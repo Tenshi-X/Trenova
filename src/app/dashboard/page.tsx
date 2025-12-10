@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import TrendChart from '@/components/charts/TrendChart';
 import { ArrowUpRight, ArrowDownRight, Activity, BrainCircuit } from 'lucide-react';
-import { fetchTrendData, getLatestAnalysis, TrendData } from '@/lib/api';
+import { getTrendDataServer, getLatestAnalysisServer } from './actions';
+import { TrendData } from '@/lib/api';
 import clsx from 'clsx';
 
 export default function DashboardPage() {
@@ -13,11 +14,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadData() {
-        // Fetch BTCUSD data by default
-        const trends = await fetchTrendData('BTCUSD');
+        // Fetch BTCUSD data by default using Server Action
+        const trends = await getTrendDataServer('BTCUSD');
         setChartData(trends);
 
-        const aiResult = await getLatestAnalysis();
+        const aiResult = await getLatestAnalysisServer();
         if (aiResult) {
             setAnalysis(aiResult);
         }

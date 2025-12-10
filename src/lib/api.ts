@@ -9,24 +9,43 @@ export type TrendData = {
 };
 
 // Fetches real market data from Supabase table (populated by Dashboard Edge Function)
+// Fetches real market data calling the 'fetch_market_data' Edge Function
 export async function fetchTrendData(symbol: string): Promise<TrendData[]> {
-  const { data, error } = await supabase
-    .from('market_data')
-    .select('symbol, datetime, close')
-    .eq('symbol', symbol)
-    .order('datetime', { ascending: true })
-    .limit(50);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    // Using direct fetch to Edge Function URL
+    const response = await fetch(
+      `https://qhbebrgrtvjwoqobafot.supabase.co/functions/v1/fetch_market_data?symbol=${symbol}&limit=50`,
+      {
+        method: 'GET',
+        headers: {
+            "Authorization": `Bearer ${token || ''}`, // Optional depending on function RLS
+            "Content-Type": "application/json"
+        }
+      }
+    );
 
-  if (error) {
-    console.error('Error fetching market data:', error);
+    if (!response.ok) throw new Error('Failed to fetch from Edge Function');
+    
+    const json = await response.json();
+    const rows = json.data;
+
+    if (!Array.isArray(rows)) return [];
+
+    // Map the response to TrendData format
+    return rows.map((d: any) => ({
+        symbol: d.symbol,
+        // Format time properly from ISO string
+        datetime: new Date(d.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }), 
+        value: d.close
+    })).reverse(); // Reverse if API returns newest first, charts usually need oldest -> newest left-to-right
+
+  } catch (error) {
+    console.error('Error fetching market data from Edge Function:', error);
     return [];
   }
-  
-  return data?.map(d => ({
-    symbol: d.symbol,
-    datetime: new Date(d.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    value: d.close // Mapping close price to value for chart
-  })) || [];
 }
 
 export type ChatbotResponse = {
