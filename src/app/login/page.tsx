@@ -43,52 +43,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background font-sans">
       {/* Background Decor */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-neon/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-neon-dim/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-neon-light/40 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-slate-200/40 rounded-full blur-[120px]" />
       </div>
 
-      <div className="glass w-full max-w-md p-8 rounded-2xl border border-white/50 relative z-10 bg-card shadow-xl">
+      <div className="glass w-full max-w-md p-8 rounded-2xl relative z-10 shadow-lg border-t-4 border-t-neon">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
-          <p className="text-foreground/60">Access your Trenova terminal</p>
+          <p className="text-slate-500">Access your Trenova terminal</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center gap-3">
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 border border-red-100 flex items-center gap-3">
             <AlertCircle size={20} />
-            <p className="text-sm">{error}</p>
+            <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground ml-1">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <label className="text-sm font-semibold text-foreground ml-1">Email Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon transition-all placeholder:text-gray-400"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-2 focus:ring-neon-light transition-all placeholder:text-slate-400"
                 placeholder="trader@trenova.com"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground ml-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <label className="text-sm font-semibold text-foreground ml-1">Password</label>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon transition-all placeholder:text-gray-400"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-2 focus:ring-neon-light transition-all placeholder:text-slate-400"
                 placeholder="••••••••"
               />
             </div>
@@ -98,10 +98,10 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className={clsx(
-              "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-white",
+              "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-white shadow-md hover:shadow-lg",
               loading 
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-neon hover:bg-neon-dim hover:shadow-lg"
+                ? "bg-slate-300 cursor-not-allowed"
+                : "bg-neon hover:bg-neon-dim transform hover:-translate-y-0.5"
             )}
           >
             {loading ? 'Authenticating...' : (

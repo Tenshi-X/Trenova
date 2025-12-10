@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F4F4F4; /* Light Gray */
-  --foreground: #005461; /* Darkest Teal - Text */
+  --background: #F8FAFC; /* Slate 50 - Very subtle cool gray */
+  --foreground: #0F172A; /* Slate 900 - Deep, professional dark */
   
-  /* Trendova Brand Palette */
-  --color-neon: #00B7B5; /* Bright Teal */
-  --color-neon-dim: #018790; /* Dark Teal - Interactive */
-  --color-neon-dark: #005461; /* Darkest Teal - Backgrounds */
+  /* Trendova Brand Palette - Professional Teal */
+  --color-neon: #0F766E; /* Teal 700 - Balanced, professional teal */
+  --color-neon-dim: #115E59; /* Teal 800 - Darker interactive state */
+  --color-neon-dark: #134E4A; /* Teal 900 - Deepest accent */
+  --color-neon-light: #CCFBF1; /* Teal 100 - Soft background for active states */
   
-  --color-card: #ffffff;
-  --color-border: #018790;
+  --color-card: #FFFFFF;
+  --color-border: #E2E8F0; /* Slate 200 - Soft border */
+  --color-border-active: #99F6E4; /* Teal 200 - Active border */
 }
 
 @theme inline {
@@ -20,8 +22,11 @@
   --color-neon: var(--color-neon);
   --color-neon-dim: var(--color-neon-dim);
   --color-neon-dark: var(--color-neon-dark);
+  --color-neon-light: var(--color-neon-light);
+  
   --color-card: var(--color-card);
   --color-border: var(--color-border);
+  --color-border-active: var(--color-border-active);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
@@ -29,20 +34,22 @@
 
 @layer utilities {
   .glass {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(1, 135, 144, 0.1);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   }
   
   .glass-dark {
-    background: rgba(0, 84, 97, 0.8);
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 183, 181, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
   }
   
   .text-glow {
-    text-shadow: 0 0 10px var(--color-neon-glow);
+    /* Subtle text shadow for headers instead of neon glow */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 }
 
