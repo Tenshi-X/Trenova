@@ -14,11 +14,13 @@ export default function Sidebar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Hide Sidebar on Auth pages
-  if (pathname === '/login' || pathname === '/register' || pathname === '/') return null;
+  // Move early return check after hooks or handle conditionally in render
+  // Ideally, layout should control visibility, but fixing here for now
+  const shouldShow = pathname !== '/login' && pathname !== '/register' && pathname !== '/';
 
   useEffect(() => {
     async function checkRole() {
+      if (!shouldShow) return; 
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.user_metadata?.role === 'admin') {
         setIsAdmin(true);
@@ -26,7 +28,9 @@ export default function Sidebar() {
       setLoading(false);
     }
     checkRole();
-  }, [supabase]);
+  }, [supabase, shouldShow]);
+
+  if (!shouldShow) return null;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

@@ -43,21 +43,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
       {/* Background Decor */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-neon/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-neon/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-neon-dim/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="glass w-full max-w-md p-8 rounded-2xl border border-white/10 relative z-10">
+      <div className="glass w-full max-w-md p-8 rounded-2xl border border-white/50 relative z-10 bg-card shadow-xl">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-400">Access your Trenova terminal</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h1>
+          <p className="text-foreground/60">Access your Trenova terminal</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-3 text-red-500">
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 border border-red-100 flex items-center gap-3">
             <AlertCircle size={20} />
             <p className="text-sm">{error}</p>
           </div>
@@ -65,30 +65,30 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300 ml-1">Email Address</label>
+            <label className="text-sm font-medium text-foreground ml-1">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder:text-gray-600"
+                className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon transition-all placeholder:text-gray-400"
                 placeholder="trader@trenova.com"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
+            <label className="text-sm font-medium text-foreground ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder:text-gray-600"
+                className="w-full bg-background border border-border rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-1 focus:ring-neon transition-all placeholder:text-gray-400"
                 placeholder="••••••••"
               />
             </div>
@@ -98,10 +98,10 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className={clsx(
-              "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all",
+              "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-white",
               loading 
-                ? "bg-gray-800 text-gray-400 cursor-not-allowed"
-                : "bg-neon text-black hover:bg-neon-dark hover:scale-[1.02]"
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-neon hover:bg-neon-dim hover:shadow-lg"
             )}
           >
             {loading ? 'Authenticating...' : (
@@ -111,13 +111,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-neon hover:underline">
-            Register Access
-          </Link>
-        </div>
       </div>
     </div>
   );

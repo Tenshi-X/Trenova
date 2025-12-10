@@ -9,9 +9,18 @@ export async function middleware(request: NextRequest) {
   })
 
   // Create a minimal Supabase client to check auth status
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Middleware: Missing Supabase Environment Variables');
+    console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
+    console.log('Key:', supabaseAnonKey ? 'Set' : 'Missing');
+  }
+
   const supabase = createServerClient(
-    'https://qhbebrgrtvjwoqobafot.supabase.co',
-    'sb_publishable_1gW70cE4QWWp87cM8XgzZg_lWQV4rQO',
+    supabaseUrl!,
+    supabaseAnonKey!,
     {
       cookies: {
         getAll() {
@@ -60,7 +69,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // Redirect Login/Register if already logged in
-  if ((path === '/login' || path === '/register') && user) {
+  if (path === '/login' && user) {
      return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

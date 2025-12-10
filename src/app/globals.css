@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0A0A0A;
-  --foreground: #EDEDED;
+  --background: #F4F4F4; /* Light Gray */
+  --foreground: #005461; /* Darkest Teal - Text */
   
-  /* Futuristic Green Palette */
-  --color-neon: #00FF88;
-  --color-neon-dim: #00CC66;
-  --color-neon-glow: rgba(0, 255, 136, 0.3);
+  /* Trendova Brand Palette */
+  --color-neon: #00B7B5; /* Bright Teal */
+  --color-neon-dim: #018790; /* Dark Teal - Interactive */
+  --color-neon-dark: #005461; /* Darkest Teal - Backgrounds */
   
-  --color-card: rgba(20, 20, 20, 0.8);
-  --color-border: rgba(255, 255, 255, 0.1);
+  --color-card: #ffffff;
+  --color-border: #018790;
 }
 
 @theme inline {
@@ -19,6 +19,7 @@
   
   --color-neon: var(--color-neon);
   --color-neon-dim: var(--color-neon-dim);
+  --color-neon-dark: var(--color-neon-dark);
   --color-card: var(--color-card);
   --color-border: var(--color-border);
 
@@ -28,9 +29,16 @@
 
 @layer utilities {
   .glass {
-    background: rgba(20, 20, 20, 0.6);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--color-border);
+    border: 1px solid rgba(1, 135, 144, 0.1);
+  }
+  
+  .glass-dark {
+    background: rgba(0, 84, 97, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 183, 181, 0.2);
+    color: white;
   }
   
   .text-glow {
