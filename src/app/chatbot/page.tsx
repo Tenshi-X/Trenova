@@ -81,23 +81,25 @@ export default function ChatbotPage() {
           <div
             key={msg.id}
             className={clsx(
-              "flex gap-4 p-4 rounded-xl max-w-[80%]",
+              "flex gap-4 p-5 rounded-2xl max-w-[85%] shadow-sm",
               msg.role === 'assistant' 
-                ? "bg-white/5 border border-white/10 self-start mr-auto" 
-                : "bg-neon/10 border border-neon/20 self-end ml-auto"
+                ? "bg-white border border-slate-100 self-start mr-auto text-slate-800" 
+                : "bg-neon-dark self-end ml-auto text-white shadow-md"
             )}
           >
             <div className={clsx(
-              "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-              msg.role === 'assistant' ? "bg-neon text-black" : "bg-white/20 text-white"
-            )}>
-              {msg.role === 'assistant' ? <Bot size={18} /> : <User size={18} />}
+              "w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm border",
+              msg.role === 'assistant' 
+                ? "bg-neon-light text-neon-dark border-neon/10" 
+                : "bg-white/10 text-white border-white/10"
+            )} style={{alignSelf: 'start'}}>
+              {msg.role === 'assistant' ? <Bot size={20} /> : <User size={20} />}
             </div>
-            <div className="space-y-1">
-                <p className="text-xs text-gray-400 font-mono mb-1">
-                    {msg.role === 'assistant' ? 'TRENOVA AI' : 'YOU'} • {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <div className="space-y-1.5 flex-1 min-w-0">
+                <p className={clsx("text-xs font-bold tracking-wide mb-1 uppercase opacity-70", msg.role === 'assistant' ? "text-slate-500" : "text-emerald-100")}>
+                    {msg.role === 'assistant' ? 'Trenova AI' : 'You'} • {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap text-white">
+                <div className={clsx("text-sm leading-7 whitespace-pre-wrap break-words", msg.role === 'assistant' ? "text-slate-700" : "text-emerald-50")}>
                     {msg.content}
                 </div>
             </div>
@@ -105,35 +107,37 @@ export default function ChatbotPage() {
         ))}
 
         {isTyping && (
-          <div className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 w-fit">
-             <div className="w-8 h-8 rounded-full bg-neon text-black flex items-center justify-center shrink-0 animate-pulse">
-                <Sparkles size={18} />
+          <div className="flex gap-4 p-5 rounded-2xl bg-white border border-slate-100 w-fit shadow-sm">
+             <div className="w-10 h-10 rounded-full bg-neon-light text-neon-dark border border-neon/10 flex items-center justify-center shrink-0 animate-pulse">
+                <Sparkles size={20} />
              </div>
-             <div className="flex items-center gap-1 h-8">
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+             <div className="flex items-center gap-1.5 h-10">
+                <span className="w-2.5 h-2.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-2.5 h-2.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-2.5 h-2.5 bg-slate-400 rounded-full animate-bounce" />
              </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4 relative">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about market trends..."
-          className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-6 pr-14 text-white focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder:text-gray-600"
-        />
-        <button
-          type="submit"
-          disabled={!input.trim() || isTyping}
-          className="absolute right-2 top-2 p-2 rounded-lg bg-neon text-black hover:bg-neon-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Send size={20} />
-        </button>
+      <form onSubmit={handleSubmit} className="mt-4 relative z-10">
+        <div className="relative group">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about market trends, signals, or predictions..."
+              className="w-full bg-white border border-slate-200 rounded-2xl py-5 pl-6 pr-16 text-foreground shadow-lg focus:outline-none focus:border-neon focus:ring-4 focus:ring-neon-light/20 transition-all placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              className="absolute right-3 top-3 p-2.5 rounded-xl bg-neon text-white hover:bg-neon-dim transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
+            >
+              <Send size={20} />
+            </button>
+        </div>
       </form>
     </div>
   );
