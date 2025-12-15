@@ -40,8 +40,6 @@ export default function Sidebar() {
   };
 
   const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Chatbot', href: '/chatbot', icon: MessageSquare },
     // Only show Admin if role is admin
     ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
   ];

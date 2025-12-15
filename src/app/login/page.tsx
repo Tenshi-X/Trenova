@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       // Check role/redirect based on mock logic or metadata
       // For blueprint: redirect to /dashboard by default, middleware will handle constraints later
-      router.push('/dashboard');
+      router.push('/admin');
       router.refresh();
       
     } catch (err: any) {
