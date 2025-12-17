@@ -1,9 +1,9 @@
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
-import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 
 function RootLayoutNav() {
   const { session } = useAuth();
@@ -14,7 +14,7 @@ function RootLayoutNav() {
   useEffect(() => {
     // Basic protection logic
     // This runs whenever session matches or segments change
-    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login';
+    const inAuthGroup = segments[0] === 'login';
     
     if (!session && !inAuthGroup) {
         // Redirect to login if not signed in
