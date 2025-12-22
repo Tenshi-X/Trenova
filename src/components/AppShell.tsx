@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Don't show sidebar on login page
-  const isLoginPage = pathname === '/login' || pathname === '/';
+  const isLoginPage = pathname === '/login' || pathname === '/' || pathname === '/feedback';
   
   // Verify if valid session exists? For now depend on page logic
   // Just layout control here.

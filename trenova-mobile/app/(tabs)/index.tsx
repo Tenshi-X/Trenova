@@ -8,9 +8,22 @@ import { supabase } from '../../lib/supabase';
 
 export default function HomeScreen() {
   const [strategy, setStrategy] = React.useState<any>(null);
+  const [marketData, setMarketData] = React.useState({
+    bitcoin: { price: 90321, change: 1.82 },
+    ethereum: { price: 4820, change: -0.63 }
+  });
 
   React.useEffect(() => {
     fetchActiveStrategy();
+    fetchMarketData();
+
+    const intervalId = setInterval(() => {
+      console.log('Auto-refreshing data...');
+      fetchActiveStrategy();
+      fetchMarketData();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchActiveStrategy = async () => {
@@ -20,9 +33,34 @@ export default function HomeScreen() {
       .from('user_strategies')
       .select('*')
       .eq('user_id', user.id)
-      .eq('symbol', 'bitcoin')
+      .order('created_at', { ascending: false }) // Get latest
+      .limit(1)
       .maybeSingle();
     setStrategy(data);
+  };
+
+  const fetchMarketData = async () => {
+    try {
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'
+      );
+      if (!response.ok) throw new Error('Failed to fetch prices');
+      const data = await response.json();
+      
+      setMarketData({
+        bitcoin: { 
+            price: data.bitcoin.usd, 
+            change: data.bitcoin.usd_24h_change 
+        },
+        ethereum: { 
+            price: data.ethereum.usd, 
+            change: data.ethereum.usd_24h_change 
+        }
+      });
+    } catch (e) {
+      console.log('Error fetching market data, using cached/fallback:', e);
+      // Optional: Update with small random noise to simulate 'live' if api fails (demo purpose) or just keep static
+    }
   };
 
   return (
@@ -44,7 +82,7 @@ export default function HomeScreen() {
         {/* Active Strategy Card (New) */}
         {strategy ? (
              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Your BTC Strategy</Text>
+                <Text style={styles.sectionTitle}>Latest Active Strategy ({strategy.symbol.toUpperCase()})</Text>
                 <View style={styles.strategyRow}>
                     <StatusCard 
                         title="Buy" 
@@ -73,7 +111,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Active Strategy</Text>
                 <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>No active Bitcoin strategy.</Text>
+                    <Text style={styles.emptyStateText}>No active strategies found.</Text>
                     <Link href="/strategies" asChild>
                         <TouchableOpacity>
                             <Text style={styles.linkText}>Create One &rarr;</Text>
@@ -87,16 +125,16 @@ export default function HomeScreen() {
         <View style={styles.grid}>
             <StatusCard 
                 title="Bitcoin (BTC)" 
-                value="$90,321" 
-                subValue="+1.82%" 
+                value={`$${marketData.bitcoin.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} 
+                subValue={`${marketData.bitcoin.change >= 0 ? '+' : ''}${marketData.bitcoin.change.toFixed(2)}%`}
                 icon="bitcoinsign.circle.fill" 
                 color="#F7931A" 
                 style={styles.gridItem}
             />
             <StatusCard 
                 title="Ethereum (ETH)" 
-                value="$4,820" 
-                subValue="-0.63%" 
+                value={`$${marketData.ethereum.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} 
+                subValue={`${marketData.ethereum.change >= 0 ? '+' : ''}${marketData.ethereum.change.toFixed(2)}%`}
                 icon="diamond.fill" 
                 color="#627EEA" 
                 style={styles.gridItem}

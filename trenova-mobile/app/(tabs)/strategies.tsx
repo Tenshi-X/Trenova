@@ -4,7 +4,18 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 
+const COINS = [
+  { label: 'Bitcoin', symbol: 'BTC', value: 'bitcoin', icon: 'bitcoinsign.circle.fill', color: '#F7931A' },
+  { label: 'Ethereum', symbol: 'ETH', value: 'ethereum', icon: 'diamond.fill', color: '#627EEA' },
+  { label: 'Solana', symbol: 'SOL', value: 'solana', icon: 'circle.grid.cross.fill', color: '#14F195' },
+];
+
 export default function StrategiesScreen() {
+  const [selectedCoin, setSelectedCoin] = useState(COINS[0]);
+  const [existingStrategy, setExistingStrategy] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Form State
   const [buyPrice, setBuyPrice] = useState('88000');
   const [takeProfit, setTakeProfit] = useState('100000');
   const [stopLoss, setStopLoss] = useState('84000');
@@ -20,30 +31,42 @@ export default function StrategiesScreen() {
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  // Fetch existing strategy on mount
+  // Fetch existing strategy when coin changes
   React.useEffect(() => {
-    fetchStrategy();
-  }, []);
+    fetchStrategy(selectedCoin.value);
+  }, [selectedCoin]);
 
-  const fetchStrategy = async () => {
+  const fetchStrategy = async (coinValue: string) => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_strategies')
         .select('*')
         .eq('user_id', user.id)
-        .eq('symbol', 'bitcoin') // Assuming single strategy per symbol for now
+        .eq('symbol', coinValue)
         .maybeSingle();
 
       if (data) {
+        setExistingStrategy(data);
         setBuyPrice(data.buy_price.toString());
         setTakeProfit(data.take_profit.toString());
         setStopLoss(data.stop_loss.toString());
+        setIsEditing(false); // Default to view mode if exists
+      } else {
+        setExistingStrategy(null);
+        // Reset to defaults or keep previous? Resetting is safer for new entry
+        setBuyPrice('');
+        setTakeProfit('');
+        setStopLoss('');
+        setIsEditing(true); // Default to create mode
       }
     } catch (e) {
       console.log('Error fetching strategy:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,54 +81,32 @@ export default function StrategiesScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check if strategy exists to determine insert vs update
-      // For simplicity in this demo, we'll delete and re-insert or just upsert if we had proper constraints.
-      // Let's use upsert with a hypothetical constraint or just standard select/update logic.
-      // Actually, standard insert might duplicate if no unique constraint on (user_id, symbol).
-      // Let's delete old one first for this demo simplicity or use proper upsert logic if ID is known.
-
-      // Better: Upsert based on specific match
-       const { error } = await supabase.from('user_strategies').upsert({
+       const payload = {
           user_id: user.id,
-          symbol: 'bitcoin',
+          symbol: selectedCoin.value,
           buy_price: parseFloat(buyPrice.replace(/,/g, '')),
           take_profit: parseFloat(takeProfit.replace(/,/g, '')),
           stop_loss: parseFloat(stopLoss.replace(/,/g, '')),
           is_active: true,
-          // If we had an ID we put it here, otherwise this might create dupes without a unique index.
-          // Assuming user_strategies has a unique constraint on (user_id, symbol) would be best.
-          // If not, let's just do a delete-insert transaction pattern essentially, or just standard insert and ignore dupes for now.
-       }, { onConflict: 'user_id, symbol' }); // Assuming there is a unique constraint
+       };
 
-       // Fallback if no constraint: select -> update or insert
-       // For this task, I'll stick to the previous insert logic but modified to be cleaner or upsert-like if possible.
-       // Let's stick to the previous logic but improve it to UPDATE if exists.
-       
-       const { data: existing } = await supabase
-         .from('user_strategies')
-         .select('id')
-         .eq('user_id', user.id)
-         .eq('symbol', 'bitcoin')
-         .maybeSingle();
-
-       if (existing) {
-         await supabase.from('user_strategies').update({
-            buy_price: parseFloat(buyPrice.replace(/,/g, '')),
-            take_profit: parseFloat(takeProfit.replace(/,/g, '')),
-            stop_loss: parseFloat(stopLoss.replace(/,/g, '')),
-         }).eq('id', existing.id);
+       // Check if we are updating an existing one found during fetch
+       if (existingStrategy) {
+         const { error } = await supabase
+           .from('user_strategies')
+           .update(payload)
+           .eq('id', existingStrategy.id);
+          if (error) throw error;
        } else {
-         await supabase.from('user_strategies').insert({
-            user_id: user.id,
-            symbol: 'bitcoin',
-            buy_price: parseFloat(buyPrice.replace(/,/g, '')),
-            take_profit: parseFloat(takeProfit.replace(/,/g, '')),
-            stop_loss: parseFloat(stopLoss.replace(/,/g, '')),
-            is_active: true,
-         });
+         // Insert new
+         const { error } = await supabase
+          .from('user_strategies')
+          .insert(payload);
+         if (error) throw error;
        }
 
-      showFeedback('success', 'Strategy configuration saved successfully.');
+      showFeedback('success', `Strategy for ${selectedCoin.label} saved.`);
+      fetchStrategy(selectedCoin.value); // Refresh state
     } catch (error: any) {
       showFeedback('error', error.message || 'Failed to save strategy.');
     } finally {
@@ -159,7 +160,28 @@ export default function StrategiesScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           
           <Text style={styles.screenTitle}>Strategy Inspector</Text>
-          <Text style={styles.screenSubtitle}>Configure & Analyze Bitcoin (BTC)</Text>
+          <Text style={styles.screenSubtitle}>Configure & Analyze Market Strategies</Text>
+
+          {/* Coin Selector */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.coinSelector} contentContainerStyle={{ gap: 12 }}>
+            {COINS.map((coin) => (
+              <TouchableOpacity 
+                key={coin.value}
+                style={[
+                  styles.coinChip, 
+                  selectedCoin.value === coin.value && styles.coinChipActive,
+                  { borderColor: selectedCoin.value === coin.value ? coin.color : '#333' }
+                ]}
+                onPress={() => setSelectedCoin(coin)}
+              >
+                 {/* @ts-ignore */}
+                <IconSymbol name={coin.icon} size={16} color={selectedCoin.value === coin.value ? '#FFF' : '#888'} />
+                <Text style={[styles.coinChipText, selectedCoin.value === coin.value && styles.coinChipTextActive]}>
+                  {coin.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
           {/* Feedback Banner */}
           {feedback && (
@@ -170,56 +192,99 @@ export default function StrategiesScreen() {
             </View>
           )}
 
-          {/* Form Card */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                {/* @ts-ignore */}
-                <IconSymbol name="gearshape.fill" size={20} color="#888" />
-                <Text style={styles.cardTitle}>Parameters (USD)</Text>
-            </View>
+          {/* View Mode: Display Existing Strategy */}
+          {!isEditing && existingStrategy && (
+             <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    {/* @ts-ignore */}
+                    <IconSymbol name="eye.fill" size={20} color={selectedCoin.color} />
+                    <Text style={[styles.cardTitle, { color: selectedCoin.color }]}>Active {selectedCoin.symbol} Strategy</Text>
+                </View>
+                
+                <View style={styles.viewRow}>
+                   <View style={styles.viewItem}>
+                      <Text style={styles.viewLabel}>Buy Price</Text>
+                      <Text style={styles.viewValue}>${existingStrategy.buy_price.toLocaleString()}</Text>
+                   </View>
+                   <View style={styles.viewItem}>
+                      <Text style={styles.viewLabel}>Take Profit</Text>
+                      <Text style={[styles.viewValue, { color: '#4CAF50' }]}>${existingStrategy.take_profit.toLocaleString()}</Text>
+                   </View>
+                   <View style={styles.viewItem}>
+                      <Text style={styles.viewLabel}>Stop Loss</Text>
+                      <Text style={[styles.viewValue, { color: '#F44336' }]}>${existingStrategy.stop_loss.toLocaleString()}</Text>
+                   </View>
+                </View>
 
-            <View style={styles.inputRow}>
+                <TouchableOpacity style={styles.updateBtn} onPress={() => setIsEditing(true)}>
+                    <Text style={styles.btnText}>Edit Configuration</Text>
+                </TouchableOpacity>
+             </View>
+          )}
+
+          {/* Edit/Create Mode: Form */}
+          {isEditing && (
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    {/* @ts-ignore */}
+                    <IconSymbol name="gearshape.fill" size={20} color="#888" />
+                    <Text style={styles.cardTitle}>
+                        {existingStrategy ? `Edit ${selectedCoin.symbol} Strategy` : `New ${selectedCoin.symbol} Strategy`}
+                    </Text>
+                </View>
+
+                <View style={styles.inputRow}>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Buy Price</Text>
+                        <TextInput 
+                            style={styles.input} 
+                            value={buyPrice} 
+                            onChangeText={setBuyPrice} 
+                            keyboardType="numeric"
+                            placeholder="0.00"
+                            placeholderTextColor="#555"
+                        />
+                    </View>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Take Profit</Text>
+                        <TextInput 
+                            style={[styles.input, { color: '#4CAF50' }]} 
+                            value={takeProfit} 
+                            onChangeText={setTakeProfit} 
+                            keyboardType="numeric"
+                            placeholder="0.00"
+                            placeholderTextColor="#555"
+                        />
+                    </View>
+                </View>
+                
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Buy Price</Text>
+                    <Text style={styles.label}>Stop Loss</Text>
                     <TextInput 
-                        style={styles.input} 
-                        value={buyPrice} 
-                        onChangeText={setBuyPrice} 
+                        style={[styles.input, { color: '#F44336' }]} 
+                        value={stopLoss} 
+                        onChangeText={setStopLoss} 
                         keyboardType="numeric"
+                        placeholder="0.00"
                         placeholderTextColor="#555"
                     />
                 </View>
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Take Profit</Text>
-                    <TextInput 
-                        style={[styles.input, { color: '#4CAF50' }]} 
-                        value={takeProfit} 
-                        onChangeText={setTakeProfit} 
-                        keyboardType="numeric"
-                        placeholderTextColor="#555"
-                    />
-                </View>
-            </View>
-            
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>Stop Loss</Text>
-                <TextInput 
-                    style={[styles.input, { color: '#F44336' }]} 
-                    value={stopLoss} 
-                    onChangeText={setStopLoss} 
-                    keyboardType="numeric"
-                    placeholderTextColor="#555"
-                />
-            </View>
 
-            <TouchableOpacity 
-                style={styles.saveBtn}
-                onPress={handleSaveStrategy}
-                disabled={loading}
-            >
-                {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Save Configuration</Text>}
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity 
+                    style={[styles.saveBtn, { backgroundColor: selectedCoin.color }]}
+                    onPress={handleSaveStrategy}
+                    disabled={loading}
+                >
+                    {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Save Configuration</Text>}
+                </TouchableOpacity>
+
+                {existingStrategy && (
+                    <TouchableOpacity style={styles.cancelBtn} onPress={() => { setIsEditing(false); setBuyPrice(existingStrategy.buy_price.toString()); setTakeProfit(existingStrategy.take_profit.toString()); setStopLoss(existingStrategy.stop_loss.toString()); }}> 
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                )}
+            </View>
+          )}
 
           {/* Analysis Action */}
           <View style={styles.actionSection}>
@@ -280,6 +345,30 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 24,
   },
+  coinSelector: {
+    marginBottom: 24,
+    maxHeight: 50,
+  },
+  coinChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    backgroundColor: '#1E1E1E',
+  },
+  coinChipActive: {
+    backgroundColor: '#333',
+  },
+  coinChipText: {
+    color: '#888',
+    fontWeight: '600',
+  },
+  coinChipTextActive: {
+    color: '#FFF',
+  },
   banner: {
     padding: 12,
     borderRadius: 8,
@@ -311,6 +400,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
     textTransform: 'uppercase',
+  },
+  viewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  viewItem: {
+    flex: 1,
+  },
+  viewLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  viewValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  updateBtn: {
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  cancelBtnText: {
+    color: '#888',
+    fontWeight: '600',
   },
   inputRow: {
     flexDirection: 'row',

@@ -26,8 +26,8 @@ export default function LandingPage() {
             <span className="text-xl font-bold tracking-tight text-foreground">TRENOVA</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/admin" className="text-sm font-semibold text-slate-500 hover:text-foreground transition-colors">
-              Admin Access
+            <Link href="/feedback" className="text-sm font-semibold text-slate-500 hover:text-foreground transition-colors">
+              Feedback
             </Link>
             <button className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all transform hover:-translate-y-0.5 shadow-lg">
               Get Early Access
@@ -266,7 +266,7 @@ export default function LandingPage() {
             <div className="flex justify-center gap-6 text-sm text-slate-500">
                <Link href="#" className="hover:text-neon">Privacy Policy</Link>
                <Link href="#" className="hover:text-neon">Terms of Service</Link>
-               <Link href="#" className="hover:text-neon">Contact Support</Link>
+               <Link href="/feedback" className="hover:text-neon">Feedback</Link>
             </div>
          </div>
       </footer>
