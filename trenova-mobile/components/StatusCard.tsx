@@ -11,17 +11,17 @@ interface StatusCardProps {
   style?: ViewStyle;
 }
 
-export function StatusCard({ title, value, subValue, icon, color = '#4A90E2', style }: StatusCardProps) {
+export function StatusCard({ title, value, subValue, icon, color = '#047857', style }: StatusCardProps) {
   return (
     <View style={[styles.card, style]}>
-      <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
+      <View style={[styles.iconContainer, { backgroundColor: `${color}15` }]}>
          {/* @ts-ignore - Dynamic icon name */}
         <IconSymbol name={icon} size={24} color={color} />
       </View>
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.value}>{value}</Text>
-        {subValue && <Text style={[styles.subValue, { color: subValue.startsWith('+') ? '#4CAF50' : '#F44336' }]}>{subValue}</Text>}
+        {subValue && <Text style={[styles.subValue, { color: subValue.startsWith('+') ? '#059669' : '#DC2626' }]}>{subValue}</Text>}
       </View>
     </View>
   );
@@ -29,14 +29,19 @@ export function StatusCard({ title, value, subValue, icon, color = '#4A90E2', st
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   iconContainer: {
     width: 48,
@@ -51,16 +56,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    color: '#888',
+    color: '#6B7280',
     marginBottom: 4,
+    fontWeight: '500',
   },
   value: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#111827',
   },
   subValue: {
     fontSize: 12,
     marginTop: 2,
+    fontWeight: '600',
   },
 });

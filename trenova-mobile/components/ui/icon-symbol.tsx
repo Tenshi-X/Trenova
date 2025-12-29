@@ -28,6 +28,13 @@ const MAPPING = {
   'sparkles': 'auto-awesome',
   'exclamationmark.circle.fill': 'error',
   'checkmark.circle.fill': 'check-circle',
+  'bell.fill': 'notifications',
+  'magnifyingglass': 'search',
+  'list.bullet': 'list',
+  'arrow.right': 'arrow-forward',
+  'chevron.left': 'chevron-left',
+  'arrow.up.right': 'arrow-outward',
+  'arrow.down.left': 'call-received',
 } as IconMapping;
 
 /**

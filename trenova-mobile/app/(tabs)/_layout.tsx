@@ -3,7 +3,6 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
@@ -12,9 +11,39 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#047857',
+        tabBarInactiveTintColor: '#94A3B8',
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarShowLabel: true,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 25,
+          left: 20,
+          right: 20,
+          elevation: 5,
+          backgroundColor: '#ffffff',
+          borderRadius: 25,
+          height: 70,
+          borderTopWidth: 0,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 10,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 10,
+          paddingTop: 8, // Add some top padding effectively centering content
+          paddingBottom: 8, // Add bottom padding for labels
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
+          marginBottom: 0,
+        },
+        tabBarItemStyle: {
+           // height: 50, // Let it be natural
+        }
       }}>
       <Tabs.Screen
         name="index"
@@ -25,10 +54,18 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="strategies"
+        name="market"
         options={{
-          title: 'Strategies',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bolt.fill" color={color} />,
+          title: 'Market',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.crop.circle" color={color} />,
         }}
       />
     </Tabs>
