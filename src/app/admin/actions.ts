@@ -15,7 +15,7 @@ export type UserProfile = {
   id: string;
   email: string;
   role: string;
-  request_quota: number;
+  subscription_end_at: string | null;
   created_at: string;
   status?: string; // Derived or future field
 };
@@ -54,24 +54,48 @@ export async function getUserProfiles() {
   return { success: true, profiles: data as UserProfile[] };
 }
 
-export async function provisionUser(userId: string, email: string, role: string, quota: number) {
+const calculateEndDate = (days: number, fromDate: Date = new Date()) => {
+    const date = new Date(fromDate);
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+};
+
+export async function provisionUser(userId: string, email: string, role: string, days: number) {
   const admin = createSupabaseAdminClient();
   if (!admin) return { success: false, error: "Configuration Error" };
+  
+  // 1. Check existing profile for Subscription Extension
+  const { data: currentProfile } = await admin
+    .from('user_profiles')
+    .select('subscription_end_at')
+    .eq('id', userId)
+    .single();
 
-  // 1. Update Auth Metadata (optional but good for sync)
+  let endAt;
+  const now = new Date();
+  const currentEnd = currentProfile?.subscription_end_at ? new Date(currentProfile.subscription_end_at) : null;
+
+  if (currentEnd && currentEnd > now) {
+     // Extend existing active subscription
+     endAt = calculateEndDate(days, currentEnd);
+  } else {
+     // Start new subscription from today
+     endAt = calculateEndDate(days);
+  }
+
+  // 2. Update Auth Metadata
   await admin.auth.admin.updateUserById(userId, {
-    user_metadata: { role, request_quota: quota }
+    user_metadata: { role, subscription_end_at: endAt }
   });
 
-  // 2. Insert/Update User Profile
+  // 3. Insert/Update User Profile
   const { error } = await admin
     .from('user_profiles')
     .upsert({
       id: userId,
       email: email,
       role: role,
-      request_quota: quota,
-      // created_at will be auto-managed or preserved if upsert
+      subscription_end_at: endAt,
     });
 
   if (error) {
@@ -88,14 +112,101 @@ export async function deleteUserProfile(userId: string) {
 
     // Delete from profiles
     const { error } = await admin.from('user_profiles').delete().eq('id', userId);
-    
-    // Optional: Delete from Auth too? 
-    // The user requirement implies "admin is purely for managing profiles from auth data"
-    // Usually we don't delete Auth user just by deleting profile unless explicitly asked.
-    // I will only delete profile for now as "deprovisioning".
 
     if (error) return { success: false, error: error.message };
     
     revalidatePath('/admin');
     return { success: true };
+}
+
+export async function createAndProvisionUser(email: string, password: string, role: string, days: number) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { success: false, error: "Configuration Error" };
+
+  const endAt = calculateEndDate(days);
+
+  // 1. Create User (Auto-confirm)
+  const { data: { user }, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role, subscription_end_at: endAt }
+  });
+
+  if (createError) return { success: false, error: createError.message };
+  if (!user) return { success: false, error: "Failed to create user" };
+
+  // 2. Insert into User Profile
+  const { error: profileError } = await admin
+    .from('user_profiles')
+    .insert({
+      id: user.id, // Link to Auth ID
+      email: email,
+      role: role,
+      subscription_end_at: endAt,
+      // created_at defaults to now()
+    });
+
+  if (profileError) {
+    return { success: false, error: `Auth created but Profile failed: ${profileError.message}` };
+  }
+
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+export async function generateDummyUsers(count: number) {
+  const admin = createSupabaseAdminClient();
+  if (!admin) return { success: false, error: "Configuration Error" };
+
+  let successCount = 0;
+  let failCount = 0;
+
+  for (let i = 0; i < count; i++) {
+    // Generate random user data
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const email = `user_${randomId}@example.com`;
+    const password = `pass_${randomId}`; // Simple password
+    const role = Math.random() > 0.8 ? 'premium' : 'user';
+    const days = role === 'premium' ? 365 : 30; // 1 year for premium, 30 days for user
+    const endAt = calculateEndDate(days);
+
+    try {
+        const { data: { user }, error: createError } = await admin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { role, subscription_end_at: endAt }
+        });
+
+        if (createError || !user) {
+            console.error(`Failed to create dummy ${email}:`, createError);
+            failCount++;
+            continue;
+        }
+
+        const { error: profileError } = await admin
+            .from('user_profiles')
+            .upsert({
+                id: user.id,
+                email: email,
+                role: role,
+                subscription_end_at: endAt,
+            });
+
+        if (profileError) {
+             console.error(`Failed to profile dummy ${email}:`, profileError);
+             failCount++;
+        } else {
+            successCount++;
+        }
+
+    } catch (e) {
+        console.error("Dummy Gen Error:", e);
+        failCount++;
+    }
+  }
+
+  revalidatePath('/admin');
+  return { success: true, count: successCount, failures: failCount };
 }

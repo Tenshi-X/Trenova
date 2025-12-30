@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, TrendingUp, Shield, ArrowRight, Smartphone, Bitcoin, Target, Zap, Lock, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Bell, TrendingUp, Shield, ArrowRight, Smartphone, Bitcoin, Target, Zap, Lock, Eye, AlertTriangle, CheckCircle2, MousePointerClick, Cpu, Brain, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function LandingPage() {
@@ -20,17 +20,18 @@ export default function LandingPage() {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-4' : 'bg-transparent py-6'}`}>
         <div className="container mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-neon to-neon-dark rounded-xl flex items-center justify-center text-white shadow-lg">
-              <TrendingUp size={20} />
-            </div>
+            <img src="/app-logo.png" alt="Trenova Logo" className="w-10 h-10 rounded-xl shadow-lg object-contain bg-white" />
             <span className="text-xl font-bold tracking-tight text-foreground">TRENOVA</span>
           </div>
           <div className="flex items-center gap-6">
             <Link href="/feedback" className="text-sm font-semibold text-slate-500 hover:text-foreground transition-colors">
               Feedback
             </Link>
+            <Link href="/login" className="text-sm font-semibold text-foreground hover:text-neon transition-colors">
+              Login
+            </Link>
             <button className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all transform hover:-translate-y-0.5 shadow-lg">
-              Get Early Access
+              Get Waiting List
             </button>
           </div>
         </div>
@@ -51,12 +52,13 @@ export default function LandingPage() {
               AI Decision Assistant
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-foreground mb-6 leading-tight">
-              You Set the Strategy. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon to-purple-600">We Watch the Market.</span>
+              Real-Time Intelligence. <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon to-purple-600">Powered by Parallel AI.</span>
             </h1>
             <p className="text-xl text-slate-500 mb-10 leading-relaxed max-w-2xl mx-auto">
-              Define your <strong>Buy Price</strong>, <strong>Take Profit</strong>, and <strong>Stop Loss</strong>. 
-              Our AI monitors real-time data 24/7 and alerts you only when the setup is perfect.
+              Select your <strong>Coin</strong>. Choose your <strong>Analysis Type</strong>. 
+              Our engine simultaneously fetches live market data and queries the AI to provide instant, data-backed insights.
+              <br/><span className="text-neon font-bold text-sm uppercase tracking-wide mt-2 inline-block">Now Available on Web. Mobile App Coming Soon.</span>
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
@@ -101,43 +103,43 @@ export default function LandingPage() {
                    <p className="text-slate-400">Your personal trading command center</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-20">
-                   {/* Step 1 */}
-                   <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
-                      <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                         <Target size={24} />
-                      </div>
-                      <h3 className="text-white font-bold mb-2">1. Set Strategy</h3>
-                      <p className="text-slate-400 text-xs">Define your Buy Price, Spend Limit, and Take Profit targets.</p>
-                   </div>
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-20">
+                    {/* Step 1 */}
+                    <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
+                       <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <MousePointerClick size={24} />
+                       </div>
+                       <h3 className="text-white font-bold mb-2">1. Select Input</h3>
+                       <p className="text-slate-400 text-xs">Choose your Coin (e.g. BTC) and Analysis Prompt from the dropdowns.</p>
+                    </div>
 
-                   {/* Step 2 */}
-                   <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
-                      <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                         <Eye size={24} />
-                      </div>
-                      <h3 className="text-white font-bold mb-2">2. Monitor</h3>
-                      <p className="text-slate-400 text-xs">System tracks the market 24/7. You don't need to stare at charts.</p>
-                   </div>
-                   
-                   {/* Step 3 */}
-                   <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
-                      <div className="w-12 h-12 bg-neon/20 rounded-xl flex items-center justify-center text-neon-light mx-auto mb-4 group-hover:scale-110 transition-transform">
-                         <Zap size={24} />
-                      </div>
-                      <h3 className="text-white font-bold mb-2">3. AI Analysis</h3>
-                      <p className="text-slate-400 text-xs">AI confirms if the trend is valid before alerting you.</p>
-                   </div>
+                    {/* Step 2 */}
+                    <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
+                       <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <Cpu size={24} />
+                       </div>
+                       <h3 className="text-white font-bold mb-2">2. Parallel Process</h3>
+                       <p className="text-slate-400 text-xs">System simultaneously fetches live Market Data and sends context to AI.</p>
+                    </div>
+                    
+                    {/* Step 3 */}
+                    <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
+                       <div className="w-12 h-12 bg-neon/20 rounded-xl flex items-center justify-center text-neon-light mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <Brain size={24} />
+                       </div>
+                       <h3 className="text-white font-bold mb-2">3. Data Fusion</h3>
+                       <p className="text-slate-400 text-xs">AI combines the prompt with actual real-time price & volume data.</p>
+                    </div>
 
-                   {/* Step 4 */}
-                   <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
-                      <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
-                         <Bell size={24} />
-                      </div>
-                      <h3 className="text-white font-bold mb-2">4. Alert</h3>
-                      <p className="text-slate-400 text-xs">Receive "Good for Buy" or "Take Profit" notifications instantly.</p>
-                   </div>
-                </div>
+                    {/* Step 4 */}
+                    <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 hover:bg-slate-800 transition-all text-center group">
+                       <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mx-auto mb-4 group-hover:scale-110 transition-transform">
+                          <MessageSquare size={24} />
+                       </div>
+                       <h3 className="text-white font-bold mb-2">4. Instant Insight</h3>
+                       <p className="text-slate-400 text-xs">Receive a comprehensive, data-backed analysis immediately.</p>
+                    </div>
+                 </div>
              </div>
           </div>
         </div>
@@ -259,7 +261,7 @@ export default function LandingPage() {
       <footer className="py-12 border-t border-slate-200 bg-white">
          <div className="container mx-auto px-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
-               <TrendingUp size={20} className="text-slate-400" />
+               <img src="/app-logo.png" alt="Trenova Logo" className="w-6 h-6 object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
                <span className="font-bold text-slate-700">TRENOVA</span>
             </div>
             <p className="text-slate-400 text-sm mb-6">© {new Date().getFullYear()} Trenova Mobile. All rights reserved.</p>

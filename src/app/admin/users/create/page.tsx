@@ -3,201 +3,270 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { Lock, Mail, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, UserPlus, Save, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { createAndProvisionUser, generateDummyUsers } from '../../actions';
 import clsx from 'clsx';
 
 export default function CreateUserPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'single' | 'bulk'>('single');
+  
+  // Single User State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
-  const router = useRouter();
-  const supabase = getSupabaseBrowserClient();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    role: 'user',
+    quota: 30
+  });
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Bulk User State
+  const [bulkCount, setBulkCount] = useState(5);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{count: number, failures: number} | null>(null);
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setLoading(false);
-      return;
-    }
+    setSuccess(false);
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            role: role,
-            request_quota: 5,
-          },
-        },
-      });
+      const res = await createAndProvisionUser(
+        formData.email,
+        formData.password,
+        formData.role,
+        formData.quota
+      );
 
-      if (signUpError) {
-        console.error('Supabase SignUp Error:', signUpError);
-        throw signUpError;
-      }
-
-      // Manual fallback insertion into user_profiles
-      if (data?.user) {
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            email: email.trim(),
-            role: role,
-            request_quota: 5,
-            created_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-        
-        if (profileError) {
-           console.warn("Manual profile insertion failed (might be handled by trigger or RLS):", profileError);
-           // We don't throw here to avoid blocking success UI if the trigger actually worked
-        }
-      }
+      if (!res.success) throw new Error(res.error);
 
       setSuccess(true);
-      
+      setTimeout(() => {
+        router.push('/admin');
+      }, 1500);
+
     } catch (err: any) {
-      console.error('Registration error:', err);
-      setError(err.message || 'Failed to create user');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background font-sans">
-             <div className="glass w-full max-w-md p-8 rounded-2xl border-t-4 border-t-neon text-center relative z-10 shadow-lg">
-                <div className="w-16 h-16 bg-neon-light rounded-full flex items-center justify-center mx-auto mb-6 text-neon-dark">
-                    <CheckCircle size={32} />
-                </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">User Created</h2>
-                <p className="text-slate-500 mb-8">
-                    The user account has been successfully created. Please check your email for verification.
-                </p>
-                <div className="space-y-4">
-                    <button 
-                        onClick={() => {
-                            setSuccess(false);
-                            setEmail('');
-                            setPassword('');
-                            setRole('user');
-                        }}
-                        className="block w-full py-4 rounded-xl bg-neon text-white font-bold hover:bg-neon-dim transition-all shadow-md transform hover:-translate-y-0.5"
-                    >
-                        Create Another User
-                    </button>
-                    <Link 
-                        href="/login"
-                        className="block w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
-                    >
-                        Go to Login
-                    </Link>
-                </div>
-             </div>
-        </div>
-    );
-  }
+  const handleBulkGenerate = async () => {
+      setBulkLoading(true);
+      setError(null);
+      setBulkResult(null);
+
+      try {
+          const res = await generateDummyUsers(bulkCount);
+          if (!res.success) throw new Error(res.error || "Bulk generation failed");
+          
+          setBulkResult({ count: res.count || 0, failures: res.failures || 0 });
+          
+          if ((res.count || 0) > 0) {
+             // Optional: Redirect after success? Or just let them stay to generate more.
+             // We'll let them stay.
+          }
+      } catch (err: any) {
+          setError(err.message);
+      } finally {
+          setBulkLoading(false);
+      }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background font-sans">
-        {/* Background Decor */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-neon-light/40 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-slate-200/40 rounded-full blur-[120px]" />
+    <div className="max-w-2xl mx-auto pb-20">
+      <div className="mb-8">
+        <Link href="/admin" className="text-slate-500 hover:text-foreground flex items-center gap-2 mb-4 text-sm font-semibold">
+          <ArrowLeft size={16} /> Back to Dashboard
+        </Link>
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+          <UserPlus className="text-neon" /> User Provisioning
+        </h1>
+        <p className="text-slate-500 mt-2">
+          Create verified users directly in the database.
+        </p>
       </div>
 
-      <div className="glass w-full max-w-md p-8 rounded-2xl relative z-10 shadow-lg border-t-4 border-t-neon">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Create New User</h1>
-          <p className="text-slate-500">Add a new user to the Trenova network</p>
+      <div className="glass bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        
+        {/* Tabs */}
+        <div className="flex border-b border-slate-100">
+            <button 
+               onClick={() => setActiveTab('single')}
+               className={clsx(
+                   "flex-1 py-4 text-sm font-bold transition-all",
+                   activeTab === 'single' ? "bg-slate-50 text-neon border-b-2 border-neon" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+               )}
+            >
+               Single User
+            </button>
+            <button 
+               onClick={() => setActiveTab('bulk')}
+               className={clsx(
+                   "flex-1 py-4 text-sm font-bold transition-all",
+                   activeTab === 'bulk' ? "bg-slate-50 text-neon border-b-2 border-neon" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+               )}
+            >
+               Bulk Generator (Dummy)
+            </button>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 border border-red-100 flex items-center gap-3">
-            <AlertCircle size={20} />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleRegister} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground ml-1">Email Address</label>
-            <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-2 focus:ring-neon-light transition-all placeholder:text-slate-400"
-                placeholder="user@trenova.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground ml-1">Password</label>
-            <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-foreground focus:outline-none focus:border-neon focus:ring-2 focus:ring-neon-light transition-all placeholder:text-slate-400"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground ml-1">Role</label>
-            <div className="relative group">
-               <select
-                 value={role}
-                 onChange={(e) => setRole(e.target.value)}
-                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-foreground focus:outline-none focus:border-neon focus:ring-2 focus:ring-neon-light transition-all appearance-none cursor-pointer"
-               >
-                 <option value="user">User</option>
-                 <option value="admin">Admin</option>
-               </select>
-               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-focus-within:text-neon">
-                 <ArrowRight className="rotate-90" size={16} /> 
-               </div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={clsx(
-              "w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-white shadow-md hover:shadow-lg",
-              loading 
-                ? "bg-slate-300 cursor-not-allowed"
-                : "bg-neon hover:bg-neon-dim transform hover:-translate-y-0.5"
+        <div className="p-8">
+            {error && (
+                <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-700 border border-red-100 flex items-center gap-3">
+                <AlertCircle size={20} />
+                <p className="text-sm font-medium">{error}</p>
+                </div>
             )}
-          >
-            {loading ? 'Creating...' : (
-              <>
-                Create User <ArrowRight size={20} />
-              </>
+            
+            {/* SINGLE USER FORM */}
+            {activeTab === 'single' && (
+                <>
+                    {success && (
+                        <div className="mb-6 p-4 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-3">
+                        <CheckCircle size={20} />
+                        <div>
+                            <p className="text-sm font-bold">User Created Successfully!</p>
+                            <p className="text-xs">Redirecting to admin dashboard...</p>
+                        </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">Email Address</label>
+                        <input 
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={e => setFormData({...formData, email: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                        placeholder="user@example.com"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">Password</label>
+                        <input 
+                        type="password"
+                        required
+                        minLength={6}
+                        value={formData.password}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                        placeholder="Set initial password..."
+                        />
+                        <p className="text-xs text-slate-400">Must be at least 6 characters.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Role</label>
+                            <select 
+                                value={formData.role}
+                                onChange={e => setFormData({...formData, role: e.target.value})}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                            >
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Subscription Duration (Days)</label>
+                            <input 
+                                type="number"
+                                value={formData.quota}
+                                onChange={e => setFormData({...formData, quota: Number(e.target.value)})}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100 flex gap-4">
+                        <Link href="/admin" className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 text-center transition-colors">
+                            Cancel
+                        </Link>
+                        <button 
+                            type="submit"
+                            disabled={loading || success}
+                            className="flex-1 py-3 rounded-xl bg-neon text-white font-bold hover:bg-neon-dim shadow-lg shadow-neon/30 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? 'Creating...' : (
+                                <>
+                                    <Save size={18} /> Create User
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    </form>
+                </>
             )}
-          </button>
-        </form>
+
+            {/* BULK GENERATOR FORM */}
+            {activeTab === 'bulk' && (
+                <div className="space-y-8">
+                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-blue-800">
+                        <AlertCircle className="shrink-0 mt-0.5" />
+                        <div className="text-sm">
+                            <p className="font-bold">About Dummy Generation</p>
+                            <p className="mt-1">
+                                This will generate random users with email format <code>user_xxxx@example.com</code> and password <code>pass_xxxx</code>. 
+                                They will be auto-verified and ready to login.
+                            </p>
+                        </div>
+                     </div>
+
+                     <div className="space-y-4">
+                        <label className="block text-sm font-bold text-foreground">Number of Users to Generate</label>
+                        <div className="flex items-center gap-4">
+                             <input 
+                                type="range" 
+                                min="1" 
+                                max="50" 
+                                value={bulkCount}
+                                onChange={e => setBulkCount(Number(e.target.value))}
+                                className="flex-1 accent-neon h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                             />
+                             <div className="w-20 text-center font-mono font-bold text-2xl text-neon border border-slate-200 rounded-lg py-2">
+                                {bulkCount}
+                             </div>
+                        </div>
+                     </div>
+
+                     {bulkResult && (
+                        <div className="p-4 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-3 animate-in fade-in">
+                            <CheckCircle size={20} />
+                            <div>
+                                <p className="font-bold">Generation Complete!</p>
+                                <p className="text-sm">Successfully created {bulkResult.count} users. ({bulkResult.failures} failed)</p>
+                            </div>
+                        </div>
+                     )}
+
+                     <div className="pt-4 flex gap-4">
+                        <button 
+                            onClick={handleBulkGenerate}
+                            disabled={bulkLoading}
+                            className="w-full py-4 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-wait flex items-center justify-center gap-2"
+                        >
+                             {bulkLoading ? 'Generating...' : (
+                                 <>
+                                     <UserPlus size={18} /> Generate {bulkCount} Dummy Users
+                                 </>
+                             )}
+                        </button>
+                     </div>
+                </div>
+            )}
+
+        </div>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export default function AdminPage() {
   // Form State
   const [formData, setFormData] = useState({
     role: 'user',
-    quota: 5
+    quota: 30
   });
 
   const fetchData = async () => {
@@ -67,7 +67,7 @@ export default function AdminPage() {
       // Reset State
       setSelectedAuthUser(null);
       setEditingProfileId(null);
-      setFormData({ role: 'user', quota: 5 });
+      setFormData({ role: 'user', quota: 30 });
 
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -83,13 +83,16 @@ export default function AdminPage() {
     }
     
     setSelectedAuthUser(user);
-    setFormData({ role: 'user', quota: 5 });
+    setFormData({ role: 'user', quota: 30 });
     setEditingProfileId(null);
   };
 
   const startEdit = (profile: UserProfile) => {
     setEditingProfileId(profile.id);
-    setFormData({ role: profile.role, quota: profile.request_quota });
+    // Calculate remaining days or default to 30 for extension
+    // When editing, we usually want to ADD time or SET time. 
+    // To keep it simple, let's default to 30 days extension in the input.
+    setFormData({ role: profile.role, quota: 30 });
     setSelectedAuthUser(null);
   };
 
@@ -233,7 +236,7 @@ export default function AdminPage() {
                   <tr>
                     <th className="px-6 py-4">User Profile</th>
                     <th className="px-6 py-4">Role</th>
-                    <th className="px-6 py-4">Quota</th>
+                    <th className="px-6 py-4">Subscription</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -241,7 +244,13 @@ export default function AdminPage() {
                   {profiles.length === 0 && !loading && (
                      <tr><td colSpan={4} className="p-8 text-center text-slate-400">No profiles provisioned yet.</td></tr>
                   )}
-                  {profiles.map((profile) => (
+                  {profiles.map((profile) => {
+                    const endDate = profile.subscription_end_at ? new Date(profile.subscription_end_at) : null;
+                    const now = new Date();
+                    const daysRemaining = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                    const isExpired = daysRemaining <= 0;
+
+                    return (
                     <tr key={profile.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -263,17 +272,29 @@ export default function AdminPage() {
                          </span>
                       </td>
                       <td className="px-6 py-4">
-                          <span className="font-mono text-sm text-slate-700 font-bold">
-                             {profile.request_quota}
-                          </span>
-                          <span className="text-xs text-slate-400 ml-1">reqs</span>
+                          {endDate ? (
+                              <div>
+                                  <span className={clsx("font-mono text-sm font-bold", isExpired ? "text-red-600" : "text-emerald-600")}>
+                                     {isExpired ? "EXPIRED" : `${daysRemaining.toFixed(0)} Days Left`}
+                                  </span>
+                                  <p className="text-xs text-slate-400">
+                                    Ends: {endDate.toLocaleString('id-ID', { 
+                                        timeZone: 'Asia/Jakarta',
+                                        dateStyle: 'medium', 
+                                        timeStyle: 'short' 
+                                    })} WIB
+                                  </p>
+                              </div>
+                          ) : (
+                              <span className="text-sm text-slate-400 italic">No Active Sub</span>
+                          )}
                       </td>
                       <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                                 <button 
                                     onClick={() => startEdit(profile)}
                                     className="p-2 rounded hover:bg-slate-100 text-slate-400 hover:text-foreground transition-colors"
-                                    title="Edit Quota/Role"
+                                    title="Extend Subscription"
                                 >
                                     <Edit size={16} />
                                 </button>
@@ -287,7 +308,8 @@ export default function AdminPage() {
                             </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -300,7 +322,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
                   <div className="p-6 border-b border-slate-100">
                       <h3 className="text-lg font-bold text-foreground">
-                          {selectedAuthUser ? 'Provision User' : 'Edit User Profile'}
+                          {selectedAuthUser ? 'Provision User' : 'Manage Subscription'}
                       </h3>
                       <p className="text-sm text-slate-500 mt-1">
                           {selectedAuthUser ? selectedAuthUser.email : profiles.find(p => p.id === editingProfileId)?.email}
@@ -322,14 +344,14 @@ export default function AdminPage() {
                       </div>
 
                       <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">Request Quota</label>
+                          <label className="text-sm font-semibold text-foreground">Add Subscription (Days)</label>
                           <input 
                              type="number"
                              value={formData.quota}
                              onChange={e => setFormData({...formData, quota: Number(e.target.value)})}
                              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
-                          <p className="text-xs text-slate-400">Number of AI requests allowed per month.</p>
+                          <p className="text-xs text-slate-400">Duration will be added from today</p>
                       </div>
                   </div>
 

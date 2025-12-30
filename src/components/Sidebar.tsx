@@ -45,11 +45,11 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-20 hover:w-72 glass flex flex-col py-8 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) group z-50 border-r border-border bg-white/95 backdrop-blur-xl shadow-2xl hover:shadow-3xl">
+    <aside className="fixed left-0 top-0 h-screen w-20 hover:w-72 glass flex flex-col py-8 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) group z-[100] border-r border-border bg-white/95 backdrop-blur-xl shadow-2xl hover:shadow-3xl">
       {/* Header/Logo */}
       <div className="flex items-center px-4 mb-10 h-12 overflow-hidden">
-        <div className="w-12 h-12 flex items-center justify-center shrink-0 bg-gradient-to-br from-neon to-neon-dark rounded-xl text-white shadow-lg mx-auto group-hover:mx-0 transition-all duration-500">
-            <Activity className="w-6 h-6" />
+        <div className="w-12 h-12 flex items-center justify-center shrink-0 bg-white rounded-xl shadow-md mx-auto group-hover:mx-0 transition-all duration-500 border border-slate-100">
+            <img src="/app-logo.png" alt="Trenova" className="w-8 h-8 object-contain" />
         </div>
         <div className="ml-4 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out whitespace-nowrap transform translate-x-10 group-hover:translate-x-0">
            <h1 className="text-xl font-bold tracking-wider text-foreground">TRENOVA</h1>

@@ -61,7 +61,10 @@ export async function askChatbot(prompt: string): Promise<ChatbotResponse | null
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
 
-    if (!token) throw new Error("No active session");
+    if (!token) {
+        console.warn("No active session token found for chatbot. Using fallback.");
+        return null;
+    }
 
     const response = await fetch(
       "https://qhbebrgrtvjwoqobafot.supabase.co/functions/v1/chatbot",
@@ -71,7 +74,7 @@ export async function askChatbot(prompt: string): Promise<ChatbotResponse | null
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ request: "market-analysis" })
+        body: JSON.stringify({ request: "market-analysis", prompt: prompt })
       }
     );
 
