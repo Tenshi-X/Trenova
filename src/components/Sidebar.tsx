@@ -40,6 +40,8 @@ export default function Sidebar() {
   };
 
   const navItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'History', href: '/dashboard/history', icon: Activity },
     // Only show Admin if role is admin
     ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
   ];
@@ -59,7 +61,10 @@ export default function Sidebar() {
 
       <nav className="flex-1 px-3 space-y-3">
         {!loading && navItems.map((item) => {
-          const isActive = pathname?.startsWith(item.href);
+          // Prevent partial match for Dashboard if we are on History or other sub-routes that have their own link
+          const isActive = item.href === '/dashboard' 
+              ? pathname === '/dashboard' 
+              : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

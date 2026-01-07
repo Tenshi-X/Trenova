@@ -122,3 +122,31 @@ export async function getLatestAnalysis(): Promise<ChatbotResponse | null> {
         ? JSON.parse(row.analysis_json) 
         : null;
 }
+
+export type AnalysisRecord = {
+    id: string;
+    created_at: string;
+    analysis: any; 
+};
+
+export async function getAnalysisHistory(days: number = 7): Promise<AnalysisRecord[]> {
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - days);
+
+    const { data, error } = await supabase
+        .from('analysis_results')
+        .select('id, analysis_json, created_at')
+        .gte('created_at', dateLimit.toISOString())
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching history:', error);
+        return [];
+    }
+
+    return data.map((row: any) => ({
+        id: row.id,
+        created_at: row.created_at,
+        analysis: row.analysis_json ? JSON.parse(row.analysis_json) : null
+    }));
+}

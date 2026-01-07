@@ -18,6 +18,11 @@ export type UserProfile = {
   subscription_end_at: string | null;
   created_at: string;
   status?: string; // Derived or future field
+  limit_image_upload?: number;
+  limit_chat_input?: number;
+  current_image_upload_count?: number;
+  current_chat_input_count?: number;
+  last_usage_reset?: string;
 };
 
 export async function getAuthUsers() {
@@ -60,7 +65,7 @@ const calculateEndDate = (days: number, fromDate: Date = new Date()) => {
     return date.toISOString();
 };
 
-export async function provisionUser(userId: string, email: string, role: string, days: number) {
+export async function provisionUser(userId: string, email: string, role: string, days: number, imageLimit: number, chatLimit: number) {
   const admin = createSupabaseAdminClient();
   if (!admin) return { success: false, error: "Configuration Error" };
   
@@ -96,6 +101,8 @@ export async function provisionUser(userId: string, email: string, role: string,
       email: email,
       role: role,
       subscription_end_at: endAt,
+      limit_image_upload: imageLimit,
+      limit_chat_input: chatLimit,
     });
 
   if (error) {
@@ -119,7 +126,7 @@ export async function deleteUserProfile(userId: string) {
     return { success: true };
 }
 
-export async function createAndProvisionUser(email: string, password: string, role: string, days: number) {
+export async function createAndProvisionUser(email: string, password: string, role: string, days: number, imageLimit: number, chatLimit: number) {
   const admin = createSupabaseAdminClient();
   if (!admin) return { success: false, error: "Configuration Error" };
 
@@ -144,6 +151,8 @@ export async function createAndProvisionUser(email: string, password: string, ro
       email: email,
       role: role,
       subscription_end_at: endAt,
+      limit_image_upload: imageLimit,
+      limit_chat_input: chatLimit,
       // created_at defaults to now()
     });
 
@@ -192,6 +201,9 @@ export async function generateDummyUsers(count: number) {
                 email: email,
                 role: role,
                 subscription_end_at: endAt,
+                // Defaults for dummy users
+                limit_image_upload: 15,
+                limit_chat_input: 50
             });
 
         if (profileError) {

@@ -22,7 +22,9 @@ export default function AdminPage() {
   // Form State
   const [formData, setFormData] = useState({
     role: 'user',
-    quota: 30
+    quota: 30,
+    imageLimit: 15,
+    chatLimit: 50
   });
 
   const fetchData = async () => {
@@ -58,7 +60,14 @@ export default function AdminPage() {
     if (!targetId || !targetEmail) return;
 
     try {
-      const res = await provisionUser(targetId, targetEmail, formData.role, formData.quota);
+      const res = await provisionUser(
+          targetId, 
+          targetEmail, 
+          formData.role, 
+          formData.quota,
+          formData.imageLimit,
+          formData.chatLimit
+      );
       if (!res.success) throw new Error(res.error);
       
       // Refresh Data
@@ -67,7 +76,8 @@ export default function AdminPage() {
       // Reset State
       setSelectedAuthUser(null);
       setEditingProfileId(null);
-      setFormData({ role: 'user', quota: 30 });
+      setEditingProfileId(null);
+      setFormData({ role: 'user', quota: 30, imageLimit: 15, chatLimit: 50 });
 
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -83,7 +93,7 @@ export default function AdminPage() {
     }
     
     setSelectedAuthUser(user);
-    setFormData({ role: 'user', quota: 30 });
+    setFormData({ role: 'user', quota: 30, imageLimit: 15, chatLimit: 50 });
     setEditingProfileId(null);
   };
 
@@ -91,8 +101,14 @@ export default function AdminPage() {
     setEditingProfileId(profile.id);
     // Calculate remaining days or default to 30 for extension
     // When editing, we usually want to ADD time or SET time. 
-    // To keep it simple, let's default to 30 days extension in the input.
-    setFormData({ role: profile.role, quota: 30 });
+    // To keep it simple, let's default to 0 days added (unless user changes) and pre-fill existing limits
+    // Note: profile.limit_image_upload might be undefined if not in DB yet, use defaults
+    setFormData({ 
+        role: profile.role, 
+        quota: 0, // Default to 0 added
+        imageLimit: profile.limit_image_upload || 15,
+        chatLimit: profile.limit_chat_input || 50
+    });
     setSelectedAuthUser(null);
   };
 
@@ -352,6 +368,27 @@ export default function AdminPage() {
                              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
                           <p className="text-xs text-slate-400">Duration will be added from today</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Image Limit</label>
+                            <input 
+                                type="number"
+                                value={formData.imageLimit}
+                                onChange={e => setFormData({...formData, imageLimit: Number(e.target.value)})}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Chat Limit</label>
+                            <input 
+                                type="number"
+                                value={formData.chatLimit}
+                                onChange={e => setFormData({...formData, chatLimit: Number(e.target.value)})}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                            />
+                        </div>
                       </div>
                   </div>
 
