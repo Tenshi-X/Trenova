@@ -16,8 +16,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <>
       {!isLoginPage && <Sidebar />}
       <main 
-        className={`flex-1 h-screen overflow-y-auto p-8 relative transition-all duration-300 ${
-          isLoginPage ? 'w-full' : 'ml-20' /* ml-20 to account for collapsed sidebar (w-20) */
+        className={`flex-1 h-screen overflow-y-auto relative transition-all duration-300 ${
+          isLoginPage ? 'w-full' : 'ml-0 md:ml-20' /* ml-0 on mobile, ml-20 on desktop */
         }`}
       >
         {/* Background Gradient/Glow effects */}
