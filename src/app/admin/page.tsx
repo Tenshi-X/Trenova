@@ -23,8 +23,7 @@ export default function AdminPage() {
   const [formData, setFormData] = useState({
     role: 'user',
     quota: 30,
-    imageLimit: 15,
-    chatLimit: 50
+    analysisLimit: 150
   });
 
   const fetchData = async () => {
@@ -65,8 +64,7 @@ export default function AdminPage() {
           targetEmail, 
           formData.role, 
           formData.quota,
-          formData.imageLimit,
-          formData.chatLimit
+          formData.analysisLimit
       );
       if (!res.success) throw new Error(res.error);
       
@@ -77,7 +75,7 @@ export default function AdminPage() {
       setSelectedAuthUser(null);
       setEditingProfileId(null);
       setEditingProfileId(null);
-      setFormData({ role: 'user', quota: 30, imageLimit: 15, chatLimit: 50 });
+      setFormData({ role: 'user', quota: 30, analysisLimit: 150 });
 
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -93,7 +91,7 @@ export default function AdminPage() {
     }
     
     setSelectedAuthUser(user);
-    setFormData({ role: 'user', quota: 30, imageLimit: 15, chatLimit: 50 });
+    setFormData({ role: 'user', quota: 30, analysisLimit: 150 });
     setEditingProfileId(null);
   };
 
@@ -106,8 +104,7 @@ export default function AdminPage() {
     setFormData({ 
         role: profile.role, 
         quota: 0, // Default to 0 added
-        imageLimit: profile.limit_image_upload || 15,
-        chatLimit: profile.limit_chat_input || 50
+        analysisLimit: profile.analysis_limit || 150
     });
     setSelectedAuthUser(null);
   };
@@ -370,25 +367,14 @@ export default function AdminPage() {
                           <p className="text-xs text-slate-400">Duration will be added from today</p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-foreground">Image Limit</label>
-                            <input 
-                                type="number"
-                                value={formData.imageLimit}
-                                onChange={e => setFormData({...formData, imageLimit: Number(e.target.value)})}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-foreground">Chat Limit</label>
-                            <input 
-                                type="number"
-                                value={formData.chatLimit}
-                                onChange={e => setFormData({...formData, chatLimit: Number(e.target.value)})}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
-                            />
-                        </div>
+                      <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">Analysis Limit (Total)</label>
+                          <input 
+                              type="number"
+                              value={formData.analysisLimit}
+                              onChange={e => setFormData({...formData, analysisLimit: Number(e.target.value)})}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                          />
                       </div>
                   </div>
 

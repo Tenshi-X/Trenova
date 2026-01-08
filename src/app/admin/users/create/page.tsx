@@ -20,8 +20,7 @@ export default function CreateUserPage() {
     password: '',
     role: 'user',
     quota: 30,
-    imageLimit: 15, // Default
-    chatLimit: 50   // Default
+    analysisLimit: 150   // Default
   });
 
   // Bulk User State
@@ -42,8 +41,7 @@ export default function CreateUserPage() {
         formData.password,
         formData.role,
         formData.quota,
-        formData.imageLimit,
-        formData.chatLimit
+        formData.analysisLimit
       );
 
       if (!res.success) throw new Error(res.error);
@@ -193,22 +191,12 @@ export default function CreateUserPage() {
 
                         </div>
 
-                        <div className="space-y-2">
-                             <label className="text-sm font-semibold text-foreground">Image Analysis Limit (Daily)</label>
+                        <div className="space-y-2 col-span-2">
+                             <label className="text-sm font-semibold text-foreground">Analysis Limit (Total)</label>
                              <input 
                                 type="number"
-                                value={formData.imageLimit}
-                                onChange={e => setFormData({...formData, imageLimit: Number(e.target.value)})}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
-                             />
-                        </div>
-
-                        <div className="space-y-2">
-                             <label className="text-sm font-semibold text-foreground">Chat Analysis Limit (Daily)</label>
-                             <input 
-                                type="number"
-                                value={formData.chatLimit}
-                                onChange={e => setFormData({...formData, chatLimit: Number(e.target.value)})}
+                                value={formData.analysisLimit}
+                                onChange={e => setFormData({...formData, analysisLimit: Number(e.target.value)})}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                              />
                         </div>

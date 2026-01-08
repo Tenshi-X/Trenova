@@ -126,7 +126,9 @@ export async function getLatestAnalysis(): Promise<ChatbotResponse | null> {
 export type AnalysisRecord = {
     id: string;
     created_at: string;
-    analysis: any; 
+    analysis: any;
+    coin_symbol?: string;
+    coin_name?: string;
 };
 
 export async function getAnalysisHistory(days: number = 7): Promise<AnalysisRecord[]> {
@@ -135,7 +137,7 @@ export async function getAnalysisHistory(days: number = 7): Promise<AnalysisReco
 
     const { data, error } = await supabase
         .from('analysis_results')
-        .select('id, analysis_json, created_at')
+        .select('id, analysis_json, created_at, coin_symbol, coin_name')
         .gte('created_at', dateLimit.toISOString())
         .order('created_at', { ascending: false });
 
@@ -147,6 +149,8 @@ export async function getAnalysisHistory(days: number = 7): Promise<AnalysisReco
     return data.map((row: any) => ({
         id: row.id,
         created_at: row.created_at,
-        analysis: row.analysis_json ? JSON.parse(row.analysis_json) : null
+        analysis: row.analysis_json ? JSON.parse(row.analysis_json) : null,
+        coin_symbol: row.coin_symbol,
+        coin_name: row.coin_name
     }));
 }

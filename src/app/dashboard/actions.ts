@@ -3,9 +3,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 
-type FeatureType = 'image' | 'chat';
-
-export async function checkAndIncrementUsage(feature: FeatureType) {
+export async function checkAndIncrementUsage() {
   // 1. Authenticate User (Must use Server Client to read cookies)
   const supabaseAuth = await createSupabaseServerClient();
   const { data: { user } } = await supabaseAuth.auth.getUser();
@@ -15,7 +13,6 @@ export async function checkAndIncrementUsage(feature: FeatureType) {
   }
 
   // 2. Perform DB Operations as Admin (Bypass RLS)
-  // This fixes the "Infinite Recursion" error and prevents users from bypassing limits
   const supabaseAdmin = createSupabaseAdminClient();
   if (!supabaseAdmin) {
     console.error("Server Error: Missing Service Role Key");
@@ -23,9 +20,10 @@ export async function checkAndIncrementUsage(feature: FeatureType) {
   }
 
   // Fetch Profile using Admin Client
+  // We use the new columns: analysis_limit, current_analysis_count
   const { data: profile, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('limit_image_upload, limit_chat_input, current_image_upload_count, current_chat_input_count, last_usage_reset')
+    .select('analysis_limit, current_analysis_count')
     .eq('id', user.id)
     .single();
 
@@ -34,40 +32,19 @@ export async function checkAndIncrementUsage(feature: FeatureType) {
     return { allowed: false, error: "Could not fetch user profile stats" };
   }
 
-  const now = new Date();
-  const lastReset = profile.last_usage_reset ? new Date(profile.last_usage_reset) : new Date(0);
-  const isSameDay = now.toDateString() === lastReset.toDateString();
+  // 3. Check Limits (No daily reset)
+  const limit = profile.analysis_limit ?? 150; 
+  const currentCount = profile.current_analysis_count || 0;
 
-  // 3. Reset counts if new day
-  let currentImageCount = isSameDay ? (profile.current_image_upload_count || 0) : 0;
-  let currentChatCount = isSameDay ? (profile.current_chat_input_count || 0) : 0;
-
-  // 4. Check Limits
-  const limitImage = profile.limit_image_upload ?? 15; 
-  const limitChat = profile.limit_chat_input ?? 50;
-
-  if (feature === 'image') {
-    if (currentImageCount >= limitImage) {
-      return { allowed: false, error: `Daily image upload limit reached (${limitImage}/${limitImage})` };
-    }
-    currentImageCount++;
-  } else {
-    if (currentChatCount >= limitChat) {
-      return { allowed: false, error: `Daily chat limit reached (${limitChat}/${limitChat})` };
-    }
-    currentChatCount++;
+  if (currentCount >= limit) {
+    return { allowed: false, error: `Analysis limit reached (${limit}/${limit}). Please upgrade.` };
   }
 
-  // 5. Update DB using Admin Client
-  const updateData = {
-    current_image_upload_count: currentImageCount,
-    current_chat_input_count: currentChatCount,
-    last_usage_reset: now.toISOString()
-  };
-
+  // 4. Update DB using Admin Client
+  const newCount = currentCount + 1;
   const { error: updateError } = await supabaseAdmin
     .from('user_profiles')
-    .update(updateData)
+    .update({ current_analysis_count: newCount })
     .eq('id', user.id);
 
   if (updateError) {
@@ -75,10 +52,10 @@ export async function checkAndIncrementUsage(feature: FeatureType) {
     return { allowed: false, error: "Failed to update usage stats" };
   }
 
-  return { allowed: true, remainingImage: limitImage - currentImageCount, remainingChat: limitChat - currentChatCount };
+  return { allowed: true, remaining: limit - newCount };
 }
 
-export async function saveAnalysis(analysisData: any) {
+export async function saveAnalysis(analysisData: any, coinSymbol?: string, coinName?: string) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -88,7 +65,9 @@ export async function saveAnalysis(analysisData: any) {
       .from('analysis_results')
       .insert({
           user_id: user.id,
-          analysis_json: JSON.stringify(analysisData)
+          analysis_json: JSON.stringify(analysisData),
+          coin_symbol: coinSymbol,
+          coin_name: coinName
       });
 
   if (error) {
@@ -110,29 +89,20 @@ export async function getUserUsage() {
 
   const { data: profile, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('limit_image_upload, limit_chat_input, current_image_upload_count, current_chat_input_count, last_usage_reset')
+    .select('analysis_limit, current_analysis_count')
     .eq('id', user.id)
     .single();
 
   if (error || !profile) return null;
 
-  const now = new Date();
-  const lastReset = profile.last_usage_reset ? new Date(profile.last_usage_reset) : new Date(0);
-  const isSameDay = now.toDateString() === lastReset.toDateString();
-
-  const currentImage = isSameDay ? (profile.current_image_upload_count || 0) : 0;
-  const currentChat = isSameDay ? (profile.current_chat_input_count || 0) : 0;
+  const current = profile.current_analysis_count || 0;
+  const limit = profile.analysis_limit ?? 150;
 
   return {
-    image: {
-      used: currentImage,
-      limit: profile.limit_image_upload ?? 15,
-      remaining: (profile.limit_image_upload ?? 15) - currentImage
-    },
-    chat: {
-      used: currentChat,
-      limit: profile.limit_chat_input ?? 50,
-      remaining: (profile.limit_chat_input ?? 50) - currentChat
+    analysis: {
+      used: current,
+      limit: limit,
+      remaining: limit - current
     }
   };
 }

@@ -38,9 +38,7 @@ export default function FeedbackPage() {
             <span className="font-semibold text-slate-600 group-hover:text-foreground transition-colors">Back to Home</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-neon to-neon-dark rounded-lg flex items-center justify-center text-white shadow-md">
-              <TrendingUp size={16} />
-            </div>
+            <img src="/app-logo.png" alt="Trenova Logo" className="w-8 h-8 rounded-lg shadow-md object-contain bg-white" />
             <span className="font-bold tracking-tight text-foreground">TRENOVA</span>
           </div>
         </div>

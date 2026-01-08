@@ -3,6 +3,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { Clock, AlertTriangle, Lock, Mail } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
+import { getUserUsage } from './actions';
+import { Zap } from 'lucide-react';
 
 export default async function DashboardLayout({
   children,
@@ -11,6 +13,7 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const usageStats = await getUserUsage();
 
   let daysLeft = 0;
   let isExpired = true; // Default to locked only if checking validation fails consistently
@@ -96,6 +99,13 @@ export default async function DashboardLayout({
             
             {/* User Profile / Status */}
             <div className="flex items-center gap-4">
+              {usageStats && (
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200 shadow-sm">
+                      <Zap size={14} className="fill-blue-700" />
+                      <span>{usageStats.analysis.remaining} / {usageStats.analysis.limit} Runs</span>
+                  </div>
+              )}
+
               {user && (
                 <div className={clsx(
                   "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-all",
