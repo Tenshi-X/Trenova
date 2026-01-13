@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Loader2, TrendingUp, CheckCircle } from 'lucide-react';
+import { Search, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import clsx from 'clsx';
 
 export type Coin = {
@@ -53,7 +53,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
     );
 
     return (
-        <div className="w-full bg-white rounded-3xl border border-slate-200 shadow-sm p-4">
+        <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 transition-colors">
             
             {/* Search Bar */}
             <div className="relative mb-4">
@@ -63,7 +63,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                     placeholder="Search coins (e.g. BTC, Solana)..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all"
                 />
             </div>
 
@@ -85,16 +85,15 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                                 className={clsx(
                                     "flex flex-col items-start min-w-[140px] p-3 rounded-2xl border transition-all snap-start text-left relative overflow-hidden group",
                                     isSelected 
-                                        ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                                        : "bg-white border-slate-100 text-slate-600 hover:border-slate-300 hover:shadow-md"
+                                        ? "bg-emerald-500 dark:bg-neon border-emerald-500 dark:border-neon text-white dark:text-slate-950 shadow-lg shadow-emerald-500/20 dark:shadow-neon/20" 
+                                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md dark:shadow-none"
                                 )}
                             >
                                 <div className="flex items-center justify-between w-full mb-2">
                                     <img src={coin.image} alt={coin.name} className="w-6 h-6 rounded-full" />
-                                    {isSelected && <CheckCircle size={16} className="text-neon" />}
                                 </div>
                                 
-                                <span className={clsx("font-bold text-sm truncate w-full", isSelected ? "text-white" : "text-slate-800")}>
+                                <span className={clsx("font-bold text-sm truncate w-full", isSelected ? "text-white dark:text-slate-950" : "text-slate-800 dark:text-slate-200")}>
                                     {coin.name}
                                 </span>
                                 <span className={clsx("text-xs font-mono uppercase opacity-70 mb-1")}>
@@ -102,7 +101,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                                 </span>
 
                                 <div className={clsx("mt-auto flex items-center gap-1 text-[10px] font-bold", isBullish ? "text-emerald-500" : "text-rose-500")}>
-                                    <TrendingUp size={10} className={clsx(isBullish ? "" : "rotate-180")} />
+                                    {isBullish ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                                     {Math.abs(coin.price_change_percentage_24h).toFixed(2)}%
                                 </div>
                             </button>
@@ -116,4 +115,5 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
             )}
         </div>
     );
+
 }

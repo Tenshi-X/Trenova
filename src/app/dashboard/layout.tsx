@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { getUserUsage } from './actions';
 import { Zap } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default async function DashboardLayout({
   children,
@@ -88,9 +89,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 transition-all duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-all duration-300">
       {/* Simple Topbar for now, can be expanded */}
-      <nav className="bg-white border-b border-slate-200 px-4 md:px-6 py-4 sticky top-0 z-40">
+      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 md:px-6 py-4 sticky top-0 z-40">
          <div className="container mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2 font-bold text-lg md:text-xl text-foreground pl-12 md:pl-0">
                 <img src="/app-logo.png" alt="Trenova Logo" className="w-8 h-8 rounded-lg object-contain bg-white border border-slate-100" />
@@ -99,6 +100,7 @@ export default async function DashboardLayout({
             
             {/* User Profile / Status */}
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               {usageStats && (
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200 shadow-sm">
                       <Zap size={14} className="fill-blue-700" />

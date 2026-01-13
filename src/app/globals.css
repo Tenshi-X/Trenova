@@ -1,18 +1,33 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #F8FAFC; /* Slate 50 - Very subtle cool gray */
-  --foreground: #0F172A; /* Slate 900 - Deep, professional dark */
+  --background: #F8FAFC; /* Slate 50 */
+  --foreground: #0F172A; /* Slate 900 */
   
   /* Trendova Brand Palette - Professional Teal */
-  --color-neon: #0F766E; /* Teal 700 - Balanced, professional teal */
-  --color-neon-dim: #115E59; /* Teal 800 - Darker interactive state */
-  --color-neon-dark: #134E4A; /* Teal 900 - Deepest accent */
-  --color-neon-light: #CCFBF1; /* Teal 100 - Soft background for active states */
+  --color-neon: #0F766E; /* Teal 700 */
+  --color-neon-dim: #115E59; /* Teal 800 */
+  --color-neon-dark: #134E4A; /* Teal 900 */
+  --color-neon-light: #CCFBF1; /* Teal 100 */
   
   --color-card: #FFFFFF;
-  --color-border: #E2E8F0; /* Slate 200 - Soft border */
-  --color-border-active: #99F6E4; /* Teal 200 - Active border */
+  --color-border: #E2E8F0; /* Slate 200 */
+  --color-border-active: #99F6E4; /* Teal 200 */
+}
+
+.dark {
+  --background: #020617; /* Slate 950 */
+  --foreground: #F8FAFC; /* Slate 50 */
+  
+  --color-neon: #2DD4BF; /* Teal 400 - Brighter for dark mode */
+  --color-neon-dim: #14B8A6; /* Teal 500 */
+  --color-neon-dark: #ccfbf1; /* Teal 100 - Light text on dark */
+  --color-neon-light: rgba(45, 212, 191, 0.1); 
+  
+  --color-card: #0F172A; /* Slate 900 */
+  --color-border: #1E293B; /* Slate 800 */
+  --color-border-active: #2DD4BF;
 }
 
 @theme inline {

@@ -56,7 +56,7 @@ export default function Sidebar() {
       {/* Mobile Menu Toggle */}
       <button 
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="md:hidden fixed top-3 left-3 z-[110] p-2 bg-white rounded-lg shadow-md border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+        className="md:hidden fixed top-3 left-3 z-[110] p-2 bg-white dark:bg-slate-900 rounded-lg shadow-md border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
       >
         <Menu size={20} />
       </button>
@@ -70,7 +70,7 @@ export default function Sidebar() {
       )}
 
       <aside className={clsx(
-        "fixed left-0 top-0 h-screen flex flex-col py-8 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) group z-[100] border-r border-border bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden",
+        "fixed left-0 top-0 h-screen flex flex-col py-8 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) group z-[100] border-r border-border dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl shadow-2xl overflow-hidden",
         // Mobile: Slide in/out. When open, full width 72. When closed, hidden off-screen.
         isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72",
         // Desktop: Always visible. Default collapsed (w-20), hover to expand (w-72).
@@ -79,7 +79,7 @@ export default function Sidebar() {
         {/* Header/Logo */}
         <div className="flex items-center px-4 mb-10 h-12 overflow-hidden shrink-0">
           <div className={clsx(
-              "w-12 h-12 flex items-center justify-center shrink-0 bg-white rounded-xl shadow-md transition-all duration-500 border border-slate-100",
+              "w-12 h-12 flex items-center justify-center shrink-0 bg-white dark:bg-slate-900 rounded-xl shadow-md transition-all duration-500 border border-slate-100 dark:border-slate-800",
               // Mobile: Always allow expanding to show logo
               // Desktop: Move margin on hover to center or left align
               "mx-0 md:mx-auto md:group-hover:mx-0"
@@ -110,8 +110,8 @@ export default function Sidebar() {
                 className={clsx(
                   'flex items-center h-12 px-3 rounded-xl transition-all duration-300 relative overflow-hidden group/item shrink-0',
                   isActive
-                    ? 'bg-neon-light/50 text-neon-dark shadow-sm border border-neon/10'
-                    : 'text-slate-500 hover:text-foreground hover:bg-slate-50'
+                    ? 'bg-neon-light/50 dark:bg-neon/10 text-neon-dark dark:text-neon shadow-sm border border-neon/10 dark:border-neon/20'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-foreground dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-900'
                 )}
               >
                 <div className={clsx(
@@ -123,7 +123,7 @@ export default function Sidebar() {
                     <item.icon
                       className={clsx(
                         'w-6 h-6 transition-transform duration-300 group-hover/item:scale-110',
-                        isActive ? 'text-neon' : 'text-slate-400 group-hover:text-slate-600'
+                        isActive ? 'text-neon' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
                       )}
                     />
                 </div>
@@ -148,10 +148,10 @@ export default function Sidebar() {
 
         {/* Footer / User Profile */}
         <div className="px-3 shrink-0">
-            <div className="pt-6 border-t border-dashed border-slate-200 space-y-2">
+            <div className="pt-6 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-2">
               <button 
                   onClick={handleLogout}
-                  className="w-full flex items-center h-12 px-3 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all font-medium group/btn overflow-hidden"
+                  className="w-full flex items-center h-12 px-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all font-medium group/btn overflow-hidden"
               >
                   <div className={clsx(
                       "w-6 h-6 flex items-center justify-center shrink-0 transition-all duration-500",

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, memo } from 'react';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface TradingViewWidgetProps {
   symbol: string;
@@ -8,6 +9,7 @@ interface TradingViewWidgetProps {
 
 function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!container.current) return;
@@ -38,7 +40,7 @@ function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
       "symbol": tvSymbol,
       "interval": "D",
       "timezone": "Etc/UTC",
-      "theme": "light",
+      "theme": theme === 'dark' ? 'dark' : 'light',
       "style": "1",
       "locale": "en",
       "enable_publishing": false,
@@ -48,10 +50,10 @@ function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
     });
 
     container.current.appendChild(script);
-  }, [symbol]);
+  }, [symbol, theme]);
 
   return (
-    <div className="w-full h-[500px] bg-white rounded-2xl md:rounded-3xl border border-slate-200 shadow-xl overflow-hidden my-6">
+    <div className="w-full h-[500px] bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden my-6 transition-colors">
       <div className="tradingview-widget-container h-full w-full" ref={container}>
         <div className="tradingview-widget-container__widget h-full w-full"></div>
       </div>

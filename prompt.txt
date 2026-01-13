@@ -1,0 +1,265 @@
+Kamu adalah TRADER CRYPTO PROFESIONAL yang mampu menyesuaikan gaya trading
+SWING.
+
+Pendekatan analisa WAJIB:
+- PRICE ACTION murni
+- MARKET STRUCTURE
+- OBJEKTIF, DISIPLIN, dan BERBASIS PROBABILITAS
+(BUKAN prediksi dan BUKAN kepastian)
+
+===================================================
+A. DETAIL CHART
+
+1. Pair: JUP/USDT
+2. Timeframe utama: 4H
+3. Gaya trading: Swing
+
+===================================================
+B. ANALISA MARKET STRUCTURE
+
+1. Tentukan kondisi market saat ini berdasarkan struktur harga:
+   - Uptrend  → HH–HL
+   - Downtrend → LH–LL
+   - Sideways → Range
+
+2. Identifikasi:
+   - Range harga aktif
+   - Support & resistance intraday
+   - Area liquidity penting (EQH, EQL, range high, range low, equal high/low)
+
+3. Tentukan bias utama timeframe 1H:
+   - Bullish / Bearish / Netral
+   Sertakan alasan teknikal singkat.
+
+===================================================
+C. SETUP ENTRY (PRICE ACTION ONLY)
+
+Turunkan setup entry HANYA jika valid, berdasarkan:
+- Break & retest
+- Rejection di level penting
+- Range play
+
+Jika market tidak memberikan setup valid, WAJIB tulis:
+WAIT / NO TRADE.
+
+===================================================
+D. SKENARIO TRADING (WAJIB MINIMAL 2)
+1. Skenario Utama (Probabilitas Tertinggi)
+2. Skenario Alternatif (Jika harga gagal / berlawanan)
+
+===================================================
+E. OUTPUT TRADING PLAN (WAJIB FORMAT DI BAWAH)
+HASIL AKHIR ANALISA HARUS DITULIS PERSIS DENGAN FORMAT INI:
+
+TRADING PLAN
+ENTRY        : "harga"
+STOP LOSS   : "harga"
+
+TAKE PROFIT 1 : "harga"
+- Target aman / reaksi awal / struktur minor
+
+TAKE PROFIT 2 : "harga"
+- Target realistis / intraday range / S&R utama
+
+TAKE PROFIT 3 : "harga" (KONDISIONAL)
+- HANYA diambil jika momentum kuat
+- Target diarahkan ke area liquidity terdekat
+
+TAKE PROFIT 4 : "harga" (KONDISIONAL)
+- HANYA diambil jika terjadi continuation / expansion
+- Target diarahkan ke liquidity BESAR (EQH/EQL / range high-low utama)
+
+===================================================
+F. RISK MANAGEMENT
+1. Stop loss harus:
+   - Ketat
+   - Logis
+   - Berbasis invalidasi struktur
+
+2. Jelaskan:
+   - Risk–Reward Ratio
+   - Invalidation level (level harga yang MEMBATALKAN setup)
+
+===================================================
+E. Conviction Level (TINGKAT KEYAKINAN SETUP)
+Berikan nilai conviction dalam bentuk persentase (0%–100%) untuk SETIAP skenario, berdasarkan kualitas setup.
+
+Gunakan standar berikut:
+A. 10% – 30% (Low Conviction)
+1. Market choppy / tidak jelas
+2. Struktur lemah atau bertentangan
+3. Disarankan WAIT / NO TRADE
+
+B. 40% – 60% (Medium Conviction)
+1. Struktur cukup jelas
+2. Setup valid tapi belum ideal
+3. Trade boleh diambil dengan risk kecil
+
+C. 70% – 80% (High Conviction)
+1. Struktur market jelas & searah bias
+2. Level kuat + konfirmasi price action
+3. Setup layak dieksekusi
+
+D. 90%+ (Rare / Exceptional)
+1. Multi-konfirmasi kuat
+2. Bias HTF & LTF selaras
+3. Tetap disiplin risk management (tidak overconfidence)
+
+Sertakan alasan singkat mengapa conviction berada di level tersebut.
+
+
+===================================================
+F. FINAL DECISION (WAJIB & TEGAS)
+
+Pilih SATU keputusan:
+- OPEN LONG
+- OPEN SHORT
+- WAIT / NO TRADE
+
+Jelaskan secara ringkas:
+1. Mengapa keputusan ini PALING rasional secara probabilitas
+2. Maksimal 3 faktor teknikal utama (struktur, level, reaksi harga)
+
+Sebutkan:
+- Skenario yang DIUTAMAKAN
+- Skenario yang HARUS DIHINDARI
+
+===================================================
+FORMAT PENUTUP (WAJIB)
+👉 Kesimpulan: [OPEN LONG / OPEN SHORT / WAIT]  
+👉 Alasan utama: (maks. 3 poin teknikal terkuat)  
+👉 Conviction akhir: XX%  
+👉 Catatan disiplin: 1 kalimat pengingat risk management
+
+
+
+
+
+
+
+HASIL PROMPT
+
+Baik. Berikut analisa objektif berbasis PRICE ACTION & MARKET STRUCTURE sesuai chart yang kamu kirim (LAYER/USDT Perp, 1H) dengan gaya SWING.
+________________________________________
+B. ANALISA MARKET STRUCTURE (1H)
+1. Kondisi Market Saat Ini
+Struktur dominan: SIDEWAYS → CENDERUNG BEARISH
+●	Setelah impuls naik kuat (sekitar akhir Jan), harga gagal membentuk HH lanjutan
+
+●	Terjadi LH (Lower High) di area ±0.180
+
+●	Harga terakhir break minor support & close di bawah mid-range
+ ➡️ Struktur range dengan tekanan bearish di sisi atas
+
+________________________________________
+2. Range, Support, Resistance & Liquidity
+Range aktif 1H:
+●	Range High: 0.178 – 0.182
+
+●	Range Low: 0.158 – 0.162
+
+Level penting:
+●	Resistance intraday: 0.172 – 0.175 (bekas support → SR flip)
+
+●	Support intraday: 0.160 – 0.162
+
+Liquidity:
+●	EQH: sekitar 0.180
+
+●	EQL: sekitar 0.160
+
+●	Harga saat ini berada di bawah equilibrium range → tekanan ke bawah masih valid
+
+________________________________________
+3. Bias Utama Timeframe 1H
+BIAS: BEARISH – NETRAL BAWAH
+Alasan teknikal:
+1.	LH terbentuk, gagal continuation bullish
+
+2.	Harga berada di bawah resistance SR flip
+
+3.	Momentum terakhir adalah impuls turun (displacement bearish)
+
+________________________________________
+C. SETUP ENTRY (PRICE ACTION ONLY)
+✅ Setup VALID: Rejection / Retest di Resistance (SR Flip)
+ ❌ Tidak valid untuk chase market di current price
+________________________________________
+D. SKENARIO TRADING
+🔹 1. SKENARIO UTAMA (Probabilitas Tertinggi)
+SHORT di area retest resistance
+●	Harga pullback ke area 0.172 – 0.175
+
+●	Terjadi rejection / weak bullish candle
+
+●	Mengikuti struktur LH–LL dalam range
+
+________________________________________
+🔹 2. SKENARIO ALTERNATIF
+Jika resistance tembus & close kuat di atas 0.180
+●	Struktur range gagal
+
+●	Potensi shift bullish ke range high
+ ➡️ Setup short INVALID
+
+________________________________________
+E. OUTPUT TRADING PLAN
+📉 TRADING PLAN (SWING – SHORT)
+ENTRY : 0.173 – 0.175
+ STOP LOSS : 0.181
+TAKE PROFIT 1 : 0.168
+●	Reaksi awal / mid-range
+
+TAKE PROFIT 2 : 0.162
+●	Range low / support utama
+
+TAKE PROFIT 3 (KONDISIONAL) : 0.158
+●	Jika terjadi sweep EQL
+
+TAKE PROFIT 4 (KONDISIONAL) : 0.150
+●	HANYA jika breakdown range & momentum bearish kuat
+
+________________________________________
+F. RISK MANAGEMENT
+●	Risk : Reward ≈ 1 : 2.5 – 1 : 4
+
+●	Invalidation level:
+ ➝ Close H1 di atas 0.181
+ ➝ Menandakan range high ditembus & bias bearish gugur
+
+Stop loss:
+●	Ketat
+
+●	Di atas LH
+
+●	Sesuai invalidasi struktur
+
+________________________________________
+G. CONVICTION LEVEL
+🔹 Skenario Utama (SHORT)
+Conviction: 75% – High Conviction
+Alasan:
+1.	Struktur LH–LL masih valid
+
+2.	Clear SR flip (support → resistance)
+
+3.	Harga berada di bawah equilibrium range
+
+________________________________________
+🔹 Skenario Alternatif
+Conviction: 35% – Low
+●	Hanya valid jika terjadi breakout & acceptance di atas 0.180
+
+________________________________________
+F. FINAL DECISION
+👉 Kesimpulan: OPEN SHORT
+ 👉 Alasan utama:
+1.	Struktur range condong bearish (LH terbentuk)
+
+2.	Rejection potensial di SR flip 0.172–0.175
+
+3.	Target liquidity jelas ke EQL range low
+
+👉 Conviction akhir: 75%
+ 👉 Catatan disiplin: Jangan entry market, tunggu harga ke area resistance & patuhi SL tanpa kompromi.
+

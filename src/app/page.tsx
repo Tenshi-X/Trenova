@@ -17,20 +17,20 @@ export default function LandingPage() {
     <div className="min-h-screen font-sans selection:bg-neon selection:text-white pb-20">
       
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-200 py-4' : 'bg-transparent py-6'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 py-4' : 'bg-transparent py-6'}`}>
         <div className="container mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/app-logo.png" alt="Trenova Logo" className="w-10 h-10 rounded-xl shadow-lg object-contain bg-white" />
+            <img src="/app-logo.png" alt="Trenova Logo" className="w-10 h-10 rounded-xl shadow-lg object-contain bg-white dark:bg-slate-800" />
             <span className="text-xl font-bold tracking-tight text-foreground">TRENOVA</span>
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/feedback" className="text-sm font-semibold text-slate-500 hover:text-foreground transition-colors">
+            <Link href="/feedback" className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-foreground dark:hover:text-white transition-colors">
               Feedback
             </Link>
             <Link href="/login" className="text-sm font-semibold text-foreground hover:text-neon transition-colors">
               Login
             </Link>
-            <Link href="/login" className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 transition-all transform hover:-translate-y-0.5 shadow-lg">
+            <Link href="/login" className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all transform hover:-translate-y-0.5 shadow-lg">
               Get Started
             </Link>
           </div>
@@ -47,7 +47,7 @@ export default function LandingPage() {
 
         <div className="container mx-auto max-w-6xl">
           <div className="text-center max-w-4xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-6">
               <span className="w-2 h-2 rounded-full bg-neon animate-pulse" />
               Live Market Intelligence
             </div>
@@ -55,7 +55,7 @@ export default function LandingPage() {
               Visual Forecasting & <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon to-purple-600">Technical Master Calls.</span>
             </h1>
-            <p className="text-xl text-slate-500 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-slate-500 dark:text-slate-400 mb-10 leading-relaxed max-w-2xl mx-auto">
               Combine <strong>AI Image Recognition</strong> with real-time market data. 
               Upload charts to detect patterns or get comprehensive price forecasts instantly.
               <br/><span className="text-neon font-bold text-sm uppercase tracking-wide mt-2 inline-block">Powered by Advanced Multimodal AI</span>
@@ -66,7 +66,7 @@ export default function LandingPage() {
                 <Smartphone size={20} />
                 Try Dashboard
               </Link>
-              <Link href="#features" className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-lg hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+              <Link href="#features" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-lg hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
                 See Features <ArrowRight size={20} />
               </Link>
             </div>
@@ -124,18 +124,18 @@ export default function LandingPage() {
       </section>
 
       {/* Primary Features Section */}
-      <section id="features" className="py-20 bg-white border-y border-slate-100">
+      <section id="features" className="py-20 bg-white dark:bg-slate-950 border-y border-slate-100 dark:border-slate-900 transition-colors">
          <div className="container mx-auto px-6 max-w-5xl">
             <div className="flex flex-col md:flex-row items-center gap-12">
                <div className="flex-1">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-6">
                      <BarChart3 size={14} />
                      Deep Analysis
                   </div>
                   <h2 className="text-4xl font-bold text-foreground mb-6">
                      Beyond Simple Signals. <br/>Complete Market Intelligence.
                   </h2>
-                  <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+                  <p className="text-lg text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
                      Most bots just say "Buy". Trenova acts as a <strong>Senior Analyst</strong>, providing the full reasoning and structure you need to trade with confidence.
                   </p>
                   <ul className="space-y-4">
@@ -163,45 +163,45 @@ export default function LandingPage() {
                   </ul>
                </div>
                <div className="flex-1 w-full flex justify-center">
-                  <div className="relative bg-slate-50 rounded-3xl p-6 border border-slate-100 w-full max-w-sm shadow-xl">
+                  <div className="relative bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 w-full max-w-sm shadow-xl transition-colors">
                      {/* Mock UI for Master Call */}
-                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                     <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
                         <div className="bg-slate-900 px-4 py-3 flex items-center justify-between">
                             <span className="text-white font-bold flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-neon animate-pulse"/> AI REPORT</span>
                             <span className="text-emerald-400 text-xs font-mono">LIVE</span>
                         </div>
                         <div className="p-4 space-y-3">
-                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                                <span className="text-sm font-bold text-slate-700">BTC/USDT</span>
-                                <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded font-bold">BULLISH</span>
+                            <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">BTC/USDT</span>
+                                <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-2 py-0.5 rounded font-bold">BULLISH</span>
                             </div>
                             <div className="space-y-1 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500">Trend:</span>
-                                    <span className="font-mono text-slate-800">Uptrend w/ Volume</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Trend:</span>
+                                    <span className="font-mono text-slate-800 dark:text-slate-200">Uptrend w/ Volume</span>
                                 </div>
-                                <div className="flex justify-between text-emerald-600">
+                                <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                                     <span className="opacity-75">Support:</span>
                                     <span className="font-mono font-bold">$92,500</span>
                                 </div>
-                                <div className="flex justify-between text-slate-600">
+                                <div className="flex justify-between text-slate-600 dark:text-slate-300">
                                     <span className="opacity-75">RSI:</span>
                                     <span className="font-mono font-bold">65 (Neutral-Bull)</span>
                                 </div>
                             </div>
-                            <div className="pt-2 text-xs text-slate-400 italic border-t border-slate-100 mt-2">
+                            <div className="pt-2 text-xs text-slate-400 dark:text-slate-500 italic border-t border-slate-100 dark:border-slate-800 mt-2">
                                 "Double bottom pattern confirmed on 4H chart. Recommend accumulation..."
                             </div>
                         </div>
                      </div>
                      
-                     <div className="absolute -bottom-4 -left-4 bg-white p-3 rounded-lg shadow-lg border border-slate-100 flex items-center gap-3">
-                         <div className="bg-blue-100 p-2 rounded-md text-blue-600">
+                     <div className="absolute -bottom-4 -left-4 bg-white dark:bg-slate-950 p-3 rounded-lg shadow-lg dark:shadow-none border border-slate-100 dark:border-slate-800 flex items-center gap-3 transition-colors">
+                         <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-md text-blue-600 dark:text-blue-400">
                              <TrendingUp size={16} />
                          </div>
                          <div>
-                             <div className="text-[10px] text-slate-400 font-bold uppercase">Forecast</div>
-                             <div className="text-sm font-bold text-slate-800">Target: $100k</div>
+                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">Forecast</div>
+                             <div className="text-sm font-bold text-slate-800 dark:text-slate-200">Target: $100k</div>
                          </div>
                      </div>
                   </div>
@@ -211,39 +211,39 @@ export default function LandingPage() {
       </section>
 
       {/* Notifications Showcase */}
-      <section className="py-20 bg-slate-50">
+      <section className="py-20 bg-slate-50 dark:bg-slate-950 transition-colors">
          <div className="container mx-auto px-6 max-w-4xl text-center">
-            <h2 className="text-3xl font-bold mb-16">Comprehensive AI Analysis</h2>
+            <h2 className="text-3xl font-bold mb-16 text-foreground">Comprehensive AI Analysis</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 hover:shadow-md transition-all">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold mb-4">
+               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-emerald-100 dark:border-slate-800 hover:shadow-md transition-all">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mb-4">
                      <TrendingUp size={14} />
                      Forecast
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">Price Prediction</h3>
-                  <p className="text-slate-500 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                      Determines Trend (Bullish/Bearish), Support & Resistance levels, and short-term targets.
                   </p>
                </div>
                
-               <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 hover:shadow-md transition-all">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mb-4">
+               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-purple-100 dark:border-slate-800 hover:shadow-md transition-all">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-bold mb-4">
                      <Search size={14} />
                      Technical
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">Deep Dive</h3>
-                  <p className="text-slate-500 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                      Analyzes Moving Averages, RSI, Momentum, and chart patterns like Head & Shoulders.
                   </p>
                </div>
 
-               <div className="bg-white p-6 rounded-2xl shadow-sm border border-orange-100 hover:shadow-md transition-all">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold mb-4">
+               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-orange-100 dark:border-slate-800 hover:shadow-md transition-all">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-bold mb-4">
                      <Shield size={14} />
                      Risk Guard
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">Sentiment & Risk</h3>
-                  <p className="text-slate-500 text-sm">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
                      Evaluates crowd psychology (FOMO vs Panic) and assigns a Volatility Score.
                   </p>
                </div>
@@ -252,14 +252,14 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-slate-200 bg-white">
+      <footer className="py-12 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors">
          <div className="container mx-auto px-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
                <img src="/app-logo.png" alt="Trenova Logo" className="w-6 h-6 object-contain grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all" />
-               <span className="font-bold text-slate-700">TRENOVA</span>
+               <span className="font-bold text-slate-700 dark:text-slate-200">TRENOVA</span>
             </div>
-            <p className="text-slate-400 text-sm mb-6">© {new Date().getFullYear()} Trenova Mobile. All rights reserved.</p>
-            <div className="flex justify-center gap-6 text-sm text-slate-500">
+            <p className="text-slate-400 dark:text-slate-600 text-sm mb-6">© {new Date().getFullYear()} Trenova Mobile. All rights reserved.</p>
+            <div className="flex justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
                <Link href="/" className="hover:text-neon">Privacy Policy</Link>
                <Link href="/" className="hover:text-neon">Terms of Service</Link>
                <Link href="/feedback" className="hover:text-neon">Feedback</Link>

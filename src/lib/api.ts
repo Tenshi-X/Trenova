@@ -56,7 +56,7 @@ export type ChatbotResponse = {
 
 // Invokes the 'chatbot' Edge Function
 // Invokes the 'chatbot' Edge Function via direct URL
-export async function askChatbot(prompt: string): Promise<ChatbotResponse | null> {
+export async function askChatbot(prompt: string, image?: string): Promise<ChatbotResponse | null> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
@@ -74,7 +74,11 @@ export async function askChatbot(prompt: string): Promise<ChatbotResponse | null
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ request: "market-analysis", prompt: prompt })
+        body: JSON.stringify({ 
+            request: "market-analysis", 
+            prompt: prompt,
+            image: image // Optional base64 image
+        })
       }
     );
 

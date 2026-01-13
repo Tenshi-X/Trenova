@@ -43,9 +43,14 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null;
+  try {
+      const { data } = await supabase.auth.getUser()
+      user = data.user;
+  } catch (err) {
+      console.error("Middleware Auth Error:", err);
+      // Treat as not logged in if auth service is unreachable
+  }
 
   const path = request.nextUrl.pathname;
 

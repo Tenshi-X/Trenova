@@ -1,0 +1,178 @@
+3.	Basic generate Ai format/outputnya seperti ini
+A. DETAIL CHART
+●	Pair: BIO/USDT
+
+●	Timeframe: 1H
+
+●	Gaya Trading: Swing
+
+________________________________________
+B. ANALISA MARKET STRUCTURE
+1. Kondisi Struktur Harga (1H)
+●	Struktur terakhir membentuk:
+
+○	LH (Lower High) di area ±0.053–0.054
+
+○	Diikuti break low minor ke area 0.044
+
+●	Belum ada HH–HL baru
+
+📌 Kesimpulan struktur:
+ ➡️ Downtrend lemah / Bearish ke Netral
+ (Bearish secara struktur, namun sudah masuk area bawah range)
+________________________________________
+2. Range Harga Aktif
+●	Range High: ±0.0530 – 0.0550
+
+●	Range Low: ±0.0415 – 0.0430
+
+●	Harga saat ini berada dekat range low
+
+________________________________________
+3. Support & Resistance Intraday
+Support:
+●	0.0430 (range low + reaksi sebelumnya)
+
+●	0.0415 (low utama / EQL potensial)
+
+Resistance:
+●	0.0470 (minor LH / mid-range)
+
+●	0.0500 – 0.0520 (zona supply + rejection kuat)
+
+________________________________________
+4. Area Liquidity Penting
+●	EQL: 0.0415 – 0.0420
+
+●	Liquidity atas (EQH): 0.0520 – 0.0540
+
+●	Harga saat ini berpotensi sweep EQL terlebih dahulu
+
+________________________________________
+5. Bias Timeframe 1H
+➡️ Bias utama: BEARISH – NETRAL
+●	Struktur masih LH–LL
+
+●	Harga belum reclaim resistance penting
+
+●	Namun sudah dekat demand bawah (potensi reaksi)
+
+________________________________________
+C. SETUP ENTRY (PRICE ACTION ONLY)
+⚠️ Tidak ada setup breakout valid saat ini.
+ Setup hanya valid jika:
+●	Rejection jelas di resistance ATAU
+
+●	Sweep liquidity + reaksi kuat di support
+
+________________________________________
+D. SKENARIO TRADING
+1. Skenario Utama (Probabilitas Tertinggi)
+SHORT continuation dari pullback
+Syarat:
+●	Harga pullback ke 0.0470–0.0485
+
+●	Terbentuk rejection / bearish close 1H
+
+________________________________________
+2. Skenario Alternatif
+LONG reaktif dari sweep range low
+Syarat:
+●	Sweep ke bawah 0.0420
+
+●	Close 1H kembali di atas 0.0430 (false break)
+
+________________________________________
+E. OUTPUT TRADING PLAN
+🔴 SCENARIO UTAMA — SHORT
+TRADING PLAN
+ ENTRY : 0.0475
+ STOP LOSS : 0.0505
+TAKE PROFIT 1 : 0.0450
+●	Reaksi awal / minor support
+
+TAKE PROFIT 2 : 0.0430
+●	Range low / support utama
+
+TAKE PROFIT 3 : 0.0415 (KONDISIONAL)
+●	Sweep EQL / liquidity bawah
+
+TAKE PROFIT 4 : 0.0395 (KONDISIONAL)
+●	Expansion jika breakdown range low
+
+________________________________________
+🟢 SCENARIO ALTERNATIF — LONG (REAKTIF, BUKAN ANTISIPASI)
+TRADING PLAN
+ ENTRY : 0.0432
+ STOP LOSS : 0.0410
+TAKE PROFIT 1 : 0.0455
+●	Reaksi pullback awal
+
+TAKE PROFIT 2 : 0.0470
+●	Mid-range resistance
+
+TAKE PROFIT 3 : 0.0500 (KONDISIONAL)
+●	Liquidity minor atas
+
+TAKE PROFIT 4 : 0.0525 (KONDISIONAL)
+●	EQH / supply utama
+
+________________________________________
+F. RISK MANAGEMENT
+Risk–Reward
+●	SHORT ≈ RR 1:2.5 – 1:4
+
+●	LONG ≈ RR 1:2 – 1:3 (lebih reaktif)
+
+Invalidation Level
+●	SHORT batal jika close kuat di atas 0.0505
+
+●	LONG batal jika harga accept di bawah 0.0410
+
+________________________________________
+E. CONVICTION LEVEL
+🔴 Skenario Utama — SHORT
+Conviction: 72% (High Conviction)
+ Alasan:
+1.	Struktur LH–LL masih valid
+
+2.	Pullback ke resistance lebih rasional daripada buy bawah
+
+3.	Bias struktur mendukung continuation
+
+________________________________________
+🟢 Skenario Alternatif — LONG
+Conviction: 48% (Medium Conviction)
+ Alasan:
+1.	Counter-trend
+
+2.	Hanya valid jika ada sweep & reclaim
+
+3.	Tidak sesuai bias utama
+
+________________________________________
+F. FINAL DECISION (WAJIB & TEGAS)
+KEPUTUSAN: WAIT / NO TRADE (SAAT INI)
+Alasan paling rasional secara probabilitas:
+1.	Harga berada di tengah antara support & resistance
+
+2.	Belum ada rejection atau sweep yang jelas
+
+3.	Entry sekarang = risk tidak efisien
+
+Skenario yang DIUTAMAKAN:
+ ➡️ SHORT di area 0.0470–0.0485
+Skenario yang HARUS DIHINDARI:
+ ❌ LONG tanpa sweep & konfirmasi struktur
+________________________________________
+FORMAT PENUTUP (WAJIB)
+👉 Kesimpulan: WAIT / NO TRADE
+ 👉 Alasan utama:
+1.	Struktur masih bearish
+
+2.	Harga belum berada di level optimal
+
+3.	Belum ada price action valid
+
+👉 Conviction akhir: 72% (untuk SHORT setup, BUKAN posisi saat ini)
+ 👉 Catatan disiplin: Trade hanya di level premium/discount, bukan karena FOMO.
