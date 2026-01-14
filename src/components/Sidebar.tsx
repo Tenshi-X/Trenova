@@ -44,12 +44,16 @@ export default function Sidebar() {
     router.refresh();
   };
 
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'History', href: '/dashboard/history', icon: Activity },
-    // Only show Admin if role is admin
-    ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
-  ];
+  const navItems = pathname?.startsWith('/admin') 
+    ? [
+        { name: 'Admin', href: '/admin', icon: Shield },
+      ]
+    : [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'History', href: '/dashboard/history', icon: Activity },
+        ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
+      ];
+
 
   return (
     <>

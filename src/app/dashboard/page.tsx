@@ -225,6 +225,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
       fetchUsage();
+      
+      // Auto-activate subscription if pending (First login check)
+      import('./actions').then(({ activatePendingSubscription }) => {
+          activatePendingSubscription().then(res => {
+             if (res?.activated) {
+                 console.log("Subscription activated!");
+                 fetchUsage(); // Refresh stats
+             }
+          });
+      });
   }, []);
 
   // Loading Message Cycle

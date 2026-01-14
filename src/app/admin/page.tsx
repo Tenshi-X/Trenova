@@ -3,20 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
-  Users, Database, Shield, Edit, Trash2, Save, 
-  UserPlus, CheckCircle, XCircle, RefreshCw, AlertTriangle, ArrowRight 
+  Database, Shield, Edit, Trash2, Save, 
+  UserPlus, RefreshCw, Trash
 } from 'lucide-react';
 import clsx from 'clsx';
-import { getAuthUsers, getUserProfiles, provisionUser, deleteUserProfile, AuthUser, UserProfile } from './actions';
+import { getUserProfiles, provisionUser, deleteUserProfile, UserProfile } from './actions';
 
 export default function AdminPage() {
-  const [authUsers, setAuthUsers] = useState<AuthUser[]>([]);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Edit/Provision State
-  const [selectedAuthUser, setSelectedAuthUser] = useState<AuthUser | null>(null);
+  // Edit State
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   
   // Form State
@@ -30,13 +28,10 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const authRes = await getAuthUsers();
       const profileRes = await getUserProfiles();
 
-      if (!authRes.success) throw new Error(authRes.error || "Failed to fetch auth users");
       if (!profileRes.success) throw new Error(profileRes.error || "Failed to fetch profiles");
 
-      setAuthUsers(authRes.users || []);
       setProfiles(profileRes.profiles || []);
     } catch (err: any) {
       setError(err.message);
@@ -49,18 +44,16 @@ export default function AdminPage() {
     fetchData();
   }, []);
 
-  const handleProvision = async () => {
-    if (!selectedAuthUser && !editingProfileId) return;
+  const handleSaveChanges = async () => {
+    if (!editingProfileId) return;
     
-    // Determine ID and Email based on what we are doing (Provisioning or Editing)
-    const targetId = selectedAuthUser ? selectedAuthUser.id : editingProfileId;
-    const targetEmail = selectedAuthUser ? selectedAuthUser.email : profiles.find(p => p.id === editingProfileId)?.email;
-
-    if (!targetId || !targetEmail) return;
+    const targetEmail = profiles.find(p => p.id === editingProfileId)?.email;
+    if (!targetEmail) return;
 
     try {
+      // Re-using provisionUser for updates as it handles upsert/update logic
       const res = await provisionUser(
-          targetId, 
+          editingProfileId, 
           targetEmail, 
           formData.role, 
           formData.quota,
@@ -72,8 +65,6 @@ export default function AdminPage() {
       await fetchData();
       
       // Reset State
-      setSelectedAuthUser(null);
-      setEditingProfileId(null);
       setEditingProfileId(null);
       setFormData({ role: 'user', quota: 30, analysisLimit: 150 });
 
@@ -82,31 +73,13 @@ export default function AdminPage() {
     }
   };
 
-  const startProvision = (user: AuthUser) => {
-    // Check if profile exists already
-    const existing = profiles.find(p => p.id === user.id);
-    if (existing) {
-       alert("This user is already in the database. Edit them in the 'App Users' section below.");
-       return;
-    }
-    
-    setSelectedAuthUser(user);
-    setFormData({ role: 'user', quota: 30, analysisLimit: 150 });
-    setEditingProfileId(null);
-  };
-
   const startEdit = (profile: UserProfile) => {
     setEditingProfileId(profile.id);
-    // Calculate remaining days or default to 30 for extension
-    // When editing, we usually want to ADD time or SET time. 
-    // To keep it simple, let's default to 0 days added (unless user changes) and pre-fill existing limits
-    // Note: profile.limit_image_upload might be undefined if not in DB yet, use defaults
     setFormData({ 
         role: profile.role, 
         quota: 0, // Default to 0 added
         analysisLimit: profile.analysis_limit || 150
     });
-    setSelectedAuthUser(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -114,8 +87,6 @@ export default function AdminPage() {
     await deleteUserProfile(id);
     fetchData();
   };
-
-  const isConfiguring_ServiceRole = error && error.includes("Service Role Key");
 
   return (
     <div className="space-y-12 font-sans pb-20">
@@ -146,116 +117,33 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {isConfiguring_ServiceRole && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex items-start gap-3">
-             <AlertTriangle className="shrink-0 mt-0.5" />
-             <div>
-                <h4 className="font-bold">Missing Configuration</h4>
-                <p className="text-sm mt-1">
-                   Unable to fetch raw Auth Users. Please ensure <code>SUPABASE_SERVICE_ROLE_KEY</code> is set in your environment variables.
-                   The list below will likely be empty.
-                </p>
-             </div>
-          </div>
-      )}
-
-      {/* SECTION 1: RAW AUTH USERS */}
-      <section className="space-y-4">
-          <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                 <Users className="text-slate-400" /> 
-                 1. Raw Authentication Users
-              </h2>
-              <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                 From <code>auth.users</code>
-              </span>
-          </div>
-          
-          <div className="glass rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-semibold">
-                  <tr>
-                    <th className="px-6 py-4">Auth ID / Email</th>
-                    <th className="px-6 py-4">Created At</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Provisioning</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {authUsers.length === 0 && !loading && (
-                     <tr><td colSpan={4} className="p-8 text-center text-slate-400">No users found or permission denied.</td></tr>
-                  )}
-                  {authUsers.map((user) => {
-                    const isProvisioned = profiles.some(p => p.id === user.id);
-                    return (
-                        <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4">
-                             <div>
-                                <p className="font-medium text-foreground">{user.email}</p>
-                                <p className="text-xs text-slate-400 font-mono">{user.id}</p>
-                             </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                            {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4">
-                            {isProvisioned ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                                    <CheckCircle size={12} /> Synced
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                    <AlertTriangle size={12} /> Unprovisioned
-                                </span>
-                            )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                           {!isProvisioned && (
-                               <button 
-                                 onClick={() => startProvision(user)}
-                                 className="text-sm font-semibold text-neon hover:text-neon-dim flex items-center justify-end gap-1 ml-auto"
-                               >
-                                  Add to App <ArrowRight size={14} />
-                               </button>
-                           )}
-                        </td>
-                        </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-      </section>
-
-
-      {/* SECTION 2: APP USERS */}
+      {/* SECTION: APP USERS */}
       <section className="space-y-4">
           <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                  <Database className="text-slate-400" /> 
-                 2. App Users (Profiles)
+                 App Users (Profiles)
               </h2>
-              <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded">
+              <span className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
                  From <code>public.user_profiles</code>
               </span>
           </div>
 
-          <div className="glass rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+          <div className="glass rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-slate-50 text-slate-500 uppercase text-xs font-semibold">
+                <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase text-xs font-semibold">
                   <tr>
                     <th className="px-6 py-4">User Profile</th>
                     <th className="px-6 py-4">Role</th>
+                    <th className="px-6 py-4">Limit</th>
                     <th className="px-6 py-4">Subscription</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {profiles.length === 0 && !loading && (
-                     <tr><td colSpan={4} className="p-8 text-center text-slate-400">No profiles provisioned yet.</td></tr>
+                     <tr><td colSpan={5} className="p-8 text-center text-slate-400">No profiles provisioned yet.</td></tr>
                   )}
                   {profiles.map((profile) => {
                     const endDate = profile.subscription_end_at ? new Date(profile.subscription_end_at) : null;
@@ -264,10 +152,10 @@ export default function AdminPage() {
                     const isExpired = daysRemaining <= 0;
 
                     return (
-                    <tr key={profile.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={profile.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">
+                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">
                                 {profile.email?.substring(0,2).toUpperCase()}
                             </div>
                             <div>
@@ -278,16 +166,21 @@ export default function AdminPage() {
                       <td className="px-6 py-4">
                          <span className={clsx(
                               "px-2.5 py-1 rounded text-xs font-medium border uppercase",
-                              profile.role === 'admin' ? "bg-purple-100 text-purple-700 border-purple-200" :
-                              "bg-blue-100 text-blue-700 border-blue-200"
+                              profile.role === 'admin' ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" :
+                              "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
                             )}>
                               {profile.role}
                          </span>
                       </td>
                       <td className="px-6 py-4">
+                        <div className="text-sm font-semibold text-foreground">
+                            {profile.analysis_limit || 0} req
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                           {endDate ? (
                               <div>
-                                  <span className={clsx("font-mono text-sm font-bold", isExpired ? "text-red-600" : "text-emerald-600")}>
+                                  <span className={clsx("font-mono text-sm font-bold", isExpired ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400")}>
                                      {isExpired ? "EXPIRED" : `${daysRemaining.toFixed(0)} Days Left`}
                                   </span>
                                   <p className="text-xs text-slate-400">
@@ -306,14 +199,14 @@ export default function AdminPage() {
                             <div className="flex items-center justify-end gap-2">
                                 <button 
                                     onClick={() => startEdit(profile)}
-                                    className="p-2 rounded hover:bg-slate-100 text-slate-400 hover:text-foreground transition-colors"
+                                    className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-foreground transition-colors"
                                     title="Extend Subscription"
                                 >
                                     <Edit size={16} />
                                 </button>
                                 <button 
                                     onClick={() => handleDelete(profile.id)}
-                                    className="p-2 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                    className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                                     title="Delete Profile"
                                 >
                                     <Trash2 size={16} />
@@ -329,16 +222,16 @@ export default function AdminPage() {
           </div>
       </section>
 
-      {/* MODAL FOR EDITING / PROVISIONING */}
-      {(selectedAuthUser || editingProfileId) && (
+      {/* MODAL FOR EDITING */}
+      {editingProfileId && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-                  <div className="p-6 border-b border-slate-100">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border border-slate-200 dark:border-slate-800">
+                  <div className="p-6 border-b border-slate-100 dark:border-slate-800">
                       <h3 className="text-lg font-bold text-foreground">
-                          {selectedAuthUser ? 'Provision User' : 'Manage Subscription'}
+                          Manage Subscription
                       </h3>
-                      <p className="text-sm text-slate-500 mt-1">
-                          {selectedAuthUser ? selectedAuthUser.email : profiles.find(p => p.id === editingProfileId)?.email}
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                          {profiles.find(p => p.id === editingProfileId)?.email}
                       </p>
                   </div>
                   
@@ -348,7 +241,7 @@ export default function AdminPage() {
                           <select 
                              value={formData.role}
                              onChange={e => setFormData({...formData, role: e.target.value})}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           >
                              <option value="user">User</option>
                              <option value="admin">Admin</option>
@@ -362,7 +255,7 @@ export default function AdminPage() {
                              type="number"
                              value={formData.quota}
                              onChange={e => setFormData({...formData, quota: Number(e.target.value)})}
-                             className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
                           <p className="text-xs text-slate-400">Duration will be added from today</p>
                       </div>
@@ -373,23 +266,22 @@ export default function AdminPage() {
                               type="number"
                               value={formData.analysisLimit}
                               onChange={e => setFormData({...formData, analysisLimit: Number(e.target.value)})}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
                       </div>
                   </div>
 
-                  <div className="p-6 border-t border-slate-100 flex gap-3 bg-slate-50">
+                  <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-3 bg-slate-50 dark:bg-slate-900/50">
                       <button 
                          onClick={() => {
-                             setSelectedAuthUser(null);
                              setEditingProfileId(null);
                          }}
-                         className="flex-1 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-white transition-colors"
+                         className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold hover:bg-white dark:hover:bg-slate-800 transition-colors"
                       >
                          Cancel
                       </button>
                       <button 
-                         onClick={handleProvision}
+                         onClick={handleSaveChanges}
                          className="flex-1 py-2.5 rounded-lg bg-neon text-white font-bold hover:bg-neon-dim shadow-md transition-colors flex items-center justify-center gap-2"
                       >
                          <Save size={18} />

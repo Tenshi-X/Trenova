@@ -106,3 +106,62 @@ export async function getUserUsage() {
     }
   };
 }
+
+export async function activatePendingSubscription() {
+    const supabaseAuth = await createSupabaseServerClient();
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    
+    if (!user) return { success: false };
+  
+    // Check if user has pending plan in metadata
+    const initialDays = user.user_metadata?.initial_plan_days;
+    if (!initialDays) return { success: true, message: "No pending plan" }; // nothing to do
+  
+    const supabaseAdmin = createSupabaseAdminClient();
+    if (!supabaseAdmin) return { success: false, error: "Config error" };
+  
+    // Check current profile status
+    const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('subscription_end_at')
+        .eq('id', user.id)
+        .single();
+    
+    // If subscription is already active (not null), we might want to clear the metadata but not overwrite?
+    // Requirement says: "start 30 days from user first login"
+    // If subscription_end_at is NULL, it means it hasn't started.
+    
+    if (!profile?.subscription_end_at) {
+        // Activate it now
+        const now = new Date();
+        const endAt = new Date(now);
+        endAt.setDate(endAt.getDate() + Number(initialDays));
+        
+        console.log(`Activating subscription for ${user.email}: ${initialDays} days, ends ${endAt.toISOString()}`);
+  
+        // 1. Update Profile
+        await supabaseAdmin
+            .from('user_profiles')
+            .update({ subscription_end_at: endAt.toISOString() })
+            .eq('id', user.id);
+            
+        // 2. Update Auth Metadata (Clear pending, set active)
+        await supabaseAdmin.auth.admin.updateUserById(user.id, {
+            user_metadata: { 
+                subscription_end_at: endAt.toISOString(),
+                initial_plan_days: null // Clear it so it doesn't trigger again
+            }
+        });
+        
+        return { success: true, activated: true };
+    } else {
+        // Already active, just clear the metadata if it's there?
+        // Let's clear it to be safe
+        if (user.user_metadata.initial_plan_days) {
+             await supabaseAdmin.auth.admin.updateUserById(user.id, {
+                user_metadata: { initial_plan_days: null }
+            });
+        }
+        return { success: true, activated: false };
+    }
+  }

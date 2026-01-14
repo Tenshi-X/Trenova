@@ -126,14 +126,21 @@ export async function createAndProvisionUser(email: string, password: string, ro
   const admin = createSupabaseAdminClient();
   if (!admin) return { success: false, error: "Configuration Error" };
 
-  const endAt = calculateEndDate(days);
+  // DELAYED SUBSCRIPTION LOGIC:
+  // We do NOT set subscription_end_at immediately. We set it to null.
+  // We store 'initial_plan_days' in metadata so it can be activated on first login.
+  const endAt = null; 
 
   // 1. Create User (Auto-confirm)
   const { data: { user }, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { role, subscription_end_at: endAt }
+    user_metadata: { 
+        role, 
+        subscription_end_at: endAt,
+        initial_plan_days: days // Store days for later activation
+    }
   });
 
   if (createError) return { success: false, error: createError.message };
@@ -146,7 +153,7 @@ export async function createAndProvisionUser(email: string, password: string, ro
       id: user.id, // Link to Auth ID
       email: email,
       role: role,
-      subscription_end_at: endAt,
+      subscription_end_at: endAt, // Null initially
       analysis_limit: analysisLimit,
       // created_at defaults to now()
     });
@@ -165,22 +172,33 @@ export async function generateDummyUsers(count: number) {
 
   let successCount = 0;
   let failCount = 0;
+  
+  // Store created users to display to admin
+  const createdUsers: any[] = [];
 
   for (let i = 0; i < count; i++) {
     // Generate random user data
     const randomId = Math.random().toString(36).substring(2, 8);
-    const email = `user_${randomId}@example.com`;
+    const email = `user_${randomId}@trenova.com`;
     const password = `pass_${randomId}`; // Simple password
-    const role = Math.random() > 0.8 ? 'premium' : 'user';
-    const days = role === 'premium' ? 365 : 30; // 1 year for premium, 30 days for user
-    const endAt = calculateEndDate(days);
+    
+    // REQUIREMENT: Role always 'user'
+    const role = 'user';
+    const days = 30; // 30 days for user
+    
+    // DELAYED SUBSCRIPTION LOGIC:
+    const endAt = null;
 
     try {
         const { data: { user }, error: createError } = await admin.auth.admin.createUser({
             email,
             password,
             email_confirm: true,
-            user_metadata: { role, subscription_end_at: endAt }
+            user_metadata: { 
+                role, 
+                subscription_end_at: endAt,
+                initial_plan_days: days
+            }
         });
 
         if (createError || !user) {
@@ -205,6 +223,7 @@ export async function generateDummyUsers(count: number) {
              failCount++;
         } else {
             successCount++;
+            createdUsers.push({ email, password, role });
         }
 
     } catch (e) {
@@ -214,5 +233,6 @@ export async function generateDummyUsers(count: number) {
   }
 
   revalidatePath('/admin');
-  return { success: true, count: successCount, failures: failCount };
+  // Return the list of created users
+  return { success: true, count: successCount, failures: failCount, users: createdUsers };
 }
