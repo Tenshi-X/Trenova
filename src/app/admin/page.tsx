@@ -136,7 +136,7 @@ export default function AdminPage() {
                   <tr>
                     <th className="px-6 py-4">User Profile</th>
                     <th className="px-6 py-4">Role</th>
-                    <th className="px-6 py-4">Limit</th>
+                    <th className="px-6 py-4">Remaining</th>
                     <th className="px-6 py-4">Subscription</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
@@ -150,6 +150,10 @@ export default function AdminPage() {
                     const now = new Date();
                     const daysRemaining = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
                     const isExpired = daysRemaining <= 0;
+
+                    const limit = profile.analysis_limit ?? 150;
+                    const used = profile.current_analysis_count ?? 0;
+                    const remaining = Math.max(0, limit - used);
 
                     return (
                     <tr key={profile.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -174,7 +178,10 @@ export default function AdminPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-semibold text-foreground">
-                            {profile.analysis_limit || 0} req
+                            {remaining} req
+                        </div>
+                        <div className="text-xs text-slate-400">
+                             of {limit} limit
                         </div>
                       </td>
                       <td className="px-6 py-4">
