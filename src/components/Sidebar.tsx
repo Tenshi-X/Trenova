@@ -7,6 +7,8 @@ import { LayoutDashboard, MessageSquare, Shield, Activity, LogOut, Menu } from '
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import clsx from 'clsx';
 
+import { useLanguage } from '@/context/LanguageContext';
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -14,10 +16,9 @@ export default function Sidebar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { t } = useLanguage();
 
-  // Move early return check after hooks or handle conditionally in render
-  // Ideally, layout should control visibility, but fixing here for now
-  const shouldShow = pathname !== '/login' && pathname !== '/';
+  const shouldShow = pathname !== '/login' && pathname !== '/' && pathname !== '/feedback';
 
   useEffect(() => {
     async function checkRole() {
@@ -31,7 +32,6 @@ export default function Sidebar() {
     checkRole();
   }, [supabase, shouldShow]);
 
-  // Close sidebar on route change (mobile)
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
@@ -46,14 +46,13 @@ export default function Sidebar() {
 
   const navItems = pathname?.startsWith('/admin') 
     ? [
-        { name: 'Admin', href: '/admin', icon: Shield },
+        { name: t('nav_admin'), href: '/admin', icon: Shield },
       ]
     : [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'History', href: '/dashboard/history', icon: Activity },
-        ...(isAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
+        { name: t('nav_dashboard'), href: '/dashboard', icon: LayoutDashboard },
+        { name: t('nav_history'), href: '/dashboard/history', icon: Activity },
+        ...(isAdmin ? [{ name: t('nav_admin'), href: '/admin', icon: Shield }] : []),
       ];
-
 
   return (
     <>
@@ -97,8 +96,8 @@ export default function Sidebar() {
               // Desktop: Only visible on hover
               "md:opacity-0 md:group-hover:opacity-100 md:translate-x-10 md:group-hover:translate-x-0"
           )}>
-             <h1 className="text-xl font-bold tracking-wider text-foreground">TRENOVA</h1>
-             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">Intelligence</p>
+             <h1 className="text-xl font-bold tracking-wider text-foreground">{t('app_title')}</h1>
+             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">{t('app_subtitle')}</p>
           </div>
         </div>
 
@@ -170,7 +169,7 @@ export default function Sidebar() {
                       isMobileOpen ? "opacity-100" : "opacity-0",
                       "md:opacity-0 md:group-hover:opacity-100"
                   )}>
-                    Sign Out
+                    {t('nav_signout')}
                   </span>
               </button>
 
@@ -186,7 +185,7 @@ export default function Sidebar() {
                     isMobileOpen ? "opacity-100" : "opacity-0",
                     "md:opacity-0 md:group-hover:opacity-100"
                 )}>
-                  v2.4.0 • Stable
+                  v2.4.0 • {t('version_status')}
                 </span>
               </div>
             </div>
