@@ -24,16 +24,9 @@ function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
     script.async = true;
     
     // Construct symbol
-    let tvSymbol = `BINANCE:${symbol.toUpperCase()}USDT`;
-    
-    // Special handling for Stablecoins or specific assets
-    if (symbol.toUpperCase() === 'USDT') {
-        tvSymbol = 'KRAKEN:USDTUSD'; // Show USDT vs USD
-    } else if (symbol.toUpperCase() === 'USDC') {
-        tvSymbol = 'KRAKEN:USDCUSD';
-    } else if (symbol.toUpperCase() === 'BTC') {
-        tvSymbol = 'BINANCE:BTCUSDT';
-    }
+    // User requested NO hardcoded exchange and NO hardcoded USDT suffix.
+    // We trust the parent component to pass the correct symbol (or the widget will auto-resolve).
+    const tvSymbol = symbol.toUpperCase();
 
     script.innerHTML = JSON.stringify({
       "autosize": true,

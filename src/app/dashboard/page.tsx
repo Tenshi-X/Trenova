@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe } from 'lucide-react';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage } from './actions';
+import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
+import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -37,6 +38,10 @@ Pendekatan analisa WAJIB:
 - OBJEKTIF, DISIPLIN, dan BERBASIS PROBABILITAS
 (BUKAN prediksi dan BUKAN kepastian)
 
+Instruksi Khusus Sinkronisasi: 
+- Jika pada bagian "SETUP ENTRY" kamu menyatakan "WAIT / NO TRADE", maka pada bagian "OUTPUT TRADING PLAN dan RISK MANAGEMENT ", kamu WAJIB menuliskan "N/A (TIDAK ADA SETUP)" dan tidak boleh memberikan angka Entry/SL/TP. 
+- Trading Plan hanya diberikan JIKA DAN HANYA JIKA ada setup valid (Break & Retest, Rejection di S&R, atau Range Play).
+
 **DATA PASAR LIVE:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
 - Harga Saat Ini: \${{PRICE}}
@@ -46,6 +51,7 @@ Pendekatan analisa WAJIB:
 {{IMAGE_CONTEXT}}
 
 ===================================================
+
 A. DETAIL CHART
 
 1. Pair: {{SYMBOL}}/USDT
@@ -53,6 +59,7 @@ A. DETAIL CHART
 3. Gaya trading: {{TRADING_STYLE}}
 
 ===================================================
+
 B. ANALISA MARKET STRUCTURE
 
 1. Tentukan kondisi market saat ini berdasarkan struktur harga:
@@ -70,6 +77,7 @@ B. ANALISA MARKET STRUCTURE
    Sertakan alasan teknikal singkat.
 
 ===================================================
+
 C. SETUP ENTRY (PRICE ACTION ONLY)
 
 Turunkan setup entry HANYA jika valid, berdasarkan:
@@ -81,17 +89,41 @@ Jika market tidak memberikan setup valid, WAJIB tulis:
 WAIT / NO TRADE.
 
 ===================================================
-D. SKENARIO TRADING (WAJIB MINIMAL 2)
-1. Skenario Utama (Probabilitas Tertinggi)
-2. Skenario Alternatif (Jika harga gagal / berlawanan)
+
+D. SKENARIO TRADING (WAJIB MINIMAL 3)
+1. Skenario Utama (Following the Trend): Probabilitas tertinggi berdasarkan bias utama.
+2. Skenario Alternatif (Trend Invalidation): Apa yang terjadi jika struktur pecah/gagal.
+3. Skenario Counter-Trend (High Risk - High Reward): Identifikasi peluang "melawan arus" di level kritis (misal: Short di Resistance kuat saat Uptrend, atau Long di Support kuat saat Downtrend)
 
 ===================================================
-E. OUTPUT TRADING PLAN (WAJIB FORMAT DI BAWAH)
-HASIL AKHIR ANALISA HARUS DITULIS PERSIS DENGAN FORMAT INI:
 
-TRADING PLAN
-ENTRY        : "harga"
-STOP LOSS   : "harga"
+E. OUTPUT TRADING PLAN (PRIMARY & COUNTER-TREND)
+[ TRADING PLAN 1: PRIMARY (TREND-FOLLOWING) ]
+ENTRY: "Harga/Area"
+STOP LOSS: "Harga"
+ALASAN: (Misal: Rejection di HTF Supply/Demand atau Liquidity Sweep)
+Conviction Level (TINGKAT KEYAKINAN SETUP)
+
+TAKE PROFIT 1 : "harga"
+- Target aman / reaksi awal / struktur minor
+
+TAKE PROFIT 2 : "harga"
+- Target realistis / intraday range / S&R utama
+
+TAKE PROFIT 3 : "harga" (KONDISIONAL)
+- HANYA diambil jika momentum kuat
+- Target diarahkan ke area liquidity terdekat
+
+TAKE PROFIT 4 : "harga" (KONDISIONAL)
+- HANYA diambil jika terjadi continuation / expansion
+- Target diarahkan ke liquidity BESAR (EQH/EQL / range high-low utama)
+
+[ TRADING PLAN 2: COUNTER-TREND (REVERSAL/BOUNCE) ]
+STATUS: [Valid/Optional/N/A]
+ALASAN: (Misal: Rejection di HTF Supply/Demand atau Liquidity Sweep)
+Conviction Level (TINGKAT KEYAKINAN SETUP)
+ENTRY: "Harga/Area"
+STOP LOSS: "Harga"
 
 TAKE PROFIT 1 : "harga"
 - Target aman / reaksi awal / struktur minor
@@ -108,6 +140,7 @@ TAKE PROFIT 4 : "harga" (KONDISIONAL)
 - Target diarahkan ke liquidity BESAR (EQH/EQL / range high-low utama)
 
 ===================================================
+
 F. RISK MANAGEMENT
 1. Stop loss harus:
    - Ketat
@@ -119,6 +152,7 @@ F. RISK MANAGEMENT
    - Invalidation level (level harga yang MEMBATALKAN setup)
 
 ===================================================
+
 G. Conviction Level (TINGKAT KEYAKINAN SETUP)
 Berikan nilai conviction dalam bentuk persentase (0%–100%) untuk SETIAP skenario, berdasarkan kualitas setup.
 
@@ -128,38 +162,31 @@ A. 10% – 30% (Low Conviction)
 2. Struktur lemah atau bertentangan
 3. Disarankan WAIT / NO TRADE
 
+
 B. 40% – 60% (Medium Conviction)
 1. Struktur cukup jelas
 2. Setup valid tapi belum ideal
 3. Trade boleh diambil dengan risk kecil
+
 
 C. 70% – 80% (High Conviction)
 1. Struktur market jelas & searah bias
 2. Level kuat + konfirmasi price action
 3. Setup layak dieksekusi
 
+
 D. 90%+ (Rare / Exceptional)
 1. Multi-konfirmasi kuat
 2. Bias HTF & LTF selaras
 3. Tetap disiplin risk management (tidak overconfidence)
 
+
 Sertakan alasan singkat mengapa conviction berada di level tersebut.
 
-===================================================
-H. TARGET JANGKA PENDEK & MENENGAH
-
-Jelaskan proyeksi pergerakan harga berdasarkan waktu:
-
-1. Jangka Pendek (1-7 hari):
-   - Estimasi range konsolidasi atau target breakout terdekat.
-   - Level krusial yang harus ditembus atau dijaga.
-
-2. Jangka Menengah (1-4 minggu):
-   - Target profit maksimal jika tren berlanjut.
-   - Risiko koreksi terdalam jika trend berbalik.
 
 ===================================================
-I. FINAL DECISION (WAJIB & TEGAS)
+
+H. FINAL DECISION (WAJIB & TEGAS)
 
 Pilih SATU keputusan:
 - OPEN LONG
@@ -174,12 +201,14 @@ Sebutkan:
 - Skenario yang DIUTAMAKAN
 - Skenario yang HARUS DIHINDARI
 
+
 ===================================================
 FORMAT PENUTUP (WAJIB)
-👉 Kesimpulan: [OPEN LONG / OPEN SHORT / WAIT]  
-👉 Alasan utama: (maks. 3 poin teknikal terkuat)  
-👉 Conviction akhir: XX%  
-👉 Catatan disiplin: 1 kalimat pengingat risk management
+👉 Kesimpulan: [OPEN LONG / OPEN SHORT / WAIT] 
+👉 Alasan Utama: (Maks. 3 poin teknikal terkuat) 
+👉 Conviction Akhir: XX% 
+Counter-Trend Note: (Status peluang counter-trend singkat) 
+👉 Catatan Disiplin: 1 kalimat pengingat manajemen risiko.
 `;
 
 function constructPrompt(template: string, coin: any, market: any, hasImage: boolean, lang: 'id' | 'en', tradingStyle: string, timeframe: string) {
@@ -210,6 +239,13 @@ export default function DashboardPage() {
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
   const [chartSearchInput, setChartSearchInput] = useState('');
+  const [chartSuggestions, setChartSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isChartSearching, setIsChartSearching] = useState(false);
+
+  // New State for switching widgets
+  const [chartSource, setChartSource] = useState<'tradingview' | 'coingecko'>('tradingview');
+  const [currentCoinId, setCurrentCoinId] = useState('');
 
   // AI Analysis State
   const [selectedCoin, setSelectedCoin] = useState<Coin | null>(null); 
@@ -223,9 +259,60 @@ export default function DashboardPage() {
   const [chatResult, setChatResult] = useState<{ analysis: string } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ignoreSearchRef = useRef(false);
 
   // Usage Stats State
   const [usageStats, setUsageStats] = useState<any>(null);
+  // Suggestions Fetcher
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+        if (ignoreSearchRef.current) {
+            ignoreSearchRef.current = false;
+            return;
+        }
+
+        if (chartSearchInput.length >= 2) {
+            setIsChartSearching(true);
+            try {
+                // Call Server Action for TV Search
+                const data = await searchTVSymbols(chartSearchInput);
+                if (data && Array.isArray(data)) {
+                     // Filter only if needed, TV usually returns good matches
+                     setChartSuggestions(data.slice(0, 10));
+                     setShowSuggestions(true);
+                }
+            } catch (error) {
+                console.error("Chart search error:", error);
+            } finally {
+                setIsChartSearching(false);
+            }
+        } else {
+            setChartSuggestions([]);
+            setShowSuggestions(false);
+        }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [chartSearchInput]);
+
+  const selectChartSymbol = (item: any) => {
+      // User picked from TradingView list -> Use TradingView Widget
+      ignoreSearchRef.current = true;
+      setChartSource('tradingview');
+      
+      // User Request: No Exchange Prefix, No USDT Suffix
+      // e.g. "BINANCE:BTCUSDT" -> item.symbol is "BTCUSDT" -> we want "BTC"
+      // e.g. "CRYPTOCAP:BNB" -> item.symbol is "BNB" -> we want "BNB"
+      
+      const rawSymbol = item.symbol;
+      const cleanSymbol = rawSymbol.replace(/USDT$/i, ''); 
+      
+      setChartSymbol(cleanSymbol);
+      setChartSearchInput(cleanSymbol);
+      setShowSuggestions(false);
+  };
+
+
 
   useEffect(() => {
       fetchUsage();
@@ -291,9 +378,12 @@ export default function DashboardPage() {
   };
 
   const handleChartSearch = () => {
+      // Manual Enter -> Use TradingView (Fallback/Pro)
       if (chartSearchInput.trim()) {
+          setChartSource('tradingview');
           setChartSymbol(chartSearchInput.trim().toUpperCase());
       }
+      setShowSuggestions(false);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -463,28 +553,95 @@ Please try again in a few moments.`;
             activeTab === 'chart' ? "block" : "hidden"
         )}>
             {/* Custom Search Bar for Chart */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3 relative z-40">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        {isChartSearching ? (
+                            <Loader2 className="animate-spin" size={18} />
+                        ) : (
+                            <Search size={18} />
+                        )}
+                    </div>
                     <input 
                         type="text" 
                         value={chartSearchInput}
                         onChange={(e) => setChartSearchInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleChartSearch()}
+                        onFocus={() => {
+                            if (chartSuggestions.length > 0) setShowSuggestions(true);
+                        }}
+                        onBlur={() => {
+                            // Delay hiding to allow click event to register
+                            setTimeout(() => setShowSuggestions(false), 200);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                handleChartSearch();
+                                setShowSuggestions(false);
+                            }
+                        }}
                         placeholder={t('search_tv_placeholder')}
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-neon/50 text-foreground"
                     />
+                    
+                    {/* Autocomplete Dropdown */}
+                    {showSuggestions && chartSuggestions.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto">
+                            <div className="px-3 py-2 text-xs font-bold text-slate-400 bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
+                                SUGESTI PASAR (TradingView Data)
+                            </div>
+                            {chartSuggestions.map((item: any) => (
+                                <button
+                                    key={`${item.exchange}-${item.symbol}`}
+                                    onClick={() => selectChartSymbol(item)}
+                                    className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left border-b last:border-0 border-slate-100 dark:border-slate-800 group"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
+                                        {item.exchange ? item.exchange.substring(0, 2) : 'TV'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{item.symbol}</span>
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono truncate max-w-[80px]">{item.exchange}</span>
+                                            <span className="text-[10px] text-slate-400 uppercase">{item.type}</span>
+                                        </div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{item.description}</div>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-neon text-xs font-bold whitespace-nowrap">
+                                        Open Chart
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <button 
-                        onClick={handleChartSearch}
+                        onClick={() => {
+                            handleChartSearch();
+                            setShowSuggestions(false);
+                        }}
                         className="bg-neon text-white dark:text-black font-bold px-6 py-2 rounded-xl hover:bg-neon-hover transition-colors"
                 >
                         {t('search_btn')}
                 </button>
             </div>
 
-            {chartSymbol ? (
-                <TradingViewWidget symbol={chartSymbol} />
+            {/* CHART RENDER LOGIC */}
+            {chartSource === 'coingecko' && currentCoinId ? (
+                <div className="animate-in fade-in zoom-in duration-300">
+                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                        <span className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded">CoinGecko Source</span>
+                        <span>Showing data for <b>{chartSearchInput}</b></span>
+                     </div>
+                     <CoinGeckoChart coinId={currentCoinId} />
+                </div>
+            ) : chartSymbol ? (
+                <div className="animate-in fade-in zoom-in duration-300">
+                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                        <span className="bg-orange-500/10 text-orange-500 px-2 py-1 rounded">TradingView Pro</span>
+                        <span>Trying to match symbol: <b>{chartSymbol}</b></span>
+                     </div>
+                    <TradingViewWidget symbol={chartSymbol} />
+                </div>
             ) : (
                 <div className="w-full py-12 md:py-24 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 mt-8">
                      <div className="p-4 bg-white rounded-full shadow-sm mb-4">

@@ -171,3 +171,25 @@ export async function activatePendingSubscription() {
         return { success: true, activated: false };
     }
   }
+
+export async function searchTVSymbols(query: string) {
+    try {
+        const res = await fetch(`https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(query)}&hl=en&exchange=&lang=en&type=&domain=production`, {
+            method: "GET",
+            headers: {
+                'Origin': 'https://www.tradingview.com'
+            }
+        });
+        
+        if (!res.ok) {
+            console.error("TV Search Failed", res.status, await res.text());
+            return [];
+        }
+        
+        const data = await res.json();
+        return data; 
+    } catch (e) {
+        console.error("TV Search Exception", e);
+        return [];
+    }
+}
