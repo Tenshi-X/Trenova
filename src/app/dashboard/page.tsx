@@ -13,34 +13,60 @@ import { useLanguage } from '@/context/LanguageContext';
 async function fetchCoinGeckoData(coinId: string) {
     try {
         const timestamp = new Date().getTime();
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&_t=${timestamp}`, {
+        const apiKey = "CG-yPmFTeENj4pGkQmCnXgT1Rmk"; // User's API Key
+        
+        const headers = {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'x-cg-demo-api-key': apiKey
+        };
+
+        // 1. Fetch Basic Price Data
+        const pricePromise = fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&_t=${timestamp}`, {
             cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
-            }
+            headers: headers
         });
-        if (!res.ok) throw new Error("API Limit");
-        const data = await res.json();
-        return data[coinId];
+
+        // 2. Fetch OHLC Data (1 Day - 30 min candles)
+        const ohlcPromise = fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=1&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: headers
+        });
+
+        const [priceRes, ohlcRes] = await Promise.all([pricePromise, ohlcPromise]);
+
+        if (!priceRes.ok) throw new Error("API Limit (Price)");
+        
+        const priceData = await priceRes.json();
+        let ohlcData = [];
+
+        if (ohlcRes.ok) {
+            ohlcData = await ohlcRes.json();
+        }
+
+        return {
+            price: priceData[coinId],
+            ohlc: ohlcData 
+        };
+
     } catch (e) {
         console.warn("CoinGecko API failed (likely rate limit), using fallback.");
-        return null;
+        return null; 
     }
 }
 
-const GLOBAL_ANALYSIS_PROMPT = `
+const PROMPT_TEMPLATE_ID = `
 Kamu adalah TRADER CRYPTO PROFESIONAL yang mampu menyesuaikan gaya trading {{TRADING_STYLE}}.
 
-Pendekatan analisa WAJIB:
+Pendekatan analisa:
 - PRICE ACTION murni
 - MARKET STRUCTURE
 - OBJEKTIF, DISIPLIN, dan BERBASIS PROBABILITAS
-(BUKAN prediksi dan BUKAN kepastian)
 
-Instruksi Khusus Sinkronisasi: 
-- Jika pada bagian "SETUP ENTRY" kamu menyatakan "WAIT / NO TRADE", maka pada bagian "OUTPUT TRADING PLAN dan RISK MANAGEMENT ", kamu WAJIB menuliskan "N/A (TIDAK ADA SETUP)" dan tidak boleh memberikan angka Entry/SL/TP. 
-- Trading Plan hanya diberikan JIKA DAN HANYA JIKA ada setup valid (Break & Retest, Rejection di S&R, atau Range Play).
+Instruksi Penting:
+- **JANGAN PERNAH** memberikan output "N/A" atau "TIDAK ADA SETUP".
+- Tugasmu adalah mencari peluang terbaik (Best Probable Setup) dari kondisi market saat ini.
+- Jika market sedang choppy/sideways, berikan setup "Low Conviction" atau "Range Trade", tapi tetap BERIKAN PLAN.
 
 **DATA PASAR LIVE:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
@@ -48,12 +74,15 @@ Instruksi Khusus Sinkronisasi:
 - Perubahan 24h: {{CHANGE_24H}}%
 - Market Cap: \${{MARKET_CAP}}
 - Volume 24h: \${{VOLUME_24H}}
+
+**DATA PERGERAKAN HARGA (OHLC Context):**
+{{MARKET_CTX}}
+
 {{IMAGE_CONTEXT}}
 
 ===================================================
 
 A. DETAIL CHART
-
 1. Pair: {{SYMBOL}}/USDT
 2. Timeframe utama: {{TIMEFRAME}}
 3. Gaya trading: {{TRADING_STYLE}}
@@ -61,161 +90,145 @@ A. DETAIL CHART
 ===================================================
 
 B. ANALISA MARKET STRUCTURE
-
-1. Tentukan kondisi market saat ini berdasarkan struktur harga:
-   - Uptrend  → HH–HL
-   - Downtrend → LH–LL
-   - Sideways → Range
-
-2. Identifikasi:
-   - Range harga aktif
-   - Support & resistance intraday
-   - Area liquidity penting (EQH, EQL, range high, range low, equal high/low)
-
-3. Tentukan bias utama timeframe {{TIMEFRAME}}:
-   - Bullish / Bearish / Netral
-   Sertakan alasan teknikal singkat.
+1. Struktur Harga (HH/HL atau LH/LL atau Range)
+2. Area Key Level (Support, Resistance, Liquidity)
+3. Bias Utama (Bullish/Bearish/Netral)
 
 ===================================================
 
-C. SETUP ENTRY (PRICE ACTION ONLY)
-
-Turunkan setup entry HANYA jika valid, berdasarkan:
-- Break & retest
-- Rejection di level penting
-- Range play
-
-Jika market tidak memberikan setup valid, WAJIB tulis:
-WAIT / NO TRADE.
+C. SKENARIO TRADING
+1. Skenario Utama (Trend Following)
+2. Skenario Alternatif (Jika level invalid)
+3. Skenario Counter-Trend (Reversal/Bounce)
 
 ===================================================
 
-D. SKENARIO TRADING (WAJIB MINIMAL 3)
-1. Skenario Utama (Following the Trend): Probabilitas tertinggi berdasarkan bias utama.
-2. Skenario Alternatif (Trend Invalidation): Apa yang terjadi jika struktur pecah/gagal.
-3. Skenario Counter-Trend (High Risk - High Reward): Identifikasi peluang "melawan arus" di level kritis (misal: Short di Resistance kuat saat Uptrend, atau Long di Support kuat saat Downtrend)
+D. TRADING PLAN (WAJIB ADA ISI)
 
-===================================================
-
-E. OUTPUT TRADING PLAN (PRIMARY & COUNTER-TREND)
 [ TRADING PLAN 1: PRIMARY (TREND-FOLLOWING) ]
-ENTRY: "Harga/Area"
-STOP LOSS: "Harga"
-ALASAN: (Misal: Rejection di HTF Supply/Demand atau Liquidity Sweep)
-Conviction Level (TINGKAT KEYAKINAN SETUP)
+ENTRY: "Harga/Area Spesifik"
+STOP LOSS: "Harga Spesifik"
+TARGET PROFIT 1: "Harga"
+TARGET PROFIT 2: "Harga"
+ALASAN TEKNIKAL: ...
+KEYAKINAN: [Low/Medium/High]%
 
-TAKE PROFIT 1 : "harga"
-- Target aman / reaksi awal / struktur minor
-
-TAKE PROFIT 2 : "harga"
-- Target realistis / intraday range / S&R utama
-
-TAKE PROFIT 3 : "harga" (KONDISIONAL)
-- HANYA diambil jika momentum kuat
-- Target diarahkan ke area liquidity terdekat
-
-TAKE PROFIT 4 : "harga" (KONDISIONAL)
-- HANYA diambil jika terjadi continuation / expansion
-- Target diarahkan ke liquidity BESAR (EQH/EQL / range high-low utama)
-
-[ TRADING PLAN 2: COUNTER-TREND (REVERSAL/BOUNCE) ]
-STATUS: [Valid/Optional/N/A]
-ALASAN: (Misal: Rejection di HTF Supply/Demand atau Liquidity Sweep)
-Conviction Level (TINGKAT KEYAKINAN SETUP)
-ENTRY: "Harga/Area"
-STOP LOSS: "Harga"
-
-TAKE PROFIT 1 : "harga"
-- Target aman / reaksi awal / struktur minor
-
-TAKE PROFIT 2 : "harga"
-- Target realistis / intraday range / S&R utama
-
-TAKE PROFIT 3 : "harga" (KONDISIONAL)
-- HANYA diambil jika momentum kuat
-- Target diarahkan ke area liquidity terdekat
-
-TAKE PROFIT 4 : "harga" (KONDISIONAL)
-- HANYA diambil jika terjadi continuation / expansion
-- Target diarahkan ke liquidity BESAR (EQH/EQL / range high-low utama)
+[ TRADING PLAN 2: COUNTER-TREND ]
+ENTRY: "Harga/Area Spesifik"
+STOP LOSS: "Harga Spesifik"
+TARGET PROFIT 1: "Harga"
+TARGET PROFIT 2: "Harga"
+ALASAN TEKNIKAL: ...
+KEYAKINAN: [Low/Medium/High]%
 
 ===================================================
 
-F. RISK MANAGEMENT
-1. Stop loss harus:
-   - Ketat
-   - Logis
-   - Berbasis invalidasi struktur
-
-2. Jelaskan:
-   - Risk–Reward Ratio
-   - Invalidation level (level harga yang MEMBATALKAN setup)
-
-===================================================
-
-G. Conviction Level (TINGKAT KEYAKINAN SETUP)
-Berikan nilai conviction dalam bentuk persentase (0%–100%) untuk SETIAP skenario, berdasarkan kualitas setup.
-
-Gunakan standar berikut:
-A. 10% – 30% (Low Conviction)
-1. Market choppy / tidak jelas
-2. Struktur lemah atau bertentangan
-3. Disarankan WAIT / NO TRADE
-
-
-B. 40% – 60% (Medium Conviction)
-1. Struktur cukup jelas
-2. Setup valid tapi belum ideal
-3. Trade boleh diambil dengan risk kecil
-
-
-C. 70% – 80% (High Conviction)
-1. Struktur market jelas & searah bias
-2. Level kuat + konfirmasi price action
-3. Setup layak dieksekusi
-
-
-D. 90%+ (Rare / Exceptional)
-1. Multi-konfirmasi kuat
-2. Bias HTF & LTF selaras
-3. Tetap disiplin risk management (tidak overconfidence)
-
-
-Sertakan alasan singkat mengapa conviction berada di level tersebut.
-
-
-===================================================
-
-H. FINAL DECISION (WAJIB & TEGAS)
-
-Pilih SATU keputusan:
-- OPEN LONG
-- OPEN SHORT
-- WAIT / NO TRADE
-
-Jelaskan secara ringkas:
-1. Mengapa keputusan ini PALING rasional secara probabilitas
-2. Maksimal 3 faktor teknikal utama (struktur, level, reaksi harga)
-
-Sebutkan:
-- Skenario yang DIUTAMAKAN
-- Skenario yang HARUS DIHINDARI
-
-
-===================================================
-FORMAT PENUTUP (WAJIB)
-👉 Kesimpulan: [OPEN LONG / OPEN SHORT / WAIT] 
-👉 Alasan Utama: (Maks. 3 poin teknikal terkuat) 
-👉 Conviction Akhir: XX% 
-Counter-Trend Note: (Status peluang counter-trend singkat) 
-👉 Catatan Disiplin: 1 kalimat pengingat manajemen risiko.
+E. KESIMPULAN AKHIR
+👉 Keputusan: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
+👉 Alasan Utama: ...
+👉 Risk Level: [Low/Medium/High/Extreme]
 `;
 
-function constructPrompt(template: string, coin: any, market: any, hasImage: boolean, lang: 'id' | 'en', tradingStyle: string, timeframe: string) {
-  const imageContext = hasImage ? "Note: User has uploaded a chart image. Please focus on visual pattern recognition." : "";
-  const langInstruction = lang === 'id' 
-    ? "**IMPORTANT:** PLEASE PROVIDE THE ENTIRE RESPONSE IN INDONESIAN LANGUAGE (BAHASA INDONESIA)." 
-    : "**IMPORTANT:** Please provide the response in English.";
+const PROMPT_TEMPLATE_EN = `
+You are a PROFESSIONAL CRYPTO TRADER capable of adapting to a {{TRADING_STYLE}} trading style.
+
+Analysis Approach:
+- Pure PRICE ACTION
+- MARKET STRUCTURE
+- OBJECTIVE, DISCIPLINED, and PROBABILITY-BASED
+
+CRITICAL INSTRUCTION:
+- **NEVER** output "N/A" or "NO SETUP".
+- Your job is to find the BEST PROBABLE SETUP given the current market conditions.
+- If the market is choppy/sideways, provide a "Low Conviction" or "Range Trade" setup, but ALWAYS PROVIDE A PLAN.
+
+**LIVE MARKET DATA:**
+- Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
+- Current Price: \${{PRICE}}
+- 24h Change: {{CHANGE_24H}}%
+- Market Cap: \${{MARKET_CAP}}
+- 24h Volume: \${{VOLUME_24H}}
+
+**PRICE ACTION CONTEXT (OHLC):**
+{{MARKET_CTX}}
+
+{{IMAGE_CONTEXT}}
+
+===================================================
+
+A. CHART DETAILS
+1. Pair: {{SYMBOL}}/USDT
+2. Main Timeframe: {{TIMEFRAME}}
+3. Trading Style: {{TRADING_STYLE}}
+
+===================================================
+
+B. MARKET STRUCTURE ANALYSIS
+1. Price Structure (HH/HL or LH/LL or Range)
+2. Key Levels (Support, Resistance, Liquidity Pools)
+3. Primary Bias (Bullish/Bearish/Neutral)
+
+===================================================
+
+C. TRADING SCENARIOS
+1. Primary Scenario (Trend Following)
+2. Alternative Scenario (Invalidation logic)
+3. Counter-Trend Scenario (Reversal/Bounce opportunities)
+
+===================================================
+
+D. TRADING PLAN (MUST BE FILLED)
+
+[ TRADING PLAN 1: PRIMARY (TREND-FOLLOWING) ]
+ENTRY: "Specific Price/Area"
+STOP LOSS: "Specific Price"
+TAKE PROFIT 1: "Price"
+TAKE PROFIT 2: "Price"
+TECHNICAL REASON: ...
+CONVICTION: [Low/Medium/High]%
+
+[ TRADING PLAN 2: COUNTER-TREND ]
+ENTRY: "Specific Price/Area"
+STOP LOSS: "Specific Price"
+TAKE PROFIT 1: "Price"
+TAKE PROFIT 2: "Price"
+TECHNICAL REASON: ...
+CONVICTION: [Low/Medium/High]%
+
+===================================================
+
+E. FINAL DECISION
+👉 Decision: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
+👉 Main Reason: ...
+👉 Risk Level: [Low/Medium/High/Extreme]
+`;
+
+function constructPrompt(templateId: string, templateEn: string, coin: any, market: any, ohlc: any[], hasImage: boolean, lang: 'id' | 'en', tradingStyle: string, timeframe: string) {
+  const imageContext = hasImage ? "Note: User has uploaded a chart image. Please focus on visual pattern recognition from the image." : "";
+  
+  // Select Template
+  const template = lang === 'id' ? templateId : templateEn;
+
+  // Generate Market Context from OHLC
+  let marketCtx = lang === 'id' ? "Data OHLC tidak tersedia." : "OHLC data unavailable.";
+  if (ohlc && ohlc.length > 0) {
+      const highs = ohlc.map((item: any) => item[2]);
+      const lows = ohlc.map((item: any) => item[3]);
+      const maxPrice = Math.max(...highs);
+      const minPrice = Math.min(...lows);
+      const openPrice = ohlc[0][1];
+      const closePrice = ohlc[ohlc.length - 1][4];
+      
+      marketCtx = `
+      - Open (24h ago): $${openPrice}
+      - 24h High: $${maxPrice}
+      - 24h Low: $${minPrice}
+      - Close (Current): $${closePrice}
+      
+      Recent OHLC Data (H/L/C):
+      ${ohlc.slice(-5).map((candle: any) => `- Candle: H:${candle[2]} L:${candle[3]} C:${candle[4]}`).join('\n')}
+      `;
+  }
 
   return template
     .replace(/{{COIN_NAME}}/g, coin.name)
@@ -224,9 +237,10 @@ function constructPrompt(template: string, coin: any, market: any, hasImage: boo
     .replace(/{{CHANGE_24H}}/g, market?.usd_24h_change?.toFixed(2) || '0')
     .replace(/{{VOLUME_24H}}/g, market?.usd_24h_vol ? market.usd_24h_vol.toLocaleString() : 'N/A')
     .replace(/{{MARKET_CAP}}/g, market?.usd_market_cap ? market.usd_market_cap.toLocaleString() : 'N/A')
+    .replace(/{{MARKET_CTX}}/g, marketCtx)
     .replace(/{{TRADING_STYLE}}/g, tradingStyle.toUpperCase())
     .replace(/{{TIMEFRAME}}/g, timeframe)
-    .replace(/{{IMAGE_CONTEXT}}/g, imageContext + "\n" + langInstruction);
+    .replace(/{{IMAGE_CONTEXT}}/g, imageContext);
 }
 
 export default function DashboardPage() {
@@ -410,10 +424,16 @@ export default function DashboardPage() {
         }
 
         // 2. Fetch Market Data
-        let marketData = await fetchCoinGeckoData(selectedCoin.id);
-        if (!marketData) {
-            console.warn("Market data fetch failed, using fallback/zeros");
-            marketData = { usd: 0, usd_24h_change: 0 };
+        let marketDataRaw = await fetchCoinGeckoData(selectedCoin.id);
+        
+        let marketData = { usd: 0, usd_24h_change: 0, usd_24h_vol: 0, usd_market_cap: 0 };
+        let ohlcData: any[] = [];
+        
+        if (marketDataRaw && marketDataRaw.price) {
+           marketData = marketDataRaw.price;
+           ohlcData = marketDataRaw.ohlc || [];
+        } else {
+             console.warn("Market data fetch failed, using fallback/zeros");
         }
 
         // 3. Prepare Image
@@ -427,7 +447,7 @@ export default function DashboardPage() {
         }
 
         // 4. Construct Prompt
-        let promptText = constructPrompt(GLOBAL_ANALYSIS_PROMPT, selectedCoin, marketData, !!selectedImage, language, tradingStyle, timeframe);
+        let promptText = constructPrompt(PROMPT_TEMPLATE_ID, PROMPT_TEMPLATE_EN, selectedCoin, marketData, ohlcData, !!selectedImage, language, tradingStyle, timeframe);
 
         // Specific adjustments for logic requirements
         if (selectedImage) {

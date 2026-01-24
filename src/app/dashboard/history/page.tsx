@@ -90,12 +90,12 @@ export default function HistoryPage() {
                         placeholder="Search coin..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all"
+                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all text-slate-800 dark:text-slate-200"
                     />
                     {searchTerm && (
                         <button 
                             onClick={() => setSearchTerm('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                         >
                             <X size={14} />
                         </button>
@@ -109,10 +109,10 @@ export default function HistoryPage() {
                     <p>Loading history...</p>
                 </div>
             ) : filteredHistory.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
-                    <FileText size={48} className="mx-auto text-slate-300 mb-4" />
-                    <h3 className="text-xl font-bold text-slate-700">No Analysis Found</h3>
-                    <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
+                    <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">No Analysis Found</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-2">
                         {searchTerm 
                             ? "Try adjusting your search term." 
                             : "You haven't run any market analysis recently."}
@@ -139,12 +139,14 @@ export default function HistoryPage() {
                         if (!record.coin_name && record.coin_symbol) coinTitle = record.coin_symbol.toUpperCase();
 
                         return (
-                            <div key={record.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                            <div key={record.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-all hover:shadow-md">
                                 <button 
                                     onClick={() => setExpandedId(isExpanded ? null : record.id)}
                                     className={clsx(
                                         "w-full text-left px-6 py-5 flex items-start gap-4 transition-colors",
-                                        isExpanded ? "bg-slate-50 border-b border-slate-100" : "hover:bg-slate-50/50"
+                                        isExpanded 
+                                            ? "bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800" 
+                                            : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
                                     )}
                                 >
                                     <div className="p-3 bg-neon/10 rounded-xl text-neon mt-0.5">
@@ -153,26 +155,26 @@ export default function HistoryPage() {
                                     
                                     <div className="flex-1">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
-                                            <h3 className="text-lg font-bold text-slate-800">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                                                 {coinTitle}
                                             </h3>
-                                            <span className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded-md mt-2 md:mt-0 w-fit">
+                                            <span className="text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md mt-2 md:mt-0 w-fit">
                                                 {date.toLocaleDateString()} • {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
-                                        <p className={clsx("text-sm text-slate-500 line-clamp-2 pr-4")}>
+                                        <p className={clsx("text-sm text-slate-500 dark:text-slate-400 line-clamp-2 pr-4")}>
                                             {content.replace(/###|[*]/g, '').slice(0, 160)}...
                                         </p>
                                     </div>
 
-                                    <div className="mt-2 text-slate-300">
+                                    <div className="mt-2 text-slate-300 dark:text-slate-600">
                                         {isExpanded ? <ChevronDown /> : <ChevronRight />}
                                     </div>
                                 </button>
                                 
                                 {isExpanded && (
-                                    <div className="p-6 md:p-8 bg-white animate-in slide-in-from-top-2 fade-in duration-200">
-                                        <div className="prose prose-slate max-w-none prose-headings:font-bold prose-a:text-neon">
+                                    <div className="p-6 md:p-8 bg-white dark:bg-slate-900 animate-in slide-in-from-top-2 fade-in duration-200">
+                                        <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-neon">
                                             <ReactMarkdown>{content}</ReactMarkdown>
                                         </div>
                                     </div>
