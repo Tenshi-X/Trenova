@@ -314,15 +314,12 @@ export default function DashboardPage() {
       ignoreSearchRef.current = true;
       setChartSource('tradingview');
       
-      // User Request: No Exchange Prefix, No USDT Suffix
-      // e.g. "BINANCE:BTCUSDT" -> item.symbol is "BTCUSDT" -> we want "BTC"
-      // e.g. "CRYPTOCAP:BNB" -> item.symbol is "BNB" -> we want "BNB"
-      
+      // Use the exact symbol from the suggestion to ensure the correct chart loads
+      // Previously stripped USDT which caused ambiguity (e.g. BTCUSDT -> BTC)
       const rawSymbol = item.symbol;
-      const cleanSymbol = rawSymbol.replace(/USDT$/i, ''); 
       
-      setChartSymbol(cleanSymbol);
-      setChartSearchInput(cleanSymbol);
+      setChartSymbol(rawSymbol);
+      setChartSearchInput(rawSymbol);
       setShowSuggestions(false);
   };
 
@@ -612,7 +609,10 @@ Please try again in a few moments.`;
                             {chartSuggestions.map((item: any) => (
                                 <button
                                     key={`${item.exchange}-${item.symbol}`}
-                                    onClick={() => selectChartSymbol(item)}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault(); // Prevent input blur
+                                        selectChartSymbol(item);
+                                    }}
                                     className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left border-b last:border-0 border-slate-100 dark:border-slate-800 group"
                                 >
                                     <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
