@@ -5,7 +5,8 @@ import { getAnalysisHistory, AnalysisRecord } from '@/lib/api';
 import { Clock, Loader2, ArrowLeft, FileText, ChevronDown, ChevronRight, Search, X, Database } from 'lucide-react';
 import Link from 'next/link';
 import clsx from 'clsx';
-import ReactMarkdown from 'react-markdown';
+import AnalysisVisualizer from '@/components/AnalysisVisualizer';
+
 
 // Helper to sanitize and format content
 const formatContent = (content: any) => {
@@ -173,11 +174,13 @@ export default function HistoryPage() {
                                 </button>
                                 
                                 {isExpanded && (
-                                    <div className="p-6 md:p-8 bg-white dark:bg-slate-900 animate-in slide-in-from-top-2 fade-in duration-200">
-                                        <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-neon">
-                                            <ReactMarkdown>{content}</ReactMarkdown>
-                                        </div>
+                                    <div className="p-4 md:p-6 bg-white dark:bg-slate-900 animate-in slide-in-from-top-2 fade-in duration-200">
+                                         <AnalysisVisualizer 
+                                            markdown={content} 
+                                            coinName={record.coin_name || record.coin_symbol || 'Unknown'} 
+                                        />
                                     </div>
+
                                 )}
                             </div>
                         );

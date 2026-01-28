@@ -1,13 +1,16 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe } from 'lucide-react';
+import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe, AppWindow } from 'lucide-react';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
 import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
+import SentimentChart from '@/components/SentimentChart';
+import MarketIntelligence from '@/components/MarketIntelligence';
+import AnalysisVisualizer from '@/components/AnalysisVisualizer';
 import { useLanguage } from '@/context/LanguageContext';
 
 async function fetchCoinGeckoData(coinId: string) {
@@ -111,7 +114,7 @@ STOP LOSS: "Harga Spesifik"
 TARGET PROFIT 1: "Harga"
 TARGET PROFIT 2: "Harga"
 ALASAN TEKNIKAL: ...
-KEYAKINAN: [Low/Medium/High]%
+KEYAKINAN: [0-100]%
 
 [ TRADING PLAN 2: COUNTER-TREND ]
 ENTRY: "Harga/Area Spesifik"
@@ -119,13 +122,13 @@ STOP LOSS: "Harga Spesifik"
 TARGET PROFIT 1: "Harga"
 TARGET PROFIT 2: "Harga"
 ALASAN TEKNIKAL: ...
-KEYAKINAN: [Low/Medium/High]%
+KEYAKINAN: [0-100]%
 
 ===================================================
 
 E. KESIMPULAN AKHIR
 👉 Keputusan: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
-👉 Alasan Utama: ...
+👉 Alasan Utama: [Berikan 1 kalimat RINGKAS dan JELAS mengapa memilih ini]
 👉 Risk Level: [Low/Medium/High/Extreme]
 `;
 
@@ -185,7 +188,7 @@ STOP LOSS: "Specific Price"
 TAKE PROFIT 1: "Price"
 TAKE PROFIT 2: "Price"
 TECHNICAL REASON: ...
-CONVICTION: [Low/Medium/High]%
+CONVICTION: [0-100]%
 
 [ TRADING PLAN 2: COUNTER-TREND ]
 ENTRY: "Specific Price/Area"
@@ -193,13 +196,13 @@ STOP LOSS: "Specific Price"
 TAKE PROFIT 1: "Price"
 TAKE PROFIT 2: "Price"
 TECHNICAL REASON: ...
-CONVICTION: [Low/Medium/High]%
+CONVICTION: [0-100]%
 
 ===================================================
 
 E. FINAL DECISION
 👉 Decision: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
-👉 Main Reason: ...
+👉 Main Reason: [Provide 1 SHORT, CLEAR sentence explaining why]
 👉 Risk Level: [Low/Medium/High/Extreme]
 `;
 
@@ -388,6 +391,37 @@ export default function DashboardPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+
+  // Paste Event Listener for AI Analysis
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+        if (activeTab !== 'analysis') return;
+        
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    setSelectedImage(file);
+                    const objectUrl = URL.createObjectURL(file);
+                    setImagePreview(objectUrl);
+                    // Provide visual feedback (optional toast or just the preview appearing)
+                }
+            }
+        }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [activeTab]);
+
+  // Fullscreen State
+  const [isChartFullscreen, setIsChartFullscreen] = useState(false);
+
+  // ... existing code ...
+
   const handleChartSearch = () => {
       // Manual Enter -> Use TradingView (Fallback/Pro)
       if (chartSearchInput.trim()) {
@@ -405,7 +439,7 @@ export default function DashboardPage() {
       reader.onerror = error => reject(error);
     });
   };
-
+  
   const runAnalysis = async () => {
     if (!selectedCoin) return;
     setChatLoading(true);
@@ -536,6 +570,9 @@ Please try again in a few moments.`;
             </button>
         </div>
       </div>
+      
+      {/* Market Intelligence Widgets */}
+      <MarketIntelligence />
 
       {/* Tabs Layout */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 mb-6">
@@ -567,10 +604,11 @@ Please try again in a few moments.`;
         {/* --- CHART TAB --- */}
         <div className={clsx(
             "space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
-            activeTab === 'chart' ? "block" : "hidden"
+            activeTab === 'chart' ? "block" : "hidden",
+            isChartFullscreen && "fixed inset-0 z-[200] bg-white dark:bg-slate-950 p-4 md:p-6 overflow-y-auto flex flex-col"
         )}>
             {/* Custom Search Bar for Chart */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3 relative z-40">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3 relative z-10">
                 <div className="flex-1 relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                         {isChartSearching ? (
@@ -603,10 +641,8 @@ Please try again in a few moments.`;
                     {/* Autocomplete Dropdown */}
                     {showSuggestions && chartSuggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto">
-                            <div className="px-3 py-2 text-xs font-bold text-slate-400 bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
-                                SUGESTI PASAR (TradingView Data)
-                            </div>
-                            {chartSuggestions.map((item: any) => (
+                           {/* ... suggestions rendering ... */}
+                           {chartSuggestions.map((item: any) => (
                                 <button
                                     key={`${item.exchange}-${item.symbol}`}
                                     onMouseDown={(e) => {
@@ -643,24 +679,40 @@ Please try again in a few moments.`;
                 >
                         {t('search_btn')}
                 </button>
+                
+                {/* Fullscreen Toggle Button */}
+                <button 
+                    onClick={() => setIsChartFullscreen(!isChartFullscreen)}
+                    className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+                    title={isChartFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                    {isChartFullscreen ? <X size={20} /> : <AppWindow size={20} />}
+                </button>
             </div>
 
             {/* CHART RENDER LOGIC */}
+            <div className={clsx("flex-1 flex flex-col", isChartFullscreen && "h-full")}>
             {chartSource === 'coingecko' && currentCoinId ? (
-                <div className="animate-in fade-in zoom-in duration-300">
-                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                <div className="animate-in fade-in zoom-in duration-300 h-full flex flex-col">
+                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 flex-none">
                         <span className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded">CoinGecko Source</span>
                         <span>Showing data for <b>{chartSearchInput}</b></span>
                      </div>
-                     <CoinGeckoChart coinId={currentCoinId} />
+                     <div className="flex-1 min-h-[500px]">
+                        <CoinGeckoChart coinId={currentCoinId} />
+                     </div>
                 </div>
             ) : chartSymbol ? (
-                <div className="animate-in fade-in zoom-in duration-300">
-                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                <div className="animate-in fade-in zoom-in duration-300 h-full flex flex-col">
+                     <div className="flex items-center gap-2 mb-2 text-xs text-slate-500 flex-none">
                         <span className="bg-orange-500/10 text-orange-500 px-2 py-1 rounded">TradingView Pro</span>
                         <span>Trying to match symbol: <b>{chartSymbol}</b></span>
                      </div>
-                    <TradingViewWidget symbol={chartSymbol} />
+                    <div className="flex-1 min-h-[500px]">
+                        <TradingViewWidget symbol={chartSymbol} />
+                    </div>
+                    {/* Show sentiment in all modes */}
+                    <SentimentChart symbol={chartSymbol} />
                 </div>
             ) : (
                 <div className="w-full py-12 md:py-24 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 mt-8">
@@ -668,9 +720,10 @@ Please try again in a few moments.`;
                         <BarChart3 size={32} className="text-neon" />
                      </div>
                      <h3 className="text-lg md:text-xl font-bold text-slate-600">{t('search_tv_placeholder')}</h3>
-                     <p className="text-sm md:text-base max-w-sm text-center">Search for any market symbol to view real-time charts.</p>
+                     <p className="text-sm md:text-base max-w-sm text-center">{t('search_tv_subtext') || "Search for any market symbol to view real-time charts."}</p>
                 </div>
             )}
+            </div>
         </div>
 
         {/* --- ANALYSIS TAB --- */}
@@ -713,12 +766,15 @@ Please try again in a few moments.`;
                                 {!imagePreview ? (
                                     <div 
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32"
+                                        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32 relative overflow-hidden"
                                     >
-                                        <Upload size={24} className="group-hover:scale-110 transition-transform" />
-                                        <div>
-                                            <p className="font-bold text-sm">{t('upload_text')}</p>
-                                            <p className="text-[10px] opacity-70">{t('upload_subtext')}</p>
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity bg-neon"></div>
+                                        <div className="flex items-center gap-4">
+                                            <Upload size={24} className="group-hover:scale-110 transition-transform" />
+                                            <div>
+                                                <p className="font-bold text-sm">{t('upload_text')}</p>
+                                                <p className="text-[10px] opacity-70">or Paste Screenshot (Ctrl+V)</p>
+                                            </div>
                                         </div>
                                         <input 
                                             type="file" 
@@ -822,25 +878,18 @@ Please try again in a few moments.`;
                         </div>
                     </div>
 
+
+
                     {/* --- ANALYSIS RESULTS --- */}
                     {chatResult && (
                         <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 transition-colors">
-                            <div className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 p-4 md:p-6 flex items-center gap-3 transition-colors">
-                                <div className="p-2 bg-neon/10 rounded-xl text-neon">
-                                    <Database size={24} />
-                                </div>
-                                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('result_title')}</h2>
-                            </div>
-                            <div className="p-6 md:p-10 prose prose-slate dark:prose-invert max-w-none prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-slate-100 prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-li:text-slate-600 dark:prose-li:text-slate-400">
-                                {chatResult.analysis.split('\n').map((line, i) => (
-                                    <p key={i} className={clsx(
-                                        "mb-2",
-                                        line.startsWith('###') && "text-xl md:text-2xl mt-8 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2 flex items-center gap-2",
-                                        line.startsWith('**') && "font-semibold text-slate-800 dark:text-slate-200"
-                                    )}>
-                                        {line.replace(/###|[*]/g, '')}
-                                    </p>
-                                ))}
+                            {/* Replaced Text Header with just the new component which handles its own UI */}
+                            
+                            <div className="p-4 md:p-6">
+                                <AnalysisVisualizer 
+                                    markdown={chatResult.analysis} 
+                                    coinName={selectedCoin?.name || 'Crypto'} 
+                                />
                             </div>
                         </div>
                     )}
