@@ -17,6 +17,7 @@ export type TranslationKey =
   | 'tab_chart'
   | 'tab_analysis'
   | 'search_tv_placeholder'
+  | 'search_tv_subtext'
   | 'search_btn'
   | 'ai_instr_title'
   | 'ai_instr_1'
@@ -64,6 +65,7 @@ export const translations = {
     tab_chart: 'Chart',
     tab_analysis: 'AI Analysis',
     search_tv_placeholder: 'Enter Symbol (e.g., BTC)',
+    search_tv_subtext: 'Search for any market symbol to view real-time charts.',
     search_btn: 'Search Chart',
     ai_instr_title: 'How to use AI Analysis',
     ai_instr_1: '1. Select a coin from the list to get basic market data.',
@@ -110,6 +112,7 @@ export const translations = {
     tab_chart: 'Grafik',
     tab_analysis: 'Analisis AI',
     search_tv_placeholder: 'Masukkan Simbol (cth. BTC)',
+    search_tv_subtext: 'Cari simbol pasar apa pun untuk melihat grafik waktu nyata.',
     search_btn: 'Cari Grafik',
     ai_instr_title: 'Cara Menggunakan Analisis AI',
     ai_instr_1: '1. Pilih koin dari daftar untuk mendapatkan data pasar dasar.',
