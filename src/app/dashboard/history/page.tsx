@@ -178,6 +178,7 @@ export default function HistoryPage() {
                                          <AnalysisVisualizer 
                                             markdown={content} 
                                             coinName={record.coin_name || record.coin_symbol || 'Unknown'} 
+                                            instant={true}
                                         />
                                     </div>
 

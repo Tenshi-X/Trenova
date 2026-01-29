@@ -116,8 +116,8 @@ export const normalizeStoch = (stoch: number) => {
 };
 
 export const normalizeCCI = (cci: number) => {
-     if (cci > 100) return cci > 300 ? 100 : interpolate(cci, 300, 100, 100, 75);
+     if (cci > 100) return cci > 200 ? 100 : interpolate(cci, 200, 100, 100, 75);
      if (cci >= 0) return interpolate(cci, 100, 0, 75, 50);
-     if (cci < -100) return cci < -300 ? 0 : interpolate(cci, -100, -300, 25, 0);
+     if (cci < -100) return cci < -200 ? 0 : interpolate(cci, -100, -200, 25, 0); // Allow extreme lows
      return interpolate(cci, 0, -100, 50, 25);
 };

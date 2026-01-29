@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,6 +34,7 @@ export default function RootLayout({
         <LanguageProvider>
           <AppShell>
             {children}
+            <Toaster position="top-center" richColors />
           </AppShell>
         </LanguageProvider>
       </body>

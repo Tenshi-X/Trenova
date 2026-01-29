@@ -43,7 +43,9 @@ export type TranslationKey =
   | 'email_label'
   | 'password_label'
   | 'login_btn'
-  | 'loading';
+  | 'loading'
+  | 'coin_search_disclaimer'
+  | 'searching_global';
 
 export const translations = {
   en: {
@@ -91,7 +93,9 @@ export const translations = {
     email_label: 'Email',
     password_label: 'Password',
     login_btn: 'Sign In',
-    loading: 'Loading...'
+    loading: 'Loading...',
+    coin_search_disclaimer: 'Showing Top 100 coins by default. Use the search bar to find any other coin from the global database.',
+    searching_global: 'Searching Global Database...'
   },
   id: {
     nav_dashboard: 'Dasbor',
@@ -138,6 +142,8 @@ export const translations = {
     email_label: 'Email',
     password_label: 'Kata Sandi',
     login_btn: 'Masuk',
-    loading: 'Memuat...'
+    loading: 'Memuat...',
+    coin_search_disclaimer: 'Menampilkan 100 koin teratas secara default. Gunakan pencarian untuk menemukan koin apa pun dari database global.',
+    searching_global: 'Mencari di Database Global...'
   }
 };

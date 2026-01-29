@@ -102,7 +102,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
         <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 transition-colors">
             
             {/* Search Bar */}
-            <div className="relative mb-4">
+            <div className="relative mb-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input 
                     type="text"
@@ -117,6 +117,9 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                     </div>
                 )}
             </div>
+            <p className="text-[10px] md:text-xs text-slate-400 mb-4 px-1">
+                {t('coin_search_disclaimer')}
+            </p>
 
             {/* Horizontal Scroll List */}
             {loading ? (
@@ -159,7 +162,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                         );
                     }) : (
                         <div className="w-full text-center py-4 text-slate-400 text-sm">
-                            {searching ? "Searching Global Database..." : `${t('coin_no_match')} "${search}"`}
+                            {searching ? t('searching_global') : `${t('coin_no_match')} "${search}"`}
                         </div>
                     )}
                 </div>

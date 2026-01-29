@@ -58,12 +58,13 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
                 // Strategy 1: Try Binance
                 try {
                     const data = await fetchBinance(symbol);
-                    if (data.length > 30) {
+                    if (data && data.length > 30) {
                         setData(data);
                         return;
+                    } else {
+                        throw new Error("Binance data incomplete");
                     }
                 } catch (ignored) {
-                   // Continue to fallback
                    console.log("Binance failed, trying fallback...");
                 }
 

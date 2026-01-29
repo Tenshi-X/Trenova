@@ -2,9 +2,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe, AppWindow } from 'lucide-react';
+import { toast } from 'sonner';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
+import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchCoinGeckoData, fetchMarketSentiment } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
@@ -13,63 +14,17 @@ import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisVisualizer from '@/components/AnalysisVisualizer';
 import { useLanguage } from '@/context/LanguageContext';
 
-async function fetchCoinGeckoData(coinId: string) {
-    try {
-        const timestamp = new Date().getTime();
-        const apiKey = "CG-yPmFTeENj4pGkQmCnXgT1Rmk"; // User's API Key
-        
-        const headers = {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'x-cg-demo-api-key': apiKey
-        };
 
-        // 1. Fetch Basic Price Data
-        const pricePromise = fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&_t=${timestamp}`, {
-            cache: 'no-store',
-            headers: headers
-        });
-
-        // 2. Fetch OHLC Data (1 Day - 30 min candles)
-        const ohlcPromise = fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=1&_t=${timestamp}`, {
-            cache: 'no-store',
-            headers: headers
-        });
-
-        const [priceRes, ohlcRes] = await Promise.all([pricePromise, ohlcPromise]);
-
-        if (!priceRes.ok) throw new Error("API Limit (Price)");
-        
-        const priceData = await priceRes.json();
-        let ohlcData = [];
-
-        if (ohlcRes.ok) {
-            ohlcData = await ohlcRes.json();
-        }
-
-        return {
-            price: priceData[coinId],
-            ohlc: ohlcData 
-        };
-
-    } catch (e) {
-        console.warn("CoinGecko API failed (likely rate limit), using fallback.");
-        return null; 
-    }
-}
 
 const PROMPT_TEMPLATE_ID = `
-Kamu adalah TRADER CRYPTO PROFESIONAL yang mampu menyesuaikan gaya trading {{TRADING_STYLE}}.
+Kamu adalah TRADER CRYPTO PROFESIONAL. Tugasmu adalah memberikan analisa market yang sangat akurat, objektif, dan berbasis data.
 
-Pendekatan analisa:
-- PRICE ACTION murni
-- MARKET STRUCTURE
-- OBJEKTIF, DISIPLIN, dan BERBASIS PROBABILITAS
-
-Instruksi Penting:
-- **JANGAN PERNAH** memberikan output "N/A" atau "TIDAK ADA SETUP".
-- Tugasmu adalah mencari peluang terbaik (Best Probable Setup) dari kondisi market saat ini.
-- Jika market sedang choppy/sideways, berikan setup "Low Conviction" atau "Range Trade", tapi tetap BERIKAN PLAN.
+**INSTRUKSI KRITIKAL BAGI AI:**
+1. **BAHASA OUTPUT:** Semua teks penjelasan (\`summary\`, \`main_reason\`, \`technical_reason\`) **WAJIB DALAM BAHASA INDONESIA**.
+2. **JANGAN GUNAKAN BAHASA INGGRIS** untuk penjelasan.
+3. Keluaran HARUS dalam format **JSON VALID** (RFC 8259). Jangan tambahkan markdown block seperti \`\`\`json.
+4. Jangan pernah output "N/A" atau "TIDAK ADA". Selalu cari peluang terbaik meskipun itu "Wait & See".
+5. Fokus pada Price Action dan Market Structure.
 
 **DATA PASAR LIVE:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
@@ -78,72 +33,52 @@ Instruksi Penting:
 - Market Cap: \${{MARKET_CAP}}
 - Volume 24h: \${{VOLUME_24H}}
 
-**DATA PERGERAKAN HARGA (OHLC Context):**
+**DATA OHLC:**
 {{MARKET_CTX}}
 
 {{IMAGE_CONTEXT}}
 
-===================================================
-
-A. DETAIL CHART
-1. Pair: {{SYMBOL}}/USDT
-2. Timeframe utama: {{TIMEFRAME}}
-3. Gaya trading: {{TRADING_STYLE}}
-
-===================================================
-
-B. ANALISA MARKET STRUCTURE
-1. Struktur Harga (HH/HL atau LH/LL atau Range)
-2. Area Key Level (Support, Resistance, Liquidity)
-3. Bias Utama (Bullish/Bearish/Netral)
-
-===================================================
-
-C. SKENARIO TRADING
-1. Skenario Utama (Trend Following)
-2. Skenario Alternatif (Jika level invalid)
-3. Skenario Counter-Trend (Reversal/Bounce)
-
-===================================================
-
-D. TRADING PLAN (WAJIB ADA ISI)
-
-[ TRADING PLAN 1: PRIMARY (TREND-FOLLOWING) ]
-ENTRY: "Harga/Area Spesifik"
-STOP LOSS: "Harga Spesifik"
-TARGET PROFIT 1: "Harga"
-TARGET PROFIT 2: "Harga"
-ALASAN TEKNIKAL: ...
-KEYAKINAN: [0-100]%
-
-[ TRADING PLAN 2: COUNTER-TREND ]
-ENTRY: "Harga/Area Spesifik"
-STOP LOSS: "Harga Spesifik"
-TARGET PROFIT 1: "Harga"
-TARGET PROFIT 2: "Harga"
-ALASAN TEKNIKAL: ...
-KEYAKINAN: [0-100]%
-
-===================================================
-
-E. KESIMPULAN AKHIR
-👉 Keputusan: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
-👉 Alasan Utama: [Berikan 1 kalimat RINGKAS dan JELAS mengapa memilih ini]
-👉 Risk Level: [Low/Medium/High/Extreme]
+**FORMAT OUTPUT YANG DIMINTA (JSON VALID):**
+{
+  "decision": "BUY" | "SELL" | "WAIT",
+  "risk_level": "Low" | "Medium" | "High" | "Extreme",
+  "main_reason": "Alasan singkat 1 kalimat (Bahasa Indonesia)",
+  "market_structure": {
+      "structure": "Bullish" | "Bearish" | "Ranging",
+      "key_support": "Level Support",
+      "key_resistance": "Level Resistance"
+  },
+  "plans": [
+    {
+      "type": "Primary Setup (Trend Following)",
+      "entry_zone": "Area Entry",
+      "stop_loss": "Harga SL",
+      "take_profit_1": "Harga TP1",
+      "take_profit_2": "Harga TP2",
+      "technical_reason": "Penjelasan teknikal singkat (Bahasa Indonesia)",
+      "conviction": 85
+    },
+    {
+      "type": "Alternative Scenario (Counter-Trend)",
+      "entry_zone": "Area Entry",
+      "stop_loss": "Harga SL",
+      "take_profit_1": "Harga TP1",
+      "take_profit_2": "Harga TP2",
+      "technical_reason": "Penjelasan teknikal singkat (Bahasa Indonesia)",
+      "conviction": 60
+    }
+  ],
+  "summary": "Penjelasan detail mengenai breakdown teknikal, struktur pasar, dan alasan di balik keputusan (2-3 paragraf). WAJIB BAHASA INDONESIA."
+}
 `;
 
 const PROMPT_TEMPLATE_EN = `
-You are a PROFESSIONAL CRYPTO TRADER capable of adapting to a {{TRADING_STYLE}} trading style.
+You are a PROFESSIONAL CRYPTO TRADER. Your task is to provide a highly accurate, objective, and data-driven market analysis.
 
-Analysis Approach:
-- Pure PRICE ACTION
-- MARKET STRUCTURE
-- OBJECTIVE, DISCIPLINED, and PROBABILITY-BASED
-
-CRITICAL INSTRUCTION:
-- **NEVER** output "N/A" or "NO SETUP".
-- Your job is to find the BEST PROBABLE SETUP given the current market conditions.
-- If the market is choppy/sideways, provide a "Low Conviction" or "Range Trade" setup, but ALWAYS PROVIDE A PLAN.
+**CRITICAL INSTRUCTIONS:**
+1. Output MUST be in **VALID JSON** (RFC 8259). Do not add markdown blocks like \`\`\`json.
+2. NEVER output "N/A" or "NO SETUP". Always find the best opportunity even if it is "Wait & See".
+3. Focus on Price Action and Market Structure.
 
 **LIVE MARKET DATA:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
@@ -152,58 +87,43 @@ CRITICAL INSTRUCTION:
 - Market Cap: \${{MARKET_CAP}}
 - 24h Volume: \${{VOLUME_24H}}
 
-**PRICE ACTION CONTEXT (OHLC):**
+**OHLC DATA:**
 {{MARKET_CTX}}
 
 {{IMAGE_CONTEXT}}
 
-===================================================
-
-A. CHART DETAILS
-1. Pair: {{SYMBOL}}/USDT
-2. Main Timeframe: {{TIMEFRAME}}
-3. Trading Style: {{TRADING_STYLE}}
-
-===================================================
-
-B. MARKET STRUCTURE ANALYSIS
-1. Price Structure (HH/HL or LH/LL or Range)
-2. Key Levels (Support, Resistance, Liquidity Pools)
-3. Primary Bias (Bullish/Bearish/Neutral)
-
-===================================================
-
-C. TRADING SCENARIOS
-1. Primary Scenario (Trend Following)
-2. Alternative Scenario (Invalidation logic)
-3. Counter-Trend Scenario (Reversal/Bounce opportunities)
-
-===================================================
-
-D. TRADING PLAN (MUST BE FILLED)
-
-[ TRADING PLAN 1: PRIMARY (TREND-FOLLOWING) ]
-ENTRY: "Specific Price/Area"
-STOP LOSS: "Specific Price"
-TAKE PROFIT 1: "Price"
-TAKE PROFIT 2: "Price"
-TECHNICAL REASON: ...
-CONVICTION: [0-100]%
-
-[ TRADING PLAN 2: COUNTER-TREND ]
-ENTRY: "Specific Price/Area"
-STOP LOSS: "Specific Price"
-TAKE PROFIT 1: "Price"
-TAKE PROFIT 2: "Price"
-TECHNICAL REASON: ...
-CONVICTION: [0-100]%
-
-===================================================
-
-E. FINAL DECISION
-👉 Decision: [OPEN LONG / OPEN SHORT / WAIT & MONITOR]
-👉 Main Reason: [Provide 1 SHORT, CLEAR sentence explaining why]
-👉 Risk Level: [Low/Medium/High/Extreme]
+**REQUIRED OUTPUT FORMAT (JSON):**
+{
+  "decision": "BUY" | "SELL" | "WAIT",
+  "risk_level": "Low" | "Medium" | "High" | "Extreme",
+  "main_reason": "Short 1 sentence reason",
+  "market_structure": {
+      "structure": "Bullish" | "Bearish" | "Ranging",
+      "key_support": "Support Level",
+      "key_resistance": "Resistance Level"
+  },
+  "plans": [
+    {
+      "type": "Primary Setup (Trend Following)",
+      "entry_zone": "Entry Area",
+      "stop_loss": "SL Price",
+      "take_profit_1": "TP1 Price",
+      "take_profit_2": "TP2 Price",
+      "technical_reason": "Technical explanation",
+      "conviction": 85
+    },
+    {
+      "type": "Alternative Scenario (Counter-Trend)",
+      "entry_zone": "Entry Area",
+      "stop_loss": "SL Price",
+      "take_profit_1": "TP1 Price",
+      "take_profit_2": "TP2 Price",
+      "technical_reason": "Technical explanation",
+      "conviction": 60
+    }
+  ],
+  "summary": "Detailed technical breakdown explaining the market structure, price action, and reasoning (1-2 paragraphs)."
+}
 `;
 
 function constructPrompt(templateId: string, templateEn: string, coin: any, market: any, ohlc: any[], hasImage: boolean, lang: 'id' | 'en', tradingStyle: string, timeframe: string) {
@@ -449,7 +369,7 @@ export default function DashboardPage() {
         // 1. Check Usage Limit (Read Only)
         const usageCheck = await checkUsageLimit();
         if (!usageCheck.allowed) {
-            alert(usageCheck.error);
+            toast.error(usageCheck.error || "Usage limit reached");
             setChatLoading(false);
             return;
         }
@@ -489,8 +409,6 @@ export default function DashboardPage() {
         if (userPrompt.trim()) {
             promptText += `\n\n**ADDITIONAL USER INSTRUCTION:**\n${userPrompt}`;
         }
-
-        // 5. Call AI
         let aiOutput = "";
         try {
             console.log("Sending prompt to AI:", promptText.length, "chars", imageBase64 ? "+ Image" : "");
@@ -504,12 +422,8 @@ export default function DashboardPage() {
             }
         } catch(e) { 
             console.error("AI Execution Error:", e);
-            aiOutput = `### ⚠️ Analysis Failed
-            
-**Reason:** Unable to reach the AI service. 
-**Details:** The server might be busy, or your connection is unstable. 
-            
-Please try again in a few moments.`;
+            aiOutput = `### ⚠️ Analysis Failed`; // Keeping text just in case, but toast handles error
+            toast.error("Failed to connect to AI. Please try again.");
         }
 
         const result = { analysis: aiOutput };
@@ -525,12 +439,13 @@ Please try again in a few moments.`;
              
              // Refresh Stats on UI
              await fetchUsage();
+             toast.success("Analysis Complete!");
              router.refresh();
         }
 
     } catch (e) {
         console.error("Critical Analysis Error:", e);
-        alert("An unexpected error occurred while generating analysis.");
+        toast.error("An unexpected error occurred while generating analysis.");
     } finally {
         setChatLoading(false);
     }
@@ -548,27 +463,8 @@ Please try again in a few moments.`;
             <p className="text-slate-500 text-xs md:text-lg">{t('header_subtitle')}</p>
         </div>
         
-        {/* Language Toggler */}
-        <div className="flex bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-1">
-            <button
-                onClick={() => setLanguage('id')}
-                className={clsx(
-                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
-                    language === 'id' ? "bg-neon/10 text-neon" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-            >
-                🇮🇩 ID
-            </button>
-            <button
-                onClick={() => setLanguage('en')}
-                className={clsx(
-                    "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
-                    language === 'en' ? "bg-neon/10 text-neon" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-            >
-                🇺🇸 EN
-            </button>
-        </div>
+        {/* Language Toggler Moved to Layout */}
+        <div />
       </div>
       
       {/* Market Intelligence Widgets */}

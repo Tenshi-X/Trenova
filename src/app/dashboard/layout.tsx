@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getUserUsage } from './actions';
 import { Zap } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default async function DashboardLayout({
   children,
@@ -100,6 +101,7 @@ export default async function DashboardLayout({
             
             {/* User Profile / Status */}
             <div className="flex items-center gap-4">
+              <LanguageSwitcher />
               <ThemeToggle />
               {usageStats && (
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200 shadow-sm">

@@ -193,3 +193,60 @@ export async function searchTVSymbols(query: string) {
         return [];
     }
 }
+
+export async function fetchCoinGeckoData(coinId: string) {
+    try {
+        const timestamp = new Date().getTime();
+        const apiKey = process.env.COINGECKO_API_KEY || "CG-yPmFTeENj4pGkQmCnXgT1Rmk"; 
+        
+        const headers = {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'x-cg-demo-api-key': apiKey
+        };
+
+        // 1. Fetch Basic Price Data
+        const pricePromise = fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: headers
+        });
+
+        // 2. Fetch OHLC Data (1 Day - 30 min candles)
+        const ohlcPromise = fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=usd&days=1&_t=${timestamp}`, {
+            cache: 'no-store',
+            headers: headers
+        });
+
+        const [priceRes, ohlcRes] = await Promise.all([pricePromise, ohlcPromise]);
+
+        if (!priceRes.ok) throw new Error("API Limit (Price)");
+        
+        const priceData = await priceRes.json();
+        let ohlcData = [];
+
+        if (ohlcRes.ok) {
+            ohlcData = await ohlcRes.json();
+        }
+
+        return {
+            price: priceData[coinId],
+            ohlc: ohlcData 
+        };
+
+    } catch (e) {
+        console.warn("CoinGecko API failed (likely rate limit), using fallback.");
+        return null; 
+    }
+}
+
+export async function fetchMarketSentiment() {
+    try {
+        const res = await fetch("https://api.alternative.me/fng/?limit=1", { next: { revalidate: 3600 } });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.data?.[0] || null;
+    } catch (e) {
+        console.error("Failed to fetch sentiment:", e);
+        return null;
+    }
+}
