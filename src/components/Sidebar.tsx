@@ -50,7 +50,6 @@ export default function Sidebar() {
       ]
     : [
         { name: t('nav_dashboard'), href: '/dashboard', icon: LayoutDashboard },
-        { name: t('nav_history'), href: '/dashboard/history', icon: Activity },
         ...(isAdmin ? [{ name: t('nav_admin'), href: '/admin', icon: Shield }] : []),
       ];
 

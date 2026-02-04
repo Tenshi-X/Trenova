@@ -19,7 +19,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Persist language preference
   useEffect(() => {
     const saved = localStorage.getItem('trenova-lang') as Language;
-    if (saved) setLanguage(saved);
+    if (saved && (saved === 'id' || saved === 'en')) {
+      setLanguage(saved);
+    }
   }, []);
 
   const handleSetLanguage = (lang: Language) => {
@@ -28,7 +30,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: TranslationKey): string => {
-    return translations[language][key] || key;
+    return translations[language]?.[key] || translations['en'][key] || key;
   };
 
   return (

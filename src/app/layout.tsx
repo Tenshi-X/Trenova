@@ -18,6 +18,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Trenova - Trading Intelligence",
   description: "AI-powered trading trends and analysis",
+  icons: {
+    icon: "/app-logo.png",
+    shortcut: "/app-logo.png",
+    apple: "/app-logo.png",
+  },
 };
 
 export default function RootLayout({
