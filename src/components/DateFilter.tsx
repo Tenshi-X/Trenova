@@ -107,7 +107,7 @@ export default function DateFilter({ startDate, endDate, onChange }: DateFilterP
                     selectsEnd
                     startDate={startDate}
                     endDate={endDate}
-                    minDate={startDate}
+                    minDate={startDate || undefined}
                     customInput={<CustomDateInput label={t('filter_end_date')} placeholder={t('filter_select_date')} onClear={() => handleEndChange(null)} />}
                     dateFormat="dd MMM yyyy"
                     portalId="root-portal"
