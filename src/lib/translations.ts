@@ -96,6 +96,7 @@ export type TranslationKey =
   | 'email_label'
   | 'password_label'
   | 'login_btn'
+  | 'authenticating'
   | 'loading'
   | 'coin_search_disclaimer'
   | 'searching_global'
@@ -199,7 +200,22 @@ export type TranslationKey =
   | 'rows_per_page'
   | 'page_info'
   | 'btn_prev'
-  | 'btn_next';
+  | 'btn_next'
+  | 'history_title'
+  | 'history_subtitle'
+  | 'history_search_placeholder'
+  | 'history_showing_results'
+  | 'history_show'
+  | 'history_no_analysis'
+  | 'history_try_search'
+  | 'history_no_analysis_desc'
+  | 'history_go_dashboard'
+  | 'history_loading'
+  | 'filter_from'
+  | 'filter_to'
+  | 'filter_start_date'
+  | 'filter_end_date'
+  | 'filter_select_date';
 
 export const translations = {
   en: {
@@ -246,11 +262,12 @@ export const translations = {
     result_title: 'Market Intelligence Report',
     select_coin_msg: 'Select a Coin to Analyze',
     select_coin_submsg: 'Choose a cryptocurrency from the list above to unlock AI price forecasting and technical analysis.',
-    login_title: 'Welcome Back',
-    login_subtitle: 'Sign in to access your dashboard',
-    email_label: 'Email',
+    login_title: 'Welcome',
+    login_subtitle: 'Access your Trenova terminal',
+    email_label: 'Email Address',
     password_label: 'Password',
-    login_btn: 'Sign In',
+    login_btn: 'Login',
+    authenticating: 'Authenticating...',
     loading: 'Loading...',
     coin_search_disclaimer: 'Showing Top 100 coins by default. Use the search bar to find any other coin from the global database.',
     searching_global: 'Searching Global Database...',
@@ -299,7 +316,7 @@ export const translations = {
     card_risk_pill: 'Risk Guard',
     card_risk_title: 'Sentiment & Risk',
     card_risk_desc: 'Evaluates crowd psychology (FOMO vs Panic) and assigns a Volatility Score.',
-    footer_rights: 'Trenova Mobile. All rights reserved.',
+    footer_rights: 'Trenova Intelligence. All rights reserved.',
     footer_privacy: 'Privacy Policy',
     footer_terms: 'Terms of Service',
     footer_feedback: 'Feedback',
@@ -354,7 +371,22 @@ export const translations = {
     rows_per_page: 'Rows per page:',
     page_info: 'Page {current} of {total}',
     btn_prev: 'Previous',
-    btn_next: 'Next'
+    btn_next: 'Next',
+    history_title: 'Analysis History',
+    history_subtitle: 'Your recent market intelligence reports',
+    history_search_placeholder: 'Search coin...',
+    history_showing_results: 'Showing {count} results',
+    history_show: 'Show:',
+    history_no_analysis: 'No Analysis Found',
+    history_try_search: 'Try adjusting your search term.',
+    history_no_analysis_desc: 'You haven\'t run any market analysis recently.',
+    history_go_dashboard: 'Go to Dashboard',
+    history_loading: 'Loading history...',
+    filter_from: 'From',
+    filter_to: 'To',
+    filter_start_date: 'Start Date',
+    filter_end_date: 'End Date',
+    filter_select_date: 'Select date'
   },
   id: {
     nav_dashboard: 'Dasbor',
@@ -400,11 +432,12 @@ export const translations = {
     result_title: 'Laporan Intelijen Pasar',
     select_coin_msg: 'Pilih Koin untuk Dianalisis',
     select_coin_submsg: 'Pilih mata uang kripto dari daftar di atas untuk membuka prakiraan harga AI dan analisis teknis.',
-    login_title: 'Selamat Datang Kembali',
-    login_subtitle: 'Masuk untuk mengakses dasbor Anda',
-    email_label: 'Email',
+    login_title: 'Selamat Datang',
+    login_subtitle: 'Akses terminal Trenova Anda',
+    email_label: 'Alamat Email',
     password_label: 'Kata Sandi',
     login_btn: 'Masuk',
+    authenticating: 'Mengautentikasi...',
     loading: 'Memuat...',
     coin_search_disclaimer: 'Menampilkan 100 koin teratas secara default. Gunakan pencarian untuk menemukan koin apa pun dari database global.',
     searching_global: 'Mencari di Database Global...',
@@ -453,7 +486,7 @@ export const translations = {
     card_risk_pill: 'Penjaga Risiko',
     card_risk_title: 'Sentimen & Risiko',
     card_risk_desc: 'Mengevaluasi psikologi massa (FOMO vs Panik) dan memberikan Skor Volatilitas.',
-    footer_rights: 'Trenova Mobile. Hak cipta dilindungi.',
+    footer_rights: 'Trenova Intelligence. Hak cipta dilindungi.',
     footer_privacy: 'Kebijakan Privasi',
     footer_terms: 'Syarat Layanan',
     footer_feedback: 'Umpan Balik',
@@ -508,6 +541,21 @@ export const translations = {
     rows_per_page: 'Baris per halaman:',
     page_info: 'Halaman {current} dari {total}',
     btn_prev: 'Sebelumnya',
-    btn_next: 'Selanjutnya'
+    btn_next: 'Selanjutnya',
+    history_title: 'Riwayat Analisis',
+    history_subtitle: 'Laporan intelijen pasar terbaru Anda',
+    history_search_placeholder: 'Cari koin...',
+    history_showing_results: 'Menampilkan {count} hasil',
+    history_show: 'Tampilkan:',
+    history_no_analysis: 'Tidak Ada Analisis',
+    history_try_search: 'Coba ubah kata kunci pencarian.',
+    history_no_analysis_desc: 'Anda belum menjalankan analisis pasar baru-baru ini.',
+    history_go_dashboard: 'Ke Dasbor',
+    history_loading: 'Memuat riwayat...',
+    filter_from: 'Dari',
+    filter_to: 'Sampai',
+    filter_start_date: 'Tanggal Mulai',
+    filter_end_date: 'Tanggal Selesai',
+    filter_select_date: 'Pilih tanggal'
   }
 };

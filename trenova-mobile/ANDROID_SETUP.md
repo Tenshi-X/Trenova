@@ -1,6 +1,6 @@
 # Android Environment Setup Guide
 
-It appears that the Android SDK and Emulator tools are not installed or configured on this machine. You have three main options to run your Trenova Mobile app:
+It appears that the Android SDK and Emulator tools are not installed or configured on this machine. You have three main options to run your Trenova Intelligence app:
 
 ## Option 1: Use Your Physical Device (Recommended & Easiest)
 You can run the app on your real Android phone without installing Android Studio.

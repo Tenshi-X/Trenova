@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, MessageSquare, Shield, Activity, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, MessageSquare, Shield, Activity, LogOut, Menu, History } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import clsx from 'clsx';
 
@@ -50,6 +50,7 @@ export default function Sidebar() {
       ]
     : [
         { name: t('nav_dashboard'), href: '/dashboard', icon: LayoutDashboard },
+        { name: t('nav_history'), href: '/dashboard/history', icon: History },
         ...(isAdmin ? [{ name: t('nav_admin'), href: '/admin', icon: Shield }] : []),
       ];
 

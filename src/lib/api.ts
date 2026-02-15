@@ -135,15 +135,19 @@ export type AnalysisRecord = {
     coin_name?: string;
 };
 
-export async function getAnalysisHistory(days: number = 7): Promise<AnalysisRecord[]> {
-    const dateLimit = new Date();
-    dateLimit.setDate(dateLimit.getDate() - days);
-
-    const { data, error } = await supabase
+export async function getAnalysisHistory(days?: number): Promise<AnalysisRecord[]> {
+    let query = supabase
         .from('analysis_results')
         .select('id, analysis_json, created_at, coin_symbol, coin_name')
-        .gte('created_at', dateLimit.toISOString())
         .order('created_at', { ascending: false });
+
+    if (days) {
+        const dateLimit = new Date();
+        dateLimit.setDate(dateLimit.getDate() - days);
+        query = query.gte('created_at', dateLimit.toISOString());
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching history:', error);

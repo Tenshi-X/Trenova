@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, TrendingUp, Shield, ArrowRight, Smartphone, Bitcoin, Target, Zap, Lock, Eye, AlertTriangle, CheckCircle2, MousePointerClick, Cpu, Brain, MessageSquare, Upload, BarChart3, Search } from 'lucide-react';
+import { Bell, TrendingUp, Shield, ArrowRight, Smartphone, Bitcoin, Target, Zap, Lock, Eye, AlertTriangle, CheckCircle2, MousePointerClick, Cpu, Brain, MessageSquare, Upload, BarChart3, Search, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 import { useLanguage } from '@/context/LanguageContext';
@@ -10,6 +10,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -22,12 +23,11 @@ export default function LandingPage() {
     <div className="min-h-screen font-sans selection:bg-neon selection:text-white pb-20">
       
       {/* Navigation */}
-      {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 py-4' : 'bg-transparent py-6'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shadow-sm ${scrolled ? 'py-4' : 'py-5'}`}>
         <div className="container mx-auto px-6 grid grid-cols-2 md:grid-cols-3 items-center">
           
           {/* Left: Logo */}
-          <div className="flex items-center gap-2 justify-start">
+          <div className="flex items-center gap-2 justify-start relative z-50">
             <img src="/app-logo.png" alt="Trenova Logo" className="w-10 h-10 rounded-xl shadow-lg object-contain bg-white dark:bg-slate-800" />
             <span className="text-xl font-bold tracking-tight text-foreground">TRENOVA</span>
           </div>
@@ -50,21 +50,67 @@ export default function LandingPage() {
                <ThemeToggle />
             </div>
 
-            <Link href="/login" className="hidden md:block text-sm font-bold text-foreground hover:text-neon transition-colors">
-              {t('nav_login')}
-            </Link>
-
             <a href="https://shopee.co.id/product/1734650704/48105786422/" target="_blank" rel="noopener noreferrer" className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all transform hover:-translate-y-0.5 shadow-lg whitespace-nowrap">
               {t('nav_get_started')}
             </a>
 
-             {/* Mobile Elements */}
-             <div className="md:hidden flex items-center gap-2">
+             {/* Mobile Hamburger Trigger */}
+             <div className="md:hidden flex items-center gap-2 relative z-50">
                <LanguageSwitcher />
                <ThemeToggle />
+               <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 ml-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+               >
+                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+               </button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 top-[72px] z-40 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 p-6 md:hidden animate-in slide-in-from-top-4 fade-in duration-200 shadow-2xl flex flex-col h-screen">
+            <div className="flex flex-col space-y-4">
+              <a 
+                href="https://discord.gg/gGdkQypYWM" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between group active:scale-95 transition-transform"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav_community')}
+                <ArrowRight size={20} className="text-slate-400 group-hover:text-neon group-hover:translate-x-1 transition-all" />
+              </a>
+              
+              <Link 
+                href="/feedback" 
+                className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between group active:scale-95 transition-transform"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav_feedback')}
+                <ArrowRight size={20} className="text-slate-400 group-hover:text-neon group-hover:translate-x-1 transition-all" />
+              </Link>
+              
+              <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
+              
+              <a 
+                href="https://shopee.co.id/product/1734650704/48105786422/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="p-4 text-center rounded-xl bg-neon text-white font-bold text-lg shadow-lg hover:bg-neon-dim transition-all active:scale-95"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t('nav_get_started')}
+              </a>
+            </div>
+            
+            {/* Mobile Menu Footer Decor */}
+            <div className="mt-auto pb-24 text-center text-slate-400 text-sm">
+                <p>Trenova Intelligence</p>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -91,9 +137,9 @@ export default function LandingPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <Link href="/dashboard" className="w-full sm:w-auto px-8 py-4 bg-neon text-white rounded-xl font-bold text-lg shadow-xl shadow-neon/30 hover:shadow-neon/50 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+              <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-neon text-white rounded-xl font-bold text-lg shadow-xl shadow-neon/30 hover:shadow-neon/50 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
                 <Smartphone size={20} />
-                {t('btn_try_dashboard')}
+                {t('nav_login')}
               </Link>
               <Link href="#features" className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-lg hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
                 {t('btn_see_features')} <ArrowRight size={20} />

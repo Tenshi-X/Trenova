@@ -4,10 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { Lock, Mail, ArrowRight, AlertCircle, Sparkles, Brain, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, ArrowLeft, AlertCircle, Sparkles, Brain, Eye, EyeOff } from 'lucide-react';
 import clsx from 'clsx';
+import { useLanguage } from '@/context/LanguageContext';
+import ThemeToggle from '@/components/ThemeToggle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LoginPage() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,6 +59,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background font-sans">
       
+      {/* Back to Home Button */}
+      <Link href="/" className="absolute top-8 left-8 z-50 flex items-center gap-2 text-slate-500 hover:text-neon transition-colors font-semibold group">
+        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+        {t('btn_back_home')}
+      </Link>
+
+      {/* Language & Theme Controls */}
+      <div className="absolute top-8 right-8 z-50 flex items-center gap-4">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
+
       {/* Full Screen Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 bg-white dark:bg-[#020617] flex flex-col items-center justify-center text-center animate-in fade-in duration-300">
@@ -93,8 +109,8 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md p-8 rounded-2xl relative z-10 shadow-xl border-t-4 border-t-neon bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-x border-b border-white/20 dark:border-slate-800">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h1>
-          <p className="text-slate-500 dark:text-slate-400">Access your Trenova terminal</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('login_title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400">{t('login_subtitle')}</p>
         </div>
 
         {error && (
@@ -106,7 +122,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Email Address</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('email_label')}</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
@@ -121,7 +137,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">Password</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('password_label')}</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
@@ -153,9 +169,9 @@ export default function LoginPage() {
                 : "bg-neon hover:bg-neon-dim transform hover:-translate-y-0.5"
             )}
           >
-            {loading ? 'Authenticating...' : (
+            {loading ? t('authenticating') : (
               <>
-                Login to Terminal <ArrowRight size={20} />
+                {t('login_btn')} <ArrowRight size={20} />
               </>
             )}
           </button>

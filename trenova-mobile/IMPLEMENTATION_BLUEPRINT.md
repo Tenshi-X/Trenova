@@ -1,4 +1,4 @@
-# Trenova Mobile Implementation Blueprint
+# Trenova Intelligence Implementation Blueprint
 
 ## 1. Overview
 This React Native application (built with Expo) serves as the mobile companion to the Trenova web terminal. Its primary focus is the **Smart Alert System**, allowing users to set sophisticated conditional alerts ("Good for Buy", "Take Profit") that monitor market conditions relative to their targets.
