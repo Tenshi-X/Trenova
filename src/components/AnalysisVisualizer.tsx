@@ -149,7 +149,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                         sl: p.stop_loss,
                         tps,
                         reason: p.technical_reason,
-                        conviction: p.conviction || 50
+                        conviction: p.conviction || 50,
+                        convictionReason: p.conviction_reason || ''
                     };
                 });
             }
@@ -267,13 +268,15 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                     const dirText = isBuy ? 'text-emerald-500' : 'text-rose-500';
                     const dirBadgeBg = isBuy ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-rose-500/10 text-rose-500 border-rose-500/30';
 
-                    // Build plan title: e.g., "BUY (TREND FOLLOWING - BULLISH)" or "SHORT (COUNTER TREND)"
-                    let planTitle = '';
-                    if (plan.isPrimary) {
-                        planTitle = `${plan.direction} (${text.trend_following} - ${trendLabel})`;
-                    } else {
-                        planTitle = `${plan.direction} (${text.counter_trend})`;
-                    }
+                    // Clean title: "Primary Setup" or "Alternative Scenario"
+                    const planTitle = plan.isPrimary 
+                        ? (language === 'id' ? 'Primary Setup' : 'Primary Setup')
+                        : (language === 'id' ? 'Skenario Alternatif' : 'Alternative Scenario');
+                    
+                    // Subtitle: "Mengikuti Tren · Bullish" or "Counter-Trend"
+                    const planSubtitle = plan.isPrimary
+                        ? `${text.trend_following} · ${trendLabel}`
+                        : text.counter_trend;
 
                     return (
                         <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
@@ -281,7 +284,7 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                             <div className={clsx("absolute top-0 left-0 w-1.5 h-full", dirBg)} />
                             
                             <div className="flex flex-col gap-3 pl-3 mb-4">
-                                {/* Direction Badge - BIG and prominent */}
+                                {/* Direction Badge + Conviction */}
                                 <div className="flex justify-between items-start">
                                     <div className={clsx("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-sm", dirBadgeBg)}>
                                         {isBuy ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
@@ -301,7 +304,7 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                                     </h3>
                                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
                                         {plan.isPrimary ? <TrendingUpIcon /> : <Shield size={12} />}
-                                        {plan.isPrimary ? (language === 'id' ? 'Strategi Trend Following' : 'Trend Following Strategy') : (language === 'id' ? 'Skenario Alternatif' : 'Hedge / Alt Scenario')}
+                                        {planSubtitle}
                                     </div>
                                 </div>
                             </div>
@@ -345,6 +348,19 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                                 {plan.reason && (
                                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                                         <p className="text-xs text-slate-500 italic">"{plan.reason}"</p>
+                                    </div>
+                                )}
+
+                                {/* Conviction Reason */}
+                                {plan.convictionReason && (
+                                    <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/20">
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <Zap size={12} className="text-amber-500" />
+                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">
+                                                {language === 'id' ? `Kenapa ${plan.conviction}%?` : `Why ${plan.conviction}%?`}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-amber-700 dark:text-amber-300">{plan.convictionReason}</p>
                                     </div>
                                 )}
                             </div>
