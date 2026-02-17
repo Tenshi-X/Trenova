@@ -25,6 +25,13 @@ Kamu adalah TRADER CRYPTO PROFESIONAL. Tugasmu adalah memberikan analisa market 
 3. Keluaran HARUS dalam format **JSON VALID** (RFC 8259). Jangan tambahkan markdown block seperti \`\`\`json.
 4. Jangan pernah output "N/A" atau "TIDAK ADA". Selalu cari peluang terbaik meskipun itu "Wait & See".
 5. Fokus pada Price Action dan Market Structure.
+6. **ATURAN DIRECTION (WAJIB DIPATUHI):**
+   - Tentukan dulu apakah trend saat ini **Bullish** atau **Bearish** dari market_structure.structure.
+   - **Jika Bullish:** Plan Primary (Trend Following) = direction "BUY", Plan Alternative (Counter-Trend) = direction "SHORT"
+   - **Jika Bearish:** Plan Primary (Trend Following) = direction "SHORT", Plan Alternative (Counter-Trend) = direction "BUY"
+   - **Jika Ranging:** Pilih direction yang paling masuk akal secara teknikal untuk masing-masing plan.
+   - Field "direction" WAJIB diisi "BUY" atau "SHORT" di setiap plan. JANGAN KOSONG.
+7. **TAKE PROFIT:** Berikan minimal 2 dan maksimal 5 level Take Profit. Semakin jauh TP, semakin kecil probabilitasnya. Jika hanya ada 2-3 level yang valid, cukup berikan segitu saja. Jangan memaksakan 5 TP jika tidak realistis.
 
 **DATA PASAR LIVE:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
@@ -51,19 +58,27 @@ Kamu adalah TRADER CRYPTO PROFESIONAL. Tugasmu adalah memberikan analisa market 
   "plans": [
     {
       "type": "Primary Setup (Trend Following)",
-      "entry_zone": "Area Entry",
-      "stop_loss": "Harga SL",
+      "direction": "BUY" atau "SHORT" (sesuai aturan di atas),
+      "entry_zone": "Area Entry (harga spesifik, misal $1.61 - $1.62)",
+      "stop_loss": "Harga SL spesifik",
       "take_profit_1": "Harga TP1",
       "take_profit_2": "Harga TP2",
+      "take_profit_3": "Harga TP3 (opsional, jika level valid)",
+      "take_profit_4": "Harga TP4 (opsional, jika level valid)",
+      "take_profit_5": "Harga TP5 (opsional, jika level valid)",
       "technical_reason": "Penjelasan teknikal singkat (Bahasa Indonesia)",
       "conviction": 85
     },
     {
       "type": "Alternative Scenario (Counter-Trend)",
-      "entry_zone": "Area Entry",
-      "stop_loss": "Harga SL",
+      "direction": "SHORT" atau "BUY" (kebalikan dari Primary),
+      "entry_zone": "Area Entry (harga spesifik)",
+      "stop_loss": "Harga SL spesifik",
       "take_profit_1": "Harga TP1",
       "take_profit_2": "Harga TP2",
+      "take_profit_3": "Harga TP3 (opsional)",
+      "take_profit_4": "Harga TP4 (opsional)",
+      "take_profit_5": "Harga TP5 (opsional)",
       "technical_reason": "Penjelasan teknikal singkat (Bahasa Indonesia)",
       "conviction": 60
     }
@@ -79,6 +94,13 @@ You are a PROFESSIONAL CRYPTO TRADER. Your task is to provide a highly accurate,
 1. Output MUST be in **VALID JSON** (RFC 8259). Do not add markdown blocks like \`\`\`json.
 2. NEVER output "N/A" or "NO SETUP". Always find the best opportunity even if it is "Wait & See".
 3. Focus on Price Action and Market Structure.
+4. **DIRECTION RULES (MUST FOLLOW):**
+   - First determine the current trend from market_structure.structure: **Bullish** or **Bearish**.
+   - **If Bullish:** Primary (Trend Following) direction = "BUY", Alternative (Counter-Trend) direction = "SHORT"
+   - **If Bearish:** Primary (Trend Following) direction = "SHORT", Alternative (Counter-Trend) direction = "BUY"
+   - **If Ranging:** Pick the most technically sound direction for each plan.
+   - The "direction" field is MANDATORY in every plan. It must be "BUY" or "SHORT".
+5. **TAKE PROFIT:** Provide a minimum of 2 and maximum of 5 Take Profit levels. The further the TP, the lower the probability. Only include as many TP levels as are technically valid (don't force 5 if only 2-3 make sense).
 
 **LIVE MARKET DATA:**
 - Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
@@ -105,19 +127,27 @@ You are a PROFESSIONAL CRYPTO TRADER. Your task is to provide a highly accurate,
   "plans": [
     {
       "type": "Primary Setup (Trend Following)",
-      "entry_zone": "Entry Area",
-      "stop_loss": "SL Price",
+      "direction": "BUY" or "SHORT" (based on trend rules above),
+      "entry_zone": "Entry Area (specific price, e.g. $1.61 - $1.62)",
+      "stop_loss": "Specific SL Price",
       "take_profit_1": "TP1 Price",
       "take_profit_2": "TP2 Price",
+      "take_profit_3": "TP3 Price (optional, if valid level exists)",
+      "take_profit_4": "TP4 Price (optional, if valid level exists)",
+      "take_profit_5": "TP5 Price (optional, if valid level exists)",
       "technical_reason": "Technical explanation",
       "conviction": 85
     },
     {
       "type": "Alternative Scenario (Counter-Trend)",
-      "entry_zone": "Entry Area",
-      "stop_loss": "SL Price",
+      "direction": "SHORT" or "BUY" (opposite of Primary),
+      "entry_zone": "Entry Area (specific price)",
+      "stop_loss": "Specific SL Price",
       "take_profit_1": "TP1 Price",
       "take_profit_2": "TP2 Price",
+      "take_profit_3": "TP3 Price (optional)",
+      "take_profit_4": "TP4 Price (optional)",
+      "take_profit_5": "TP5 Price (optional)",
       "technical_reason": "Technical explanation",
       "conviction": 60
     }
@@ -636,6 +666,9 @@ export default function DashboardPage() {
 
             {selectedCoin ? (
                 <div className="space-y-6">
+                    
+                    {/* Technical Sentiment */}
+                    <SentimentChart symbol={selectedCoin.symbol} />
                     
                     {/* INSTRUCTIONS BLOCK */}
                     <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-2xl p-4 md:p-6 flex gap-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import clsx from 'clsx';
 
@@ -46,8 +46,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             risk: "Risiko",
             conviction: "Keyakinan",
             detailed_breakdown: "PENJELASAN DETAIL",
-            trend_strategy: "Strategi Trend Following",
-            alt_strategy: "Skenario Alternatif",
+            trend_following: "TREND FOLLOWING",
+            counter_trend: "COUNTER TREND",
             prob: "Probabilitas",
             entry: "ENTRY",
             sl: "STOP LOSS",
@@ -55,15 +55,20 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             structure: "Struktur",
             key_support: "Support Kunci",
             key_resistance: "Resistance Kunci",
-            open: "Terbuka"
+            open: "Terbuka",
+            bullish: "BULLISH",
+            bearish: "BEARISH",
+            ranging: "RANGING",
+            buy: "BUY",
+            short: "SHORT",
         },
         en: {
             intelligence: "INTELLIGENCE",
             risk: "Risk",
             conviction: "Conviction",
             detailed_breakdown: "DETAILED BREAKDOWN",
-            trend_strategy: "Trend Following Strategy",
-            alt_strategy: "Hedge / Alt Scenario",
+            trend_following: "TREND FOLLOWING",
+            counter_trend: "COUNTER TREND",
             prob: "Prob",
             entry: "ENTRY",
             sl: "STOP LOSS",
@@ -71,7 +76,12 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             structure: "Structure",
             key_support: "Key Support",
             key_resistance: "Key Resistance",
-            open: "Open"
+            open: "Open",
+            bullish: "BULLISH",
+            bearish: "BEARISH",
+            ranging: "RANGING",
+            buy: "BUY",
+            short: "SHORT",
         }
     };
 
@@ -101,16 +111,47 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             result.mainReason = json.main_reason || "";
             result.marketStructure = json.market_structure || null;
             
+            // Determine trend for direction logic
+            const trend = result.marketStructure?.structure?.toLowerCase() || 'ranging';
+            
             if (Array.isArray(json.plans)) {
-                result.plans = json.plans.map((p: any) => ({
-                    type: p.type,
-                    entry: p.entry_zone,
-                    sl: p.stop_loss,
-                    tp1: p.take_profit_1,
-                    tp2: p.take_profit_2,
-                    reason: p.technical_reason,
-                    conviction: p.conviction || 50
-                }));
+                result.plans = json.plans.map((p: any, idx: number) => {
+                    // Determine direction from the AI response, or infer from trend
+                    let direction = p.direction?.toUpperCase() || '';
+                    const isPrimary = idx === 0 || (p.type || '').toLowerCase().includes('primary') || (p.type || '').toLowerCase().includes('trend following');
+                    
+                    // Fallback: infer direction if AI didn't provide it
+                    if (!direction || (direction !== 'BUY' && direction !== 'SHORT')) {
+                        if (trend === 'bullish') {
+                            direction = isPrimary ? 'BUY' : 'SHORT';
+                        } else if (trend === 'bearish') {
+                            direction = isPrimary ? 'SHORT' : 'BUY';
+                        } else {
+                            // Ranging: use decision as hint
+                            direction = result.decision === 'BUY' ? (isPrimary ? 'BUY' : 'SHORT') : (isPrimary ? 'SHORT' : 'BUY');
+                        }
+                    }
+                    
+                    // Collect TP levels (up to 5)
+                    const tps: string[] = [];
+                    for (let i = 1; i <= 5; i++) {
+                        const tp = p[`take_profit_${i}`];
+                        if (tp && tp !== 'N/A' && tp !== '-' && tp !== '') {
+                            tps.push(tp);
+                        }
+                    }
+                    
+                    return {
+                        type: p.type,
+                        direction,
+                        isPrimary,
+                        entry: p.entry_zone,
+                        sl: p.stop_loss,
+                        tps,
+                        reason: p.technical_reason,
+                        conviction: p.conviction || 50
+                    };
+                });
             }
             return result;
         } catch (e) {
@@ -133,8 +174,6 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             const reasonMatch = markdown.match(/(?:👉\s*Main Reason|👉\s*Alasan Utama)(?:[\*\s]*):?\s*([^\n]+)/i); 
             if (reasonMatch) result.mainReason = reasonMatch[1].trim().replace(/\*\*/g, '');
 
-            // Fallback for Summary: Use the full markdown content if it's text-based
-            // We strip out the decision lines if possible to avoid duplication, or just use full text
             result.summary = markdown;
             
             return result;
@@ -153,6 +192,9 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
     const mainColor = isLong ? "text-emerald-500" : isShort ? "text-rose-500" : "text-slate-500";
     const mainBg = isLong ? "bg-emerald-500" : isShort ? "bg-rose-500" : "bg-slate-500";
     const mainGradient = isLong ? "from-emerald-500 to-emerald-700" : isShort ? "from-rose-500 to-rose-700" : "from-slate-500 to-slate-700";
+
+    // Get trend label
+    const trendLabel = parsedData.marketStructure?.structure?.toUpperCase() || 'RANGING';
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -218,63 +260,97 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
 
             {/* TRADING PLANS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {plans.map((plan, idx) => (
-                    <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-                        <div className={clsx("absolute top-0 left-0 w-1.5 h-full", idx === 0 ? mainBg : "bg-slate-400")} />
-                        
-                        <div className="flex justify-between items-start mb-4 pl-3">
-                            <div>
-                                <h3 className={clsx("font-black text-lg", idx === 0 ? mainColor : "text-slate-500")}>
-                                    {plan.type}
-                                </h3>
-                                <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                                    {idx === 0 ? <TrendingUpIcon /> : <Shield size={12} />}
-                                    {idx === 0 ? text.trend_strategy : text.alt_strategy}
+                {plans.map((plan, idx) => {
+                    const isBuy = plan.direction === 'BUY';
+                    const dirColor = isBuy ? 'emerald' : 'rose';
+                    const dirBg = isBuy ? 'bg-emerald-500' : 'bg-rose-500';
+                    const dirText = isBuy ? 'text-emerald-500' : 'text-rose-500';
+                    const dirBadgeBg = isBuy ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-rose-500/10 text-rose-500 border-rose-500/30';
+
+                    // Build plan title: e.g., "BUY (TREND FOLLOWING - BULLISH)" or "SHORT (COUNTER TREND)"
+                    let planTitle = '';
+                    if (plan.isPrimary) {
+                        planTitle = `${plan.direction} (${text.trend_following} - ${trendLabel})`;
+                    } else {
+                        planTitle = `${plan.direction} (${text.counter_trend})`;
+                    }
+
+                    return (
+                        <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                            {/* Side accent bar */}
+                            <div className={clsx("absolute top-0 left-0 w-1.5 h-full", dirBg)} />
+                            
+                            <div className="flex flex-col gap-3 pl-3 mb-4">
+                                {/* Direction Badge - BIG and prominent */}
+                                <div className="flex justify-between items-start">
+                                    <div className={clsx("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-sm", dirBadgeBg)}>
+                                        {isBuy ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+                                        {plan.direction}
+                                    </div>
+                                    {plan.conviction > 0 && (
+                                        <span className={clsx("px-2 py-1 rounded text-xs font-bold", idx === 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-slate-100 dark:bg-slate-800 text-slate-500")}>
+                                            {plan.conviction}% {text.prob}
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                {/* Plan Title */}
+                                <div>
+                                    <h3 className={clsx("font-black text-base md:text-lg", dirText)}>
+                                        {planTitle}
+                                    </h3>
+                                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                                        {plan.isPrimary ? <TrendingUpIcon /> : <Shield size={12} />}
+                                        {plan.isPrimary ? (language === 'id' ? 'Strategi Trend Following' : 'Trend Following Strategy') : (language === 'id' ? 'Skenario Alternatif' : 'Hedge / Alt Scenario')}
+                                    </div>
                                 </div>
                             </div>
-                            {plan.conviction > 0 && (
-                                <span className={clsx("px-2 py-1 rounded text-xs font-bold", idx === 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-slate-100 text-slate-500")}>
-                                    {plan.conviction}% {text.prob}
-                                </span>
-                            )}
-                        </div>
-                        
-                        <div className="space-y-3 pl-3">
-                            <div className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-950/50 rounded-lg">
-                                <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                    <Target size={14} /> {text.entry}
-                                </span>
-                                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{plan.entry}</span>
-                            </div>
                             
-                            <div className="flex flex-col gap-1">
-                                <div className="flex justify-between items-center p-2 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-900/20">
+                            <div className="space-y-3 pl-3">
+                                {/* Entry Zone */}
+                                <div className="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-950/50 rounded-lg">
+                                    <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                        <Target size={14} /> {text.entry}
+                                    </span>
+                                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{plan.entry}</span>
+                                </div>
+                                
+                                {/* Stop Loss */}
+                                <div className="flex justify-between items-center p-2.5 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-900/20">
                                     <span className="flex items-center gap-2 text-xs font-bold text-rose-500">
                                         <Shield size={14} /> {text.sl}
                                     </span>
                                     <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{plan.sl}</span>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
-                                    <span className="block text-[10px] font-bold text-emerald-500 mb-1">TP 1</span>
-                                    <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">{plan.tp1}</span>
-                                </div>
-                                <div className="p-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
-                                    <span className="block text-[10px] font-bold text-emerald-500 mb-1">TP 2</span>
-                                    <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">{plan.tp2 || text.open}</span>
-                                </div>
+                                {/* Take Profit Levels - Dynamic Grid */}
+                                {plan.tps && plan.tps.length > 0 && (
+                                    <div className={clsx(
+                                        "grid gap-2",
+                                        plan.tps.length <= 2 ? "grid-cols-2" : 
+                                        plan.tps.length === 3 ? "grid-cols-3" :
+                                        plan.tps.length === 4 ? "grid-cols-2 md:grid-cols-4" :
+                                        "grid-cols-2 md:grid-cols-5"
+                                    )}>
+                                        {plan.tps.map((tp: string, tpIdx: number) => (
+                                            <div key={tpIdx} className="p-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
+                                                <span className="block text-[10px] font-bold text-emerald-500 mb-1">TP {tpIdx + 1}</span>
+                                                <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">{tp}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Technical Reason */}
+                                {plan.reason && (
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
+                                        <p className="text-xs text-slate-500 italic">"{plan.reason}"</p>
+                                    </div>
+                                )}
                             </div>
-                            
-                            {plan.reason && (
-                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-                                    <p className="text-xs text-slate-500 italic">"{plan.reason}"</p>
-                                </div>
-                            )}
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* MARKET STRUCTURE */}
@@ -290,7 +366,14 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
                             <span className="text-xs text-slate-400 uppercase font-bold">{text.structure}</span>
-                            <div className="font-bold text-slate-700 dark:text-slate-300 mt-1">{parsedData.marketStructure.structure}</div>
+                            <div className={clsx(
+                                "font-bold mt-1",
+                                parsedData.marketStructure.structure?.toLowerCase() === 'bullish' ? 'text-emerald-600 dark:text-emerald-400' :
+                                parsedData.marketStructure.structure?.toLowerCase() === 'bearish' ? 'text-rose-600 dark:text-rose-400' :
+                                'text-slate-700 dark:text-slate-300'
+                            )}>
+                                {parsedData.marketStructure.structure}
+                            </div>
                         </div>
                         <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
                             <span className="text-xs text-slate-400 uppercase font-bold">{text.key_support}</span>
