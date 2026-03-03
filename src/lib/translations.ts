@@ -148,6 +148,8 @@ export type TranslationKey =
   | 'modal_add_sub'
   | 'modal_add_sub_desc'
   | 'modal_limit'
+  | 'modal_add_limit'
+  | 'modal_add_limit_desc'
   | 'btn_cancel'
   | 'btn_save_changes'
   | 'confirm_delete_user'
@@ -196,15 +198,16 @@ export type TranslationKey =
   | 'pricing_desc'
   | 'plan_name'
   | 'plan_subtitle'
-  | 'plan_150_title'
-  | 'plan_150_price'
-  | 'plan_150_desc'
-  | 'plan_300_title'
-  | 'plan_300_price'
-  | 'plan_300_desc'
-  | 'plan_450_title'
-  | 'plan_450_price'
-  | 'plan_450_desc'
+  | 'plan_prod1_title'
+  | 'plan_prod1_sub'
+  | 'plan_prod2_title'
+  | 'plan_prod2_sub'
+  | 'plan_prod3_title'
+  | 'plan_prod3_sub'
+  | 'plan_prod4_title'
+  | 'plan_prod4_sub'
+  | 'plan_token'
+  | 'plan_masa_aktif'
   | 'plan_feature_1'
   | 'plan_feature_2'
   | 'plan_feature_3'
@@ -371,6 +374,8 @@ export const translations = {
     modal_add_sub: 'Add Subscription (Days)',
     modal_add_sub_desc: 'Duration will be added from today',
     modal_limit: 'Analysis Limit (Total)',
+    modal_add_limit: 'Add Analysis Limit (Current)',
+    modal_add_limit_desc: 'Increase the current remaining limit',
     btn_cancel: 'Cancel',
     btn_save_changes: 'Save Changes',
     confirm_delete_user: 'Are you sure you want to remove this user from the App Profiles? (Auth account will remain)',
@@ -428,17 +433,20 @@ export const translations = {
     plan_name: 'AI Market Intelligence',
     plan_subtitle: 'Full Access + Token Quota',
     
-    plan_150_title: '150 Tokens',
-    plan_150_price: 'Rp150.000',
-    plan_150_desc: 'Perfect for casual traders. ~5 analyses per day.',
+    plan_prod1_title: 'STARTER PLAN',
+    plan_prod1_sub: '1 Month Active',
     
-    plan_300_title: '300 Tokens',
-    plan_300_price: 'Rp300.000',
-    plan_300_desc: 'Ideal for active daily traders. ~10 analyses per day.',
+    plan_prod2_title: 'PRO PLAN',
+    plan_prod2_sub: '2 Months Active',
     
-    plan_450_title: '450 Tokens',
-    plan_450_price: 'Rp450.000',
-    plan_450_desc: 'For power users who need constant market updates.',
+    plan_prod3_title: 'ELITE PLAN',
+    plan_prod3_sub: '3 Months Active',
+    
+    plan_prod4_title: 'EXTEND ACCESS',
+    plan_prod4_sub: 'Active Period Only',
+    
+    plan_token: 'Tokens',
+    plan_masa_aktif: 'Active Period',
     
     plan_feature_1: '1 Month Active Subscription',
     plan_feature_2: 'Full AI Analysis Access',
@@ -616,6 +624,8 @@ export const translations = {
     modal_add_sub: 'Tambah Langganan (Hari)',
     modal_add_sub_desc: 'Durasi akan ditambahkan dari hari ini',
     modal_limit: 'Batas Analisis (Total)',
+    modal_add_limit: 'Tambah Batas Analisis (Sekarang)',
+    modal_add_limit_desc: 'Menambah batas sisa saat ini',
     btn_cancel: 'Batal',
     btn_save_changes: 'Simpan Perubahan',
     confirm_delete_user: 'Apakah Anda yakin ingin menghapus pengguna ini dari Profil Aplikasi? (Akun otentikasi akan tetap ada)',
@@ -664,17 +674,20 @@ export const translations = {
     plan_name: 'Intelijen Pasar AI',
     plan_subtitle: 'Akses Penuh + Kuota Token',
     
-    plan_150_title: '150 Token',
-    plan_150_price: 'Rp150.000',
-    plan_150_desc: 'Cocok untuk trader santai. ~5 analisis per hari.',
+    plan_prod1_title: 'PAKET STARTER',
+    plan_prod1_sub: 'Masa Aktif 1 Bulan',
     
-    plan_300_title: '300 Token',
-    plan_300_price: 'Rp300.000',
-    plan_300_desc: 'Ideal untuk trader harian aktif. ~10 analisis per hari.',
+    plan_prod2_title: 'PAKET PRO',
+    plan_prod2_sub: 'Masa Aktif 2 Bulan',
     
-    plan_450_title: '450 Token',
-    plan_450_price: 'Rp450.000',
-    plan_450_desc: 'Untuk pengguna pro yang butuh update pasar konstan.',
+    plan_prod3_title: 'PAKET ELITE',
+    plan_prod3_sub: 'Masa Aktif 3 Bulan',
+    
+    plan_prod4_title: 'PERPANJANG AKSES',
+    plan_prod4_sub: 'Khusus Masa Aktif',
+    
+    plan_token: 'Token',
+    plan_masa_aktif: 'Masa Aktif',
     
     plan_feature_1: 'Langganan Aktif 1 Bulan',
     plan_feature_2: 'Akses Analisis AI Penuh',

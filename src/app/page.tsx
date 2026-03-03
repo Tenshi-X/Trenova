@@ -49,7 +49,7 @@ export default function LandingPage() {
                <ThemeToggle />
             </div>
 
-            <a href="https://shopee.co.id/product/1734650704/48105786422/" target="_blank" rel="noopener noreferrer" className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all transform hover:-translate-y-0.5 shadow-lg whitespace-nowrap">
+            <a href="https://s.shopee.co.id/LiCMmnIOs" target="_blank" rel="noopener noreferrer" className="hidden sm:block bg-foreground text-background px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-all transform hover:-translate-y-0.5 shadow-lg whitespace-nowrap">
               {t('nav_get_started')}
             </a>
 
@@ -87,7 +87,7 @@ export default function LandingPage() {
               <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
               
               <a 
-                href="https://shopee.co.id/product/1734650704/48105786422/" 
+                href="https://s.shopee.co.id/LiCMmnIOs" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="p-4 text-center rounded-xl bg-neon text-white font-bold text-lg shadow-lg hover:bg-neon-dim transition-all active:scale-95"
@@ -491,65 +491,152 @@ export default function LandingPage() {
                <p className="text-slate-500 dark:text-slate-400 text-lg">{t('pricing_desc')}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-               {/* Plan 150 Tokens */}
-               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-xl transition-all flex flex-col">
-                  <div className="mb-4">
-                     <h3 className="text-lg font-bold text-foreground uppercase tracking-wider">{t('plan_150_title')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+               {/* Product 1 */}
+               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  <div className="mb-6 relative z-10">
+                     <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod1_title')}</h3>
+                     <p className="text-emerald-500 font-semibold text-sm mt-1">{t('plan_prod1_sub')}</p>
                   </div>
-                  <div className="mb-6">
-                     <span className="text-3xl font-bold text-foreground">{t('plan_150_price')}</span>
+                  <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">50 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp55.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">300 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp165.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">450 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp250.000</span>
+                     </div>
+                     <div className="flex justify-between items-center pt-1 border-transparent">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">1000 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp450.000</span>
+                     </div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 mb-8 text-sm flex-grow">{t('plan_150_desc')}</p>
-                  <a 
-                     href="https://shopee.co.id/product/1734650704/48105786422/" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-center text-sm"
-                  >
-                     {t('plan_btn')}
-                  </a>
+                  <div className="mt-auto relative z-10">
+                     <a 
+                        href="https://s.shopee.co.id/LiCMmnIOs" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 bg-transparent border-2 border-slate-200 dark:border-slate-700 text-foreground dark:text-white rounded-xl font-bold hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-sm inline-block"
+                     >
+                        {t('plan_btn')}
+                     </a>
+                  </div>
                </div>
 
-               {/* Plan 300 Tokens */}
-               <div className="bg-slate-900 dark:bg-black border border-neon/50 rounded-2xl p-6 hover:shadow-xl transition-all flex flex-col relative transform md:-translate-y-4 shadow-2xl">
-                  <div className="absolute top-0 right-0 bg-neon text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">
+               {/* Product 2 */}
+               <div className="bg-slate-50 dark:bg-[#0f172a] border border-neon/50 dark:border-neon rounded-3xl p-6 hover:shadow-2xl hover:shadow-neon/20 transition-all duration-300 flex flex-col relative transform lg:-translate-y-4 shadow-xl group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-neon/5 to-transparent rounded-3xl pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 bg-neon text-white text-[11px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
                      POPULAR
                   </div>
-                  <div className="mb-4">
-                     <h3 className="text-lg font-bold text-white uppercase tracking-wider">{t('plan_300_title')}</h3>
+                  <div className="mb-6 pt-2 relative z-10">
+                     <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod2_title')}</h3>
+                     <p className="text-emerald-500 font-semibold text-sm mt-1">{t('plan_prod2_sub')}</p>
                   </div>
-                  <div className="mb-6">
-                     <span className="text-3xl font-bold text-white">{t('plan_300_price')}</span>
+                  <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">50 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp100.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">300 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp300.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">450 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp450.000</span>
+                     </div>
+                     <div className="flex justify-between items-center pt-1 border-transparent">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">1000 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp800.000</span>
+                     </div>
                   </div>
-                  <p className="text-slate-300 mb-8 text-sm flex-grow">{t('plan_300_desc')}</p>
-                   <a 
-                     href="https://shopee.co.id/product/1734650704/48105786422/" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="w-full py-3 bg-neon hover:bg-neon-dim text-white rounded-xl font-bold transition-colors text-center text-sm flex items-center justify-center gap-2"
-                  >
-                     {t('plan_btn')} <ArrowRight size={16} />
-                  </a>
+                  <div className="mt-auto relative z-10">
+                     <a 
+                        href="https://s.shopee.co.id/70F6J5qP1j" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 bg-neon hover:bg-neon-dim text-white rounded-xl font-bold transition-all text-center text-sm flex items-center justify-center gap-2 shadow-lg shadow-neon/30 active:scale-95"
+                     >
+                        {t('plan_btn')} <ArrowRight size={18} />
+                     </a>
+                  </div>
                </div>
 
-               {/* Plan 450 Tokens */}
-               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 hover:shadow-xl transition-all flex flex-col">
-                  <div className="mb-4">
-                     <h3 className="text-lg font-bold text-foreground uppercase tracking-wider">{t('plan_450_title')}</h3>
+               {/* Product 3 */}
+               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  <div className="mb-6 relative z-10">
+                     <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod3_title')}</h3>
+                     <p className="text-emerald-500 font-semibold text-sm mt-1">{t('plan_prod3_sub')}</p>
                   </div>
-                  <div className="mb-6">
-                     <span className="text-3xl font-bold text-foreground">{t('plan_450_price')}</span>
+                  <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">50 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp135.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">300 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp420.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">450 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp650.000</span>
+                     </div>
+                     <div className="flex justify-between items-center pt-1 border-transparent">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">1000 {t('plan_token')}</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp1.100.000</span>
+                     </div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-400 mb-8 text-sm flex-grow">{t('plan_450_desc')}</p>
-                   <a 
-                     href="https://shopee.co.id/product/1734650704/48105786422/" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-center text-sm"
-                  >
-                     {t('plan_btn')}
-                  </a>
+                  <div className="mt-auto relative z-10">
+                     <a 
+                        href="https://s.shopee.co.id/5AnS7k79Vg" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 bg-transparent border-2 border-slate-200 dark:border-slate-700 text-foreground dark:text-white rounded-xl font-bold hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-sm inline-block"
+                     >
+                        {t('plan_btn')}
+                     </a>
+                  </div>
+               </div>
+
+               {/* Product 4 */}
+               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                  <div className="mb-6 relative z-10">
+                     <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod4_title')}</h3>
+                     <p className="text-emerald-500 font-semibold text-sm mt-1">{t('plan_prod4_sub')}</p>
+                  </div>
+                  <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">1 Bulan</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp50.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">2 Bulan</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp100.000</span>
+                     </div>
+                     <div className="flex justify-between items-center pt-1 border-transparent">
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">3 Bulan</span>
+                        <span className="font-bold text-foreground tracking-wide">Rp150.000</span>
+                     </div>
+                  </div>
+                   <div className="mt-auto relative z-10">
+                     <a 
+                        href="https://s.shopee.co.id/4AuuvvNtNS" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 bg-transparent border-2 border-slate-200 dark:border-slate-700 text-foreground dark:text-white rounded-xl font-bold hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-center text-sm inline-block"
+                     >
+                        {t('plan_btn')}
+                     </a>
+                   </div>
                </div>
             </div>
 

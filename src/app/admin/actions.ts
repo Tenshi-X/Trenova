@@ -62,14 +62,21 @@ const calculateEndDate = (days: number, fromDate: Date = new Date()) => {
     return date.toISOString();
 };
 
-export async function provisionUser(userId: string, email: string, role: string, days: number, analysisLimit: number) {
+export async function provisionUser(
+  userId: string, 
+  email: string, 
+  role: string, 
+  days: number, 
+  addAnalysisLimit: number,
+  totalAnalysisLimit: number
+) {
   const admin = createSupabaseAdminClient();
   if (!admin) return { success: false, error: "Configuration Error" };
   
-  // 1. Check existing profile for Subscription Extension
+  // 1. Check existing profile for Subscription Extension and Limits
   const { data: currentProfile } = await admin
     .from('user_profiles')
-    .select('subscription_end_at')
+    .select('subscription_end_at, analysis_limit, current_analysis_count')
     .eq('id', userId)
     .single();
 
@@ -78,12 +85,24 @@ export async function provisionUser(userId: string, email: string, role: string,
   const currentEnd = currentProfile?.subscription_end_at ? new Date(currentProfile.subscription_end_at) : null;
 
   if (currentEnd && currentEnd > now) {
-     // Extend existing active subscription
      endAt = calculateEndDate(days, currentEnd);
   } else {
-     // Start new subscription from today
      endAt = calculateEndDate(days);
   }
+
+  // Handle Analysis Limits
+  const oldLimit = currentProfile?.analysis_limit ?? 150;
+  const oldUsed = currentProfile?.current_analysis_count ?? 0;
+  const oldRemaining = Math.max(0, oldLimit - oldUsed);
+
+  const newLimit = totalAnalysisLimit;
+  const newRemaining = oldRemaining + addAnalysisLimit;
+
+  if (newRemaining > newLimit) {
+    return { success: false, error: `Limit cannot exceed total limit (${newRemaining}/${newLimit}). Please increase total limit first.` };
+  }
+
+  const newUsed = newLimit - newRemaining;
 
   // 2. Update Auth Metadata
   await admin.auth.admin.updateUserById(userId, {
@@ -98,7 +117,8 @@ export async function provisionUser(userId: string, email: string, role: string,
       email: email,
       role: role,
       subscription_end_at: endAt,
-      analysis_limit: analysisLimit,
+      analysis_limit: newLimit,
+      current_analysis_count: newUsed
     });
 
   if (error) {

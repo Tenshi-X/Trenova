@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [formData, setFormData] = useState({
     role: 'user',
     quota: 30,
+    addAnalysisLimit: 0,
     analysisLimit: 150
   });
 
@@ -67,6 +68,7 @@ export default function AdminPage() {
           targetEmail, 
           formData.role, 
           formData.quota,
+          formData.addAnalysisLimit,
           formData.analysisLimit
       );
       if (!res.success) throw new Error(res.error);
@@ -76,7 +78,7 @@ export default function AdminPage() {
       
       // Reset State
       setEditingProfileId(null);
-      setFormData({ role: 'user', quota: 30, analysisLimit: 150 });
+      setFormData({ role: 'user', quota: 30, addAnalysisLimit: 0, analysisLimit: 150 });
 
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -88,6 +90,7 @@ export default function AdminPage() {
     setFormData({ 
         role: profile.role, 
         quota: 0, // Default to 0 added
+        addAnalysisLimit: 0,
         analysisLimit: profile.analysis_limit || 150
     });
   };
@@ -424,6 +427,17 @@ export default function AdminPage() {
                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
                           <p className="text-xs text-slate-400">{t('modal_add_sub_desc')}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">{t('modal_add_limit')}</label>
+                          <input 
+                              type="number"
+                              value={formData.addAnalysisLimit}
+                              onChange={e => setFormData({...formData, addAnalysisLimit: Number(e.target.value)})}
+                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
+                          />
+                          <p className="text-xs text-slate-400">{t('modal_add_limit_desc')}</p>
                       </div>
 
                       <div className="space-y-2">
