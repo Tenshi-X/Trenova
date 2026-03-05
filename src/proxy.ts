@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -13,14 +13,16 @@ export async function middleware(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Middleware: Missing Supabase Environment Variables');
+    console.error('Proxy: Missing Supabase Environment Variables');
     console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
     console.log('Key:', supabaseAnonKey ? 'Set' : 'Missing');
+    // Allow the request to proceed without auth check if env vars are missing
+    return response;
   }
 
   const supabase = createServerClient(
-    supabaseUrl!,
-    supabaseAnonKey!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -48,7 +50,7 @@ export async function middleware(request: NextRequest) {
       const { data } = await supabase.auth.getUser()
       user = data.user;
   } catch (err) {
-      console.error("Middleware Auth Error:", err);
+      console.error("Proxy Auth Error:", err);
       // Treat as not logged in if auth service is unreachable
   }
 
@@ -73,7 +75,7 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  // Redirect Login if already logged in (Register is now protected admin route)
+  // Redirect Login if already logged in
   if (path === '/login' && user) {
      return NextResponse.redirect(new URL('/dashboard', request.url))
   }
@@ -88,7 +90,6 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
