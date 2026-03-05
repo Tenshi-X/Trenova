@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+
   // Disable ETags to prevent Netlify CDN from serving stale HTML with wrong chunk references
   generateEtags: false,
 
