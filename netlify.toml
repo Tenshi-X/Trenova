@@ -1,6 +1,5 @@
 [build]
   command = "npm run build"
-  publish = ".next"
 
 # Never cache HTML pages — ensures browsers always get the latest
 # HTML that references the correct JS/CSS chunk hashes.
