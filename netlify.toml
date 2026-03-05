@@ -1,21 +1,2 @@
 [build]
   command = "npm run build"
-
-# Never cache HTML pages — ensures browsers always get the latest
-# HTML that references the correct JS/CSS chunk hashes.
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
-
-# Long-lived cache for hashed static assets (content-addressed, safe to cache forever)
-[[headers]]
-  for = "/_next/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Long-lived cache for public folder files
-[[headers]]
-  for = "/static/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
