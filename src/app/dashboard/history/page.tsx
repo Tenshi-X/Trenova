@@ -35,14 +35,20 @@ const getPreviewText = (content: string, language: 'en' | 'id') => {
     
     try {
         // 1. Try to clean markdown code blocks if present
-        const cleanContent = content.replace(/```json\s*|\s*```/g, '').trim();
+        let cleanContent = content.replace(/```(?:json|JSON)?\s*|\s*```/gi, '').trim();
         
-        // 2. Try parsing as JSON if it looks like an object
+        // 2. If not starting with {, try to find JSON object
+        if (!cleanContent.startsWith('{')) {
+            const firstBrace = cleanContent.indexOf('{');
+            const lastBrace = cleanContent.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace > firstBrace) {
+                cleanContent = cleanContent.substring(firstBrace, lastBrace + 1);
+            }
+        }
+        
+        // 3. Try parsing as JSON
         if (cleanContent.startsWith('{')) {
             const json = JSON.parse(cleanContent);
-            // Return main reason (Indonesian/English) or summary
-            // If the JSON structure supports language keys in future, use them.
-            // For now, it seems standard structure.
             return json.main_reason || json.summary || json.decision || "Click to view full analysis";
         }
     } catch (e) {
