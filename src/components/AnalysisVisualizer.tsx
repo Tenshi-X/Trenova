@@ -32,7 +32,7 @@ function useTypewriter(text: string, speed = 10) {
     }, [text, speed]);
     
     return text ? text.slice(0, displayedLength) : '';
-}
+} 
 
 import { useLanguage } from '@/context/LanguageContext';
 
