@@ -3,3 +3,11 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Redirect /login to /sign-in to bypass stale CDN edge cache
+# force = true ensures it overrides any cached content
+[[redirects]]
+  from = "/login"
+  to = "/sign-in"
+  status = 302
+  force = true

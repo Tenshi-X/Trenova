@@ -7,7 +7,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Don't show sidebar on login page
-  const isLoginPage = pathname === '/login' || pathname === '/' || pathname === '/feedback';
+  const isLoginPage = pathname === '/login' || pathname === '/sign-in' || pathname === '/' || pathname === '/feedback';
   
   return (
     <ThemeProvider>

@@ -59,7 +59,7 @@ export async function proxy(request: NextRequest) {
   // Protect Admin Routes
   if (path.startsWith('/admin')) {
     if (!user) {
-        return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.redirect(new URL('/sign-in', request.url))
     }
     const role = user.user_metadata.role;
     if (role !== 'admin') {
@@ -71,12 +71,12 @@ export async function proxy(request: NextRequest) {
   // Protect User Routes (Dashboard, Chatbot)
   if (path.startsWith('/dashboard') || path.startsWith('/chatbot')) {
     if (!user) {
-        return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.redirect(new URL('/sign-in', request.url))
     }
   }
   
   // Redirect Login if already logged in
-  if (path === '/login' && user) {
+  if ((path === '/login' || path === '/sign-in') && user) {
      return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
