@@ -51,46 +51,62 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
     // 2. Search Logic (Debounced)
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (search.length >= 2) {
-                setSearching(true);
-                try {
-                    // A. Search for Coin IDs
-                    const searchRes = await fetch(`https://api.coingecko.com/api/v3/search?query=${search}`);
-                    if (!searchRes.ok) throw new Error("Search failed");
-                    const searchData = await searchRes.json();
-                    
-                    // Take top 10 results
-                    const topCoins = searchData.coins.slice(0, 50);
-                    const coinIds = topCoins.map((c: any) => c.id).join(',');
+            const lowerSearch = search.toLowerCase();
+            const searchClean = lowerSearch.replace(/[^a-z0-9]/g, '');
+            
+            // First pass: always do local filtering on loaded coins for exact/partial matches
+            const localFilter = search.length === 0 ? coins : coins.filter(c => {
+                const sym = c.symbol.toLowerCase();
+                const name = c.name.toLowerCase();
+                return name.includes(lowerSearch) || 
+                       sym.includes(searchClean) ||
+                       (sym + 'usdt').includes(searchClean) ||
+                       (sym + 'usd').includes(searchClean);
+            });
 
-                    if (coinIds) {
-                        // B. Fetch Market Data for these IDs
-                        const marketRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds}&order=market_cap_desc&sparkline=false`);
-                        if (marketRes.ok) {
-                            const marketData = await marketRes.json();
-                            setDisplayedCoins(marketData);
-                        }
-                    } else {
-                        setDisplayedCoins([]);
+            if (search.length < 2) {
+                setDisplayedCoins(localFilter);
+                return;
+            }
+
+            // Provide immediate feedback to user with local filter results
+            // This prevents the search results from "freezing" on character 1 
+            // if the CoinGecko API throws a rate limit error (HTTP 429).
+            setDisplayedCoins(localFilter);
+            setSearching(true);
+            
+            try {
+                // A. Search for Coin IDs through CoinGecko globally
+                const searchRes = await fetch(`https://api.coingecko.com/api/v3/search?query=${search}`);
+                if (!searchRes.ok) throw new Error("Search failed");
+                const searchData = await searchRes.json();
+                
+                // Take top 50 results
+                const topCoins = searchData.coins.slice(0, 50);
+                const coinIds = topCoins.map((c: any) => c.id).join(',');
+
+                if (coinIds) {
+                    // B. Fetch Market Data for these IDs
+                    const marketRes = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds}&order=market_cap_desc&sparkline=false`);
+                    if (marketRes.ok) {
+                        const marketData = await marketRes.json();
+                        
+                        // Combine local filter and market data to ensure 
+                        // local hits (like typing "btcusdt") aren't wiped out by CoinGecko's empty API hit.
+                        const combined = [...localFilter];
+                        marketData.forEach((mc: Coin) => {
+                            if (!combined.find(c => c.id === mc.id)) {
+                                combined.push(mc);
+                            }
+                        });
+                        setDisplayedCoins(combined);
                     }
-
-                } catch (e) {
-                    console.error("Search API Error", e);
-                } finally {
-                    setSearching(false);
                 }
-            } else {
-                // Return to local filter of top 100 or full list
-                if (search.length === 0) {
-                    setDisplayedCoins(coins);
-                } else {
-                     // Local filter for 1 char
-                     const filtered = coins.filter(c => 
-                        c.name.toLowerCase().includes(search.toLowerCase()) || 
-                        c.symbol.toLowerCase().includes(search.toLowerCase())
-                    );
-                    setDisplayedCoins(filtered);
-                }
+            } catch (e) {
+                console.error("Search API Error", e);
+                // On catch, the localFilter results are still retained!
+            } finally {
+                setSearching(false);
             }
         }, 500); // 500ms debounce
 
