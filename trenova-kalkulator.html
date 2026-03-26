@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trenova Terminal — Business Intelligence v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c0b;--bg2:#0e1412;--bg3:#141a18;--bg4:#1c2421;--border:rgba(46,196,160,0.12);--border2:rgba(46,196,160,0.25);--teal:#2ec4a0;--teal-dim:rgba(46,196,160,0.15);--teal-glow:rgba(46,196,160,0.06);--amber:#f0a500;--red:#e05c5c;--blue:#4a9eff;--text:#d4e8e3;--text-muted:#6a8f87;--text-dim:#3a5852;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(46,196,160,0.022) 39px,rgba(46,196,160,0.022) 40px);pointer-events:none;z-index:0;}
+.wrapper{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+.nav{display:flex;gap:4px;margin-bottom:28px;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:5px;flex-wrap:wrap;}
+.nav-btn{flex:1;min-width:70px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;padding:8px 6px;border-radius:7px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;transition:all 0.18s;text-transform:uppercase;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.active{background:var(--bg4);color:var(--teal);border:0.5px solid var(--border2);}
+.page{display:none;}.page.active{display:block;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:18px;border-bottom:0.5px solid var(--border);}
+.logo-main{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;}
+.logo-sub{font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:0.2em;text-transform:uppercase;margin-top:2px;}
+.status-dot{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(46,196,160,0.5);}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(46,196,160,0);}}
+.sec-label{font-family:var(--mono);font-size:10px;letter-spacing:0.2em;color:var(--teal);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sec-label::after{content:'';flex:1;height:0.5px;background:linear-gradient(to right,var(--border2),transparent);}
+.input-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:22px 26px;margin-bottom:14px;}
+.field-row{display:grid;grid-template-columns:210px 1fr 130px;align-items:center;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--border);}
+.field-row:last-child{border-bottom:none;padding-bottom:0;}
+.field-row:first-child{padding-top:0;}
+.field-label{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.field-label span{display:block;font-size:10px;color:var(--text-dim);margin-top:2px;}
+.field-input{background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;padding:7px 11px;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);width:100%;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.field-input:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(46,196,160,0.1);}
+.field-input::placeholder{color:var(--text-dim);}
+.field-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--teal);text-align:right;white-space:nowrap;}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.metrics-grid.m3{grid-template-columns:repeat(3,1fr);}
+.metrics-grid.m5{grid-template-columns:repeat(5,1fr);}
+.metric-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:15px 17px;position:relative;overflow:hidden;transition:transform 0.2s,border-color 0.2s;}
+.metric-card:hover{transform:translateY(-1px);border-color:var(--border2);}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:0.35;}
+.metric-label{font-family:var(--mono);font-size:10px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:7px;}
+.metric-val{font-family:var(--mono);font-size:17px;font-weight:600;line-height:1;}
+.metric-val.teal{color:var(--teal);}.metric-val.amber{color:var(--amber);}.metric-val.red{color:var(--red);}.metric-val.blue{color:var(--blue);}
+.metric-sub{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:4px;}
+.chart-section{background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:14px;}
+.bar-group{display:flex;flex-direction:column;gap:11px;}
+.bar-row{display:flex;align-items:center;gap:11px;}
+.bar-name{font-family:var(--mono);font-size:11px;color:var(--text-muted);min-width:90px;}
+.bar-track{flex:1;height:8px;background:var(--bg4);border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.16,1,0.3,1);}
+.bar-fill.teal{background:linear-gradient(90deg,#1a8a72,#2ec4a0);}
+.bar-fill.amber{background:linear-gradient(90deg,#a06a00,#f0a500);}
+.bar-fill.red{background:linear-gradient(90deg,#902020,#e05c5c);}
+.bar-fill.blue{background:linear-gradient(90deg,#1a4a99,#4a9eff);}
+.bar-num{font-family:var(--mono);font-size:11px;color:var(--text);min-width:115px;text-align:right;}
+.tier-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
+.tier-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:13px 11px;cursor:pointer;transition:all 0.18s;position:relative;}
+.tier-card:hover,.tier-card.active{border-color:var(--teal);background:var(--teal-dim);}
+.tier-card.active::after{content:'✓';position:absolute;top:7px;right:9px;font-size:10px;color:var(--teal);}
+.tier-name{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;}
+.tier-qty{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--teal);}
+.tier-unit{font-family:var(--mono);font-size:9px;color:var(--text-dim);}
+.tier-price{font-family:var(--mono);font-size:11px;color:var(--text);margin-top:5px;}
+.tier-margin{font-size:10px;color:var(--teal);font-family:var(--mono);}
+.rec-badge{font-family:var(--mono);font-size:9px;background:var(--teal);color:#080c0b;padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:3px;font-weight:600;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
+.sum-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:16px 20px;}
+.sum-title{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px;}
+.sum-line{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:0.5px solid var(--border);}
+.sum-line:last-child{border-bottom:none;}
+.sum-key{font-size:12px;color:var(--text-muted);}
+.sum-num{font-family:var(--mono);font-size:12px;font-weight:500;}
+.sum-num.g{color:var(--teal);}.sum-num.r{color:var(--red);}.sum-num.a{color:var(--amber);}
+.topup-visual{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.topup-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:15px 17px;}
+.topup-label{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;}
+.topup-val{font-family:var(--mono);font-size:19px;font-weight:600;}
+.topup-sub{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:3px;}
+.whatif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px;}
+.whatif-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color 0.2s;}
+.whatif-card:hover{border-color:var(--border2);}
+.whatif-label{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;}
+.whatif-price{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--teal);}
+.whatif-detail{font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:5px;line-height:1.7;white-space:pre;}
+.whatif-badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px;margin-top:5px;}
+.badge-profit{background:rgba(46,196,160,0.15);color:var(--teal);}
+.badge-loss{background:rgba(224,92,92,0.15);color:var(--red);}
+.multi-row{display:grid;grid-template-columns:70px 1fr 1fr 1fr 1fr;gap:9px;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);}
+.multi-row:last-child{border-bottom:none;}
+.multi-label{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;}
+.multi-input{background:var(--bg3);border:0.5px solid var(--border);border-radius:5px;padding:6px 9px;font-family:var(--mono);font-size:12px;color:var(--text);width:100%;outline:none;}
+.multi-input:focus{border-color:var(--teal);}
+.multi-result{font-family:var(--mono);font-size:12px;color:var(--teal);text-align:right;}
+.multi-tag{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.scenario-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.scenario-item{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:11px 15px;display:grid;grid-template-columns:auto 1fr auto auto auto auto auto;gap:9px;align-items:center;}
+.sc-name{font-family:var(--mono);font-size:12px;color:var(--text);}
+.sc-val{font-family:var(--mono);font-size:11px;color:var(--text-muted);}
+.sc-profit{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--teal);}
+.sc-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:0 4px;transition:color 0.15s;}
+.sc-del:hover{color:var(--red);}
+.sc-save-btn{background:var(--teal-dim);border:0.5px solid var(--border2);border-radius:6px;padding:7px 15px;font-family:var(--mono);font-size:11px;color:var(--teal);cursor:pointer;transition:all 0.15s;letter-spacing:0.05em;}
+.sc-save-btn:hover{background:rgba(46,196,160,0.25);}
+.payback-timeline{display:flex;gap:0;margin-bottom:14px;overflow:hidden;border-radius:8px;border:0.5px solid var(--border);}
+.pb-month{flex:1;padding:11px 7px;text-align:center;border-right:0.5px solid var(--border);}
+.pb-month:last-child{border-right:none;}
+.pb-month.paid{background:rgba(46,196,160,0.1);}
+.pb-month.current{background:rgba(46,196,160,0.2);}
+.pb-num{font-family:var(--mono);font-size:13px;font-weight:600;}
+.pb-label{font-family:var(--mono);font-size:9px;color:var(--text-muted);margin-top:3px;}
+.ads-result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border);}
+.ads-big{font-family:var(--mono);font-size:20px;font-weight:600;}
+.export-btn{background:var(--teal-dim);border:0.5px solid var(--border2);border-radius:8px;padding:9px 18px;font-family:var(--mono);font-size:11px;color:var(--teal);cursor:pointer;transition:all 0.15s;letter-spacing:0.06em;margin-right:7px;margin-bottom:7px;}
+.export-btn:hover{background:rgba(46,196,160,0.25);}
+.export-area{background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;padding:15px 18px;font-family:var(--mono);font-size:11px;color:var(--text-muted);line-height:1.8;margin-top:11px;white-space:pre-wrap;display:none;}
+.target-result{background:var(--bg3);border:0.5px solid var(--border2);border-radius:8px;padding:15px 18px;margin-top:11px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.tr-label{font-family:var(--mono);font-size:10px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
+.tr-val{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--teal);}
+.footer{text-align:center;padding-top:26px;border-top:0.5px solid var(--border);font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:0.1em;}
+@media(max-width:640px){
+  .metrics-grid,.metrics-grid.m5{grid-template-columns:repeat(2,1fr);}
+  .tier-grid{grid-template-columns:repeat(3,1fr);}
+  .sum-grid,.whatif-grid,.topup-visual,.target-result{grid-template-columns:1fr;}
+  .field-row{grid-template-columns:1fr;gap:5px;}
+  .field-val{text-align:left;}
+  .nav-btn{font-size:9px;padding:6px 3px;}
+  .multi-row{grid-template-columns:1fr 1fr;}
+  .scenario-item{grid-template-columns:1fr 1fr auto;}
+  .ads-result-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<div class="header">
+  <div><div class="logo-main">Trenova Terminal</div><div class="logo-sub">Business Intelligence v2.0</div></div>
+  <div class="status-dot"><div class="dot"></div><span>LIVE CALC</span></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('pricing')">Pricing</button>
+  <button class="nav-btn" onclick="showPage('topup')">Topup API</button>
+  <button class="nav-btn" onclick="showPage('multitier')">Multi Tier</button>
+  <button class="nav-btn" onclick="showPage('whatif')">What If</button>
+  <button class="nav-btn" onclick="showPage('ads')">Meta Ads</button>
+  <button class="nav-btn" onclick="showPage('target')">Target Profit</button>
+  <button class="nav-btn" onclick="showPage('scenarios')">Skenario</button>
+  <button class="nav-btn" onclick="showPage('payback')">Payback</button>
+  <button class="nav-btn" onclick="showPage('export')">Export</button>
+</div>
+
+<!-- PRICING -->
+<div id="page-pricing" class="page active">
+  <div class="sec-label">// Parameter Dasar</div>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Cost per Analisa (USD)<span>biaya API Anthropic per analisa</span></div><input type="number" class="field-input" id="costUsd" value="0.14" step="0.01" min="0.01" oninput="recalcAll()"><div class="field-val" id="lbl-cost-idr">—</div></div>
+    <div class="field-row"><div class="field-label">Kurs USD / IDR<span>update sesuai kurs hari ini</span></div><input type="number" class="field-input" id="kurs" value="16000" step="100" min="10000" oninput="recalcAll()"><div class="field-val" id="lbl-kurs">Rp 16.000</div></div>
+    <div class="field-row"><div class="field-label">Jumlah Analisa / Paket<span>analisa per paket yang dijual</span></div><input type="number" class="field-input" id="qty" value="30" step="1" min="1" oninput="recalcAll()"><div class="field-val" id="lbl-qty">30x</div></div>
+    <div class="field-row"><div class="field-label">Harga Jual Paket (Rp)<span>harga ke pembeli</span></div><input type="number" class="field-input" id="price" value="130000" step="1000" min="1000" oninput="recalcAll()"><div class="field-val" id="lbl-price">Rp 130.000</div></div>
+    <div class="field-row"><div class="field-label">Estimasi User / Bulan<span>proyeksi pembeli per bulan</span></div><input type="number" class="field-input" id="users" value="20" step="1" min="1" oninput="recalcAll()"><div class="field-val" id="lbl-users">20 user</div></div>
+    <div class="field-row"><div class="field-label">Overhead Bulanan (Rp)<span>hosting, domain, tools, dll</span></div><input type="number" class="field-input" id="overhead" value="50000" step="5000" min="0" oninput="recalcAll()"><div class="field-val" id="lbl-overhead">Rp 50.000</div></div>
+  </div>
+  <div class="sec-label">// Hasil Kalkulasi</div>
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="metric-label">Cost / Paket</div><div class="metric-val red" id="m-cost">—</div><div class="metric-sub" id="m-cost-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Profit / Paket</div><div class="metric-val teal" id="m-profit">—</div><div class="metric-sub" id="m-profit-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Margin</div><div class="metric-val amber" id="m-margin">—</div><div class="metric-sub" id="m-margin-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Profit Bersih / Bulan</div><div class="metric-val teal" id="m-monthly">—</div><div class="metric-sub" id="m-monthly-sub">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="sec-label" style="margin-bottom:14px;">// Visualisasi Per Paket</div>
+    <div class="bar-group">
+      <div class="bar-row"><div class="bar-name">Cost API</div><div class="bar-track"><div class="bar-fill red" id="bar-cost" style="width:0%"></div></div><div class="bar-num" id="bnum-cost">—</div></div>
+      <div class="bar-row"><div class="bar-name">Profit</div><div class="bar-track"><div class="bar-fill teal" id="bar-profit" style="width:0%"></div></div><div class="bar-num" id="bnum-profit">—</div></div>
+      <div class="bar-row"><div class="bar-name">Harga Jual</div><div class="bar-track"><div class="bar-fill amber" id="bar-price" style="width:100%"></div></div><div class="bar-num" id="bnum-price">—</div></div>
+    </div>
+  </div>
+  <div class="sec-label">// Quick Tier Selector</div>
+  <div class="tier-grid" id="tier-grid"></div>
+  <div class="sec-label">// Ringkasan Bisnis</div>
+  <div class="sum-grid">
+    <div class="sum-card">
+      <div class="sum-title">// Per Paket</div>
+      <div class="sum-line"><span class="sum-key">Harga jual</span><span class="sum-num g" id="s-price">—</span></div>
+      <div class="sum-line"><span class="sum-key">Cost API</span><span class="sum-num r" id="s-cost">—</span></div>
+      <div class="sum-line"><span class="sum-key">Gross profit</span><span class="sum-num g" id="s-gross">—</span></div>
+      <div class="sum-line"><span class="sum-key">Margin</span><span class="sum-num a" id="s-margin">—</span></div>
+      <div class="sum-line"><span class="sum-key">Cost / analisa</span><span class="sum-num" id="s-per-analisa">—</span></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-title">// Proyeksi Bulanan</div>
+      <div class="sum-line"><span class="sum-key">Revenue</span><span class="sum-num g" id="s-rev">—</span></div>
+      <div class="sum-line"><span class="sum-key">Total cost API</span><span class="sum-num r" id="s-api-cost">—</span></div>
+      <div class="sum-line"><span class="sum-key">Overhead</span><span class="sum-num r" id="s-overhead">—</span></div>
+      <div class="sum-line"><span class="sum-key">Profit bersih</span><span class="sum-num g" id="s-net">—</span></div>
+      <div class="sum-line"><span class="sum-key">Break even user</span><span class="sum-num" id="s-be">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOPUP -->
+<div id="page-topup" class="page">
+  <div class="sec-label">// Kalkulator Topup Anthropic</div>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Topup per sekali (USD)<span>minimum topup Anthropic = $5</span></div><input type="number" class="field-input" id="topupAmt" value="5" step="5" min="5" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-usd">$5</div></div>
+    <div class="field-row"><div class="field-label">Estimasi user / bulan<span>sama dengan di halaman Pricing</span></div><input type="number" class="field-input" id="topupUsers" value="20" step="1" min="1" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-users">20 user</div></div>
+    <div class="field-row"><div class="field-label">Analisa per paket<span>sama dengan di halaman Pricing</span></div><input type="number" class="field-input" id="topupQty" value="30" step="1" min="1" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-qty">30x</div></div>
+  </div>
+  <div class="topup-visual">
+    <div class="topup-card"><div class="topup-label">Total Analisa / Bulan</div><div class="topup-val teal" id="tp-total-analisa">—</div><div class="topup-sub" id="tp-total-sub">—</div></div>
+    <div class="topup-card"><div class="topup-label">Total Biaya API / Bulan</div><div class="topup-val amber" id="tp-total-cost">—</div><div class="topup-sub" id="tp-cost-sub">—</div></div>
+    <div class="topup-card"><div class="topup-label">Jumlah Topup Dibutuhkan</div><div class="topup-val blue" id="tp-topup-count">—</div><div class="topup-sub" id="tp-topup-sub">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="sec-label" style="margin-bottom:12px;">// Breakdown Topup per Minggu</div>
+    <div class="bar-group" id="topup-weekly-bars"></div>
+  </div>
+  <div class="input-card">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;">// Manajemen Modal</div>
+    <div class="sum-line"><span class="sum-key">Modal awal yang disiapkan (1 bulan)</span><span class="sum-num g" id="tp-modal">—</span></div>
+    <div class="sum-line"><span class="sum-key">Saldo per topup $5 = analisa</span><span class="sum-num" id="tp-per-topup">—</span></div>
+    <div class="sum-line"><span class="sum-key">Rata-rata topup per minggu</span><span class="sum-num" id="tp-per-week">—</span></div>
+    <div class="sum-line"><span class="sum-key">Pakai $10/topup → hemat berapa kali</span><span class="sum-num" id="tp-save">—</span></div>
+  </div>
+</div>
+
+<!-- MULTI TIER -->
+<div id="page-multitier" class="page">
+  <div class="sec-label">// Simulasi Revenue Campuran Tier</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Isi berapa user yang beli masing-masing tier dalam sebulan. Cost otomatis ngikut parameter Pricing.</p>
+  <div class="input-card">
+    <div class="multi-row" style="padding-bottom:6px;">
+      <div class="multi-label">Tier</div><div class="multi-label">Harga Jual (Rp)</div><div class="multi-label">Jumlah User</div><div class="multi-label">Revenue</div><div class="multi-label">Profit</div>
+    </div>
+    <div id="multi-rows"></div>
+  </div>
+  <div class="metrics-grid m3">
+    <div class="metric-card"><div class="metric-label">Total Revenue</div><div class="metric-val teal" id="mt-rev">—</div><div class="metric-sub">semua tier</div></div>
+    <div class="metric-card"><div class="metric-label">Total Profit</div><div class="metric-val teal" id="mt-profit">—</div><div class="metric-sub" id="mt-profit-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Avg Margin</div><div class="metric-val amber" id="mt-margin">—</div><div class="metric-sub">weighted average</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="sec-label" style="margin-bottom:12px;">// Kontribusi Revenue per Tier</div>
+    <div class="bar-group" id="multi-bars"></div>
+  </div>
+</div>
+
+<!-- WHAT IF -->
+<div id="page-whatif" class="page">
+  <div class="sec-label">// Skenario What If — Simulasi Harga</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Dampak langsung jika harga naik atau turun. Klik kartu untuk apply harga ke Pricing.</p>
+  <div class="whatif-grid" id="whatif-cards"></div>
+  <div class="sec-label">// Custom What If</div>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Harga Custom (Rp)<span>coba harga apapun yang kamu inginkan</span></div><input type="number" class="field-input" id="wi-price" value="150000" step="5000" oninput="recalcWhatif()"><div class="field-val" id="wi-price-lbl">Rp 150.000</div></div>
+    <div class="field-row"><div class="field-label">Target User / Bulan<span>berapa user closing per bulan</span></div><input type="number" class="field-input" id="wi-users" value="20" step="1" oninput="recalcWhatif()"><div class="field-val" id="wi-users-lbl">20 user</div></div>
+  </div>
+  <div class="target-result" id="wi-result">
+    <div><div class="tr-label">Margin</div><div class="tr-val" id="wi-margin">—</div></div>
+    <div><div class="tr-label">Profit / Paket</div><div class="tr-val" id="wi-profit">—</div></div>
+    <div><div class="tr-label">Profit Bulanan</div><div class="tr-val" id="wi-monthly">—</div></div>
+  </div>
+</div>
+
+<!-- META ADS -->
+<div id="page-ads" class="page">
+  <div class="sec-label">// Meta Ads — Berapa Closing yang Dibutuhkan?</div>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Budget Iklan / Bulan (Rp)<span>total budget Meta Ads</span></div><input type="number" class="field-input" id="adsBudget" value="200000" step="50000" min="0" oninput="recalcAds()"><div class="field-val" id="lbl-ads-budget">Rp 200.000</div></div>
+    <div class="field-row"><div class="field-label">Estimasi CTR (%)<span>% orang klik dari yang lihat iklan</span></div><input type="number" class="field-input" id="adsCtr" value="2" step="0.1" min="0.1" oninput="recalcAds()"><div class="field-val" id="lbl-ads-ctr">2%</div></div>
+    <div class="field-row"><div class="field-label">Estimasi Konversi (%)<span>% klik yang jadi beli</span></div><input type="number" class="field-input" id="adsConv" value="5" step="0.5" min="0.1" oninput="recalcAds()"><div class="field-val" id="lbl-ads-conv">5%</div></div>
+    <div class="field-row"><div class="field-label">CPM estimasi (Rp)<span>biaya per 1.000 tayangan</span></div><input type="number" class="field-input" id="adsCpm" value="15000" step="1000" min="1000" oninput="recalcAds()"><div class="field-val" id="lbl-ads-cpm">Rp 15.000</div></div>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card"><div class="metric-label">Estimasi Reach</div><div class="metric-val amber" id="am-reach">—</div><div class="metric-sub">tayangan</div></div>
+    <div class="metric-card"><div class="metric-label">Estimasi Klik</div><div class="metric-val teal" id="am-clicks">—</div><div class="metric-sub" id="am-clicks-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Closing Prediksi</div><div class="metric-val teal" id="am-closing">—</div><div class="metric-sub" id="am-closing-sub">—</div></div>
+    <div class="metric-card"><div class="metric-label">Cost per Closing</div><div class="metric-val amber" id="am-cpc">—</div><div class="metric-sub">biaya akuisisi</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="sec-label" style="margin-bottom:14px;">// Analisis ROI Ads</div>
+    <div class="bar-group">
+      <div class="bar-row"><div class="bar-name">Budget Ads</div><div class="bar-track"><div class="bar-fill red" id="ads-bar-budget" style="width:100%"></div></div><div class="bar-num" id="ads-bnum-budget">—</div></div>
+      <div class="bar-row"><div class="bar-name">Revenue Ads</div><div class="bar-track"><div class="bar-fill teal" id="ads-bar-rev" style="width:0%"></div></div><div class="bar-num" id="ads-bnum-rev">—</div></div>
+      <div class="bar-row"><div class="bar-name">Profit Ads</div><div class="bar-track"><div class="bar-fill amber" id="ads-bar-profit" style="width:0%"></div></div><div class="bar-num" id="ads-bnum-profit">—</div></div>
+    </div>
+    <div class="ads-result-grid">
+      <div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;">Min Closing BEP</div><div class="ads-big teal" id="ads-bep">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">user minimum</div></div>
+      <div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;">ROAS</div><div class="ads-big" id="ads-roas">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);" id="ads-roas-note">—</div></div>
+      <div><div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;">Status Kampanye</div><div style="font-family:var(--mono);font-size:13px;font-weight:600;" id="ads-status">—</div><div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);" id="ads-verdict">—</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TARGET PROFIT -->
+<div id="page-target" class="page">
+  <div class="sec-label">// Target Profit — Mundur ke Angka Operasional</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Masukkan target profit, kalkulator otomatis hitung berapa closing dan budget ads yang dibutuhkan.</p>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Target Profit Bersih / Bulan (Rp)<span>profit yang ingin kamu capai</span></div><input type="number" class="field-input" id="tgt-profit" value="1000000" step="100000" min="0" oninput="recalcTarget()"><div class="field-val" id="lbl-tgt-profit">Rp 1.000.000</div></div>
+    <div class="field-row"><div class="field-label">Total Konversi Ads (%)<span>CTR × Conv rate (misal: CTR 2% × Conv 5% = 0.1%)</span></div><input type="number" class="field-input" id="tgt-conv" value="0.1" step="0.01" min="0.01" oninput="recalcTarget()"><div class="field-val" id="lbl-tgt-conv">0.10%</div></div>
+    <div class="field-row"><div class="field-label">CPM Ads (Rp)<span>sama dengan di halaman Ads</span></div><input type="number" class="field-input" id="tgt-cpm" value="15000" step="1000" min="1000" oninput="recalcTarget()"><div class="field-val" id="lbl-tgt-cpm">Rp 15.000</div></div>
+  </div>
+  <div class="target-result">
+    <div><div class="tr-label">Closing Dibutuhkan</div><div class="tr-val" id="tgt-closing">—</div></div>
+    <div><div class="tr-label">Budget Ads Minimum</div><div class="tr-val" id="tgt-ads-budget">—</div></div>
+    <div><div class="tr-label">Revenue yang Dibutuhkan</div><div class="tr-val" id="tgt-revenue">—</div></div>
+  </div>
+  <div class="chart-section" style="margin-top:12px;">
+    <div class="sec-label" style="margin-bottom:12px;">// Scaling — Profit vs Jumlah User</div>
+    <div class="bar-group" id="target-scale-bars"></div>
+  </div>
+</div>
+
+<!-- SKENARIO -->
+<div id="page-scenarios" class="page">
+  <div class="sec-label">// Simpan & Bandingkan Skenario</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Simpan kondisi saat ini sebagai skenario, bandingkan sampai 6 skenario berbeda.</p>
+  <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;">
+    <input type="text" class="field-input" id="sc-name" placeholder="Nama skenario (misal: Basic 30x Harga Naik)" style="flex:1;max-width:320px;">
+    <button class="sc-save-btn" onclick="saveScenario()">+ Simpan Skenario Sekarang</button>
+  </div>
+  <div class="scenario-list" id="scenario-list">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);padding:11px 0;">Belum ada skenario. Set parameter di halaman Pricing lalu simpan di sini.</div>
+  </div>
+  <div id="sc-compare" style="display:none;">
+    <div class="sec-label" style="margin-top:6px;">// Perbandingan Profit Bersih / Bulan</div>
+    <div class="chart-section"><div class="bar-group" id="sc-compare-bars"></div></div>
+  </div>
+</div>
+
+<!-- PAYBACK -->
+<div id="page-payback" class="page">
+  <div class="sec-label">// Payback Period — Kapan Modal Balik?</div>
+  <div class="input-card">
+    <div class="field-row"><div class="field-label">Modal Awal (Rp)<span>total biaya yang kamu keluarkan di awal</span></div><input type="number" class="field-input" id="pb-modal" value="500000" step="50000" min="0" oninput="recalcPayback()"><div class="field-val" id="lbl-pb-modal">Rp 500.000</div></div>
+    <div class="field-row"><div class="field-label">Budget Ads Bulan 1 (Rp)<span>pengeluaran ads awal</span></div><input type="number" class="field-input" id="pb-ads" value="200000" step="50000" min="0" oninput="recalcPayback()"><div class="field-val" id="lbl-pb-ads">Rp 200.000</div></div>
+    <div class="field-row"><div class="field-label">Pertumbuhan User / Bulan (%)<span>asumsi user naik berapa persen tiap bulan</span></div><input type="number" class="field-input" id="pb-growth" value="20" step="5" min="0" max="200" oninput="recalcPayback()"><div class="field-val" id="lbl-pb-growth">20%</div></div>
+  </div>
+  <div class="metrics-grid m3">
+    <div class="metric-card"><div class="metric-label">Total Modal</div><div class="metric-val red" id="pb-total-modal">—</div><div class="metric-sub">yang harus dikembalikan</div></div>
+    <div class="metric-card"><div class="metric-label">Payback Period</div><div class="metric-val teal" id="pb-period">—</div><div class="metric-sub">estimasi balik modal</div></div>
+    <div class="metric-card"><div class="metric-label">Profit Kumulatif Bulan 6</div><div class="metric-val amber" id="pb-m6">—</div><div class="metric-sub">total 6 bulan</div></div>
+  </div>
+  <div class="sec-label">// Timeline Kumulatif Profit (6 Bulan)</div>
+  <div class="payback-timeline" id="pb-timeline"></div>
+  <div class="chart-section" style="margin-top:12px;">
+    <div class="sec-label" style="margin-bottom:12px;">// Profit Bulanan vs Modal</div>
+    <div class="bar-group" id="pb-bars"></div>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<div id="page-export" class="page">
+  <div class="sec-label">// Export Ringkasan Bisnis</div>
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">Salin ringkasan untuk disimpan, dibagikan ke partner, atau dijadikan catatan strategi.</p>
+  <div style="flex-wrap:wrap;display:flex;">
+    <button class="export-btn" onclick="exportText()">Copy Teks Ringkasan</button>
+    <button class="export-btn" onclick="exportCSV()">Download CSV Tier</button>
+    <button class="export-btn" onclick="generateExportArea()">Preview Ringkasan</button>
+  </div>
+  <div class="export-area" id="export-area"></div>
+</div>
+
+<div class="footer" style="margin-top:28px;">TRENOVA INTELLIGENCE &nbsp;·&nbsp; BUSINESS INTELLIGENCE v2.0</div>
+</div>
+
+<script>
+const TIERS=[{name:'Trial',qty:5,price:25000},{name:'Starter',qty:15,price:75000},{name:'Basic',qty:30,price:130000,rec:true},{name:'Pro',qty:60,price:249000},{name:'Elite',qty:100,price:399000}];
+let scenarios=[];
+function rp(n){if(isNaN(n)||!isFinite(n))return'—';const a=Math.abs(n);let s=n<0?'-':'';if(a>=1e9)return s+'Rp '+(a/1e9).toFixed(2)+'M';if(a>=1e6)return s+'Rp '+(a/1e6).toFixed(2)+'jt';return s+'Rp '+Math.round(a).toLocaleString('id-ID');}
+function rpf(n){return isNaN(n)||!isFinite(n)?'—':'Rp '+Math.round(n).toLocaleString('id-ID');}
+function g(id){return document.getElementById(id);}
+function sv(id,v){const e=g(id);if(e)e.textContent=v;}
+function getBase(){return{costUsd:parseFloat(g('costUsd').value)||0.14,kurs:parseFloat(g('kurs').value)||16000,qty:parseInt(g('qty').value)||30,price:parseFloat(g('price').value)||130000,users:parseInt(g('users').value)||20,overhead:parseFloat(g('overhead').value)||0};}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  g('page-'+name).classList.add('active');
+  const pages=['pricing','topup','multitier','whatif','ads','target','scenarios','payback','export'];
+  const idx=pages.indexOf(name);
+  if(idx>=0)document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  const map={topup:recalcTopup,multitier:()=>{buildMultiRows();updateMulti();},whatif:()=>{recalcWhatifCards();recalcWhatif();},ads:recalcAds,target:recalcTarget,payback:recalcPayback};
+  if(map[name])map[name]();
+}
+
+function recalcAll(){
+  const b=getBase();
+  const ci=b.costUsd*b.kurs,tc=ci*b.qty,p=b.price-tc,m=b.price>0?(p/b.price*100):0;
+  const mr=b.price*b.users,nm=mr-tc*b.users-b.overhead,be=p>0?Math.ceil(b.overhead/p):'∞';
+  sv('lbl-cost-idr',rpf(ci));sv('lbl-kurs',rpf(b.kurs));sv('lbl-qty',b.qty+'x');sv('lbl-price',rpf(b.price));sv('lbl-users',b.users+' user');sv('lbl-overhead',rpf(b.overhead));
+  sv('m-cost',rp(tc));sv('m-cost-sub',rpf(ci)+'/analisa');
+  const mp=g('m-profit');if(mp){mp.textContent=rp(p);mp.className='metric-val '+(p>=0?'teal':'red');}
+  sv('m-profit-sub',p>=0?'gross profit':'RUGI!');
+  const mm=g('m-margin');if(mm){mm.textContent=m.toFixed(1)+'%';mm.className='metric-val '+(m>=40?'teal':m>=20?'amber':'red');}
+  sv('m-margin-sub',m>=40?'sehat':m>=20?'cukup':'terlalu tipis');
+  sv('m-monthly',rp(nm));sv('m-monthly-sub',b.users+' user × '+rpf(b.price));
+  const mv=Math.max(b.price,1);
+  const bc=g('bar-cost'),bp=g('bar-profit'),bpr=g('bar-price');
+  if(bc)bc.style.width=Math.min(tc/mv*100,100).toFixed(1)+'%';
+  if(bp)bp.style.width=Math.max(0,p/mv*100).toFixed(1)+'%';
+  if(bpr)bpr.style.width='100%';
+  sv('bnum-cost',rpf(tc));sv('bnum-profit',rpf(p));sv('bnum-price',rpf(b.price));
+  sv('s-price',rpf(b.price));sv('s-cost',rpf(tc));sv('s-gross',rpf(p));sv('s-margin',m.toFixed(1)+'%');sv('s-per-analisa',b.qty>0?rpf(b.price/b.qty)+'/analisa':'—');sv('s-rev',rpf(mr));sv('s-api-cost',rpf(tc*b.users));sv('s-overhead',rpf(b.overhead));sv('s-net',rpf(nm));sv('s-be',typeof be==='number'?be+' user':'∞');
+  buildTiers();
+}
+
+function buildTiers(){
+  const gr=g('tier-grid');if(!gr)return;
+  gr.innerHTML='';
+  const b=getBase();
+  TIERS.forEach(t=>{
+    const cost=b.costUsd*b.kurs*t.qty,margin=((t.price-cost)/t.price*100);
+    const div=document.createElement('div');
+    div.className='tier-card'+(t.rec?' rec':'');
+    div.innerHTML=`${t.rec?'<div class="rec-badge">★ REC</div>':''}<div class="tier-name">${t.name}</div><div class="tier-qty">${t.qty}x</div><div class="tier-unit">analisa</div><div class="tier-price">${rpf(t.price)}</div><div class="tier-margin">${margin.toFixed(0)}% margin</div>`;
+    div.onclick=()=>{g('qty').value=t.qty;g('price').value=t.price;document.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('active'));div.classList.add('active');recalcAll();};
+    gr.appendChild(div);
+  });
+}
+
+function recalcTopup(){
+  const ta=parseFloat(g('topupAmt').value)||5,tu=parseInt(g('topupUsers').value)||20,tq=parseInt(g('topupQty').value)||30;
+  const b=getBase();
+  sv('lbl-topup-usd','$'+ta.toFixed(0));sv('lbl-topup-users',tu+' user');sv('lbl-topup-qty',tq+'x');
+  const totalA=tu*tq,ci=b.costUsd*b.kurs,tcm=totalA*ci,tc=Math.ceil(tcm/(ta*b.kurs)),apT=Math.floor(ta/b.costUsd);
+  sv('tp-total-analisa',totalA.toLocaleString('id-ID'));sv('tp-total-sub',tu+' user × '+tq+'x analisa');sv('tp-total-cost',rp(tcm));sv('tp-cost-sub','$'+(tcm/b.kurs).toFixed(2)+' USD');sv('tp-topup-count',tc+'x');sv('tp-topup-sub','topup $'+ta+' per kali');
+  sv('tp-modal',rp(tc*ta*b.kurs));sv('tp-per-topup',apT.toLocaleString('id-ID')+' analisa');sv('tp-per-week',(tc/4).toFixed(1)+'x per minggu');
+  const save10=Math.ceil(tcm/(10*b.kurs));sv('tp-save',tc+' → '+save10+'x (hemat '+(tc-save10)+'x topup)');
+  const wb=g('topup-weekly-bars');if(!wb)return;
+  wb.innerHTML='';
+  const wkly=totalA/4,wc=tcm/4,mxw=Math.max(totalA,1);
+  [1,2,3,4].forEach(w=>{const d=document.createElement('div');d.className='bar-row';d.innerHTML=`<div class="bar-name">Minggu ${w}</div><div class="bar-track"><div class="bar-fill teal" style="width:${(wkly/mxw*100).toFixed(0)}%"></div></div><div class="bar-num">${Math.round(wkly).toLocaleString('id-ID')} analisa · ${rp(wc)}</div>`;wb.appendChild(d);});
+}
+
+function buildMultiRows(){
+  const mr=g('multi-rows');if(!mr||mr.children.length>0)return;
+  TIERS.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='multi-row';
+    d.innerHTML=`<div class="multi-tag">${t.name}</div><input type="number" class="multi-input" id="mt-price-${i}" value="${t.price}" step="1000" oninput="updateMulti()"><input type="number" class="multi-input" id="mt-users-${i}" value="${[2,3,10,3,2][i]}" step="1" min="0" oninput="updateMulti()"><div class="multi-result" id="mt-rev-${i}">—</div><div class="multi-result" id="mt-profit-${i}">—</div>`;
+    mr.appendChild(d);
+  });
+}
+
+function updateMulti(){
+  const b=getBase();let tr=0,tp=0;const bars=[];
+  TIERS.forEach((t,i)=>{
+    const price=parseFloat(g('mt-price-'+i)?.value)||t.price,users=parseInt(g('mt-users-'+i)?.value)||0;
+    const cost=b.costUsd*b.kurs*t.qty,rev=price*users,prof=(price-cost)*users;
+    tr+=rev;tp+=prof;sv('mt-rev-'+i,rp(rev));
+    const pe=g('mt-profit-'+i);if(pe){pe.textContent=rp(prof);pe.style.color=prof>=0?'var(--teal)':'var(--red)';}
+    bars.push({name:t.name,rev,prof});
+  });
+  sv('mt-rev',rp(tr));sv('mt-profit',rp(tp));sv('mt-profit-sub','dari '+rp(tr)+' revenue');
+  const mm=g('mt-margin');if(mm){const avg=tr>0?(tp/tr*100):0;mm.textContent=avg.toFixed(1)+'%';mm.className='metric-val '+(avg>=40?'teal':avg>=20?'amber':'red');}
+  const mb=g('multi-bars');if(!mb)return;mb.innerHTML='';
+  const mx=Math.max(...bars.map(x=>x.rev),1);
+  bars.forEach(x=>{const d=document.createElement('div');d.className='bar-row';d.innerHTML=`<div class="bar-name">${x.name}</div><div class="bar-track"><div class="bar-fill teal" style="width:${(x.rev/mx*100).toFixed(1)}%"></div></div><div class="bar-num">${rp(x.rev)}</div>`;mb.appendChild(d);});
+}
+
+function recalcWhatifCards(){
+  const b=getBase(),ct=g('whatif-cards');if(!ct)return;ct.innerHTML='';
+  [-30,-15,0,15,30,50].forEach(pct=>{
+    const np=b.price*(1+pct/100),cost=b.costUsd*b.kurs*b.qty,prof=np-cost,mar=np>0?(prof/np*100):0,mon=prof*b.users-b.overhead;
+    const d=document.createElement('div');d.className='whatif-card';
+    const badge=prof>=0?'badge-profit':'badge-loss',bt=prof>=0?'PROFIT':'RUGI';
+    d.innerHTML=`<div class="whatif-label">${pct===0?'Harga Sekarang':pct>0?'+'+pct+'% lebih mahal':pct+'% lebih murah'}</div><div class="whatif-price">${rp(np)}</div><div class="whatif-detail">Margin: ${mar.toFixed(1)}%\nProfit/paket: ${rp(prof)}\nProfit/bulan: ${rp(mon)}</div><div class="whatif-badge ${badge}">${bt}</div>`;
+    d.onclick=()=>{g('price').value=Math.round(np);recalcAll();showPage('pricing');};
+    ct.appendChild(d);
+  });
+}
+
+function recalcWhatif(){
+  const b=getBase(),wp=parseFloat(g('wi-price')?.value)||b.price,wu=parseInt(g('wi-users')?.value)||b.users;
+  sv('wi-price-lbl',rpf(wp));sv('wi-users-lbl',wu+' user');
+  const cost=b.costUsd*b.kurs*b.qty,prof=wp-cost,mar=wp>0?(prof/wp*100):0,mon=prof*wu-b.overhead;
+  const me=g('wi-margin');if(me){me.textContent=mar.toFixed(1)+'%';me.style.color=mar>=40?'var(--teal)':mar>=20?'var(--amber)':'var(--red)';}
+  sv('wi-profit',rp(prof));sv('wi-monthly',rp(mon));
+}
+
+function recalcAds(){
+  const budget=parseFloat(g('adsBudget')?.value)||0,ctr=parseFloat(g('adsCtr')?.value)||0,conv=parseFloat(g('adsConv')?.value)||0,cpm=parseFloat(g('adsCpm')?.value)||1,b=getBase();
+  sv('lbl-ads-budget',rpf(budget));sv('lbl-ads-ctr',ctr.toFixed(1)+'%');sv('lbl-ads-conv',conv.toFixed(1)+'%');sv('lbl-ads-cpm',rpf(cpm));
+  const reach=(budget/cpm)*1000,clicks=reach*(ctr/100),closing=clicks*(conv/100),cpc=closing>0?budget/closing:0;
+  const ar=closing*b.price,apu=b.costUsd*b.kurs*b.qty,ap=ar-closing*apu-budget,roas=budget>0?ar/budget:0,bep=b.price>apu?Math.ceil(budget/(b.price-apu)):Infinity;
+  sv('am-reach',Math.round(reach).toLocaleString('id-ID'));sv('am-clicks',Math.round(clicks).toLocaleString('id-ID'));sv('am-clicks-sub',ctr.toFixed(1)+'% dari reach');sv('am-closing',Math.round(closing).toLocaleString('id-ID'));sv('am-closing-sub',conv.toFixed(1)+'% konversi');sv('am-cpc',closing>0?rp(cpc):'∞');
+  const mx=Math.max(ar,budget,1);
+  const abr=g('ads-bar-rev'),abp=g('ads-bar-profit');
+  if(abr)abr.style.width=Math.min(ar/mx*100,100).toFixed(1)+'%';
+  if(abp)abp.style.width=Math.max(0,ap/mx*100).toFixed(1)+'%';
+  sv('ads-bnum-budget',rpf(budget));sv('ads-bnum-rev',rpf(ar));sv('ads-bnum-profit',rpf(ap));
+  sv('ads-bep',isFinite(bep)?bep+' user':'∞');
+  const re=g('ads-roas');if(re){re.textContent=roas.toFixed(2)+'x';re.style.color=roas>=2?'var(--teal)':roas>=1?'var(--amber)':'var(--red)';}
+  sv('ads-roas-note','Rp1 iklan → Rp'+roas.toFixed(2)+' revenue');
+  const se=g('ads-status'),ve=g('ads-verdict');
+  if(se&&ve){if(ap>=0&&roas>=2){se.textContent='PROFITABLE';se.style.color='var(--teal)';ve.textContent='iklan sangat layak dijalankan';}else if(ap>=0){se.textContent='BREAK EVEN';se.style.color='var(--amber)';ve.textContent='balik modal, optimasi CTR / konversi';}else{se.textContent='TIDAK PROFIT';se.style.color='var(--red)';ve.textContent='naikkan konversi atau kurangi budget';}}
+}
+
+function recalcTarget(){
+  const tp=parseFloat(g('tgt-profit')?.value)||1000000,cv=parseFloat(g('tgt-conv')?.value)||0.1,cpm=parseFloat(g('tgt-cpm')?.value)||15000,b=getBase();
+  sv('lbl-tgt-profit',rpf(tp));sv('lbl-tgt-conv',cv.toFixed(2)+'%');sv('lbl-tgt-cpm',rpf(cpm));
+  const apu=b.costUsd*b.kurs*b.qty,ppu=b.price-apu,cn=ppu>0?Math.ceil((tp+b.overhead)/ppu):Infinity;
+  const rv=b.price*cn,ba=isFinite(cn)?(cn/(cv/100))*(cpm/1000):Infinity;
+  sv('tgt-closing',isFinite(cn)?cn+' user':'∞');sv('tgt-ads-budget',isFinite(ba)?rp(ba):'∞');sv('tgt-revenue',isFinite(rv)?rpf(rv):'∞');
+  const sb=g('target-scale-bars');if(!sb)return;sb.innerHTML='';
+  const steps=[5,10,20,30,50,100],mx=Math.max(...steps.map(u=>ppu*u-b.overhead),1);
+  steps.forEach(u=>{const pr=ppu*u-b.overhead,d=document.createElement('div');d.className='bar-row';d.innerHTML=`<div class="bar-name">${u} user</div><div class="bar-track"><div class="bar-fill ${pr>=0?'teal':'red'}" style="width:${Math.max(0,pr/mx*100).toFixed(1)}%"></div></div><div class="bar-num">${rp(pr)}</div>`;sb.appendChild(d);});
+}
+
+function saveScenario(){
+  if(scenarios.length>=6){alert('Maksimal 6 skenario.');return;}
+  const name=g('sc-name').value.trim()||('Skenario '+(scenarios.length+1)),b=getBase();
+  const cost=b.costUsd*b.kurs*b.qty,profit=b.price-cost,margin=b.price>0?(profit/b.price*100):0,net=profit*b.users-b.overhead;
+  scenarios.push({name,price:b.price,qty:b.qty,users:b.users,profit,margin,net});
+  g('sc-name').value='';renderScenarios();
+}
+
+function renderScenarios(){
+  const list=g('scenario-list');if(!list)return;list.innerHTML='';
+  if(!scenarios.length){list.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);padding:11px 0;">Belum ada skenario tersimpan.</div>';g('sc-compare').style.display='none';return;}
+  scenarios.forEach((sc,i)=>{
+    const d=document.createElement('div');d.className='scenario-item';
+    d.innerHTML=`<div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">#${i+1}</div><div class="sc-name">${sc.name}</div><div class="sc-val">${rpf(sc.price)} · ${sc.qty}x · ${sc.users}u</div><div class="sc-val">${sc.margin.toFixed(1)}%</div><div class="sc-profit">${rp(sc.profit)}/pkt</div><div class="sc-profit">${rp(sc.net)}/bln</div><button class="sc-del" onclick="deleteScenario(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+  const sc2=g('sc-compare');if(sc2)sc2.style.display='block';
+  const bars=g('sc-compare-bars');if(!bars)return;bars.innerHTML='';
+  const mx=Math.max(...scenarios.map(s=>Math.abs(s.net)),1);
+  scenarios.forEach(sc=>{const d=document.createElement('div');d.className='bar-row';d.innerHTML=`<div class="bar-name" style="min-width:110px;">${sc.name}</div><div class="bar-track"><div class="bar-fill ${sc.net>=0?'teal':'red'}" style="width:${Math.max(0,sc.net/mx*100).toFixed(1)}%"></div></div><div class="bar-num">${rp(sc.net)}/bln</div>`;bars.appendChild(d);});
+}
+
+function deleteScenario(i){scenarios.splice(i,1);renderScenarios();}
+
+function recalcPayback(){
+  const pm=parseFloat(g('pb-modal')?.value)||500000,pa=parseFloat(g('pb-ads')?.value)||200000,pg=parseFloat(g('pb-growth')?.value)||20,b=getBase();
+  sv('lbl-pb-modal',rpf(pm));sv('lbl-pb-ads',rpf(pa));sv('lbl-pb-growth',pg+'%');
+  const tm=pm+pa;sv('pb-total-modal',rpf(tm));
+  const ppu=b.price-b.costUsd*b.kurs*b.qty;let cum=0,pbm=null,curU=b.users;const months=[];
+  for(let m=1;m<=6;m++){const net=ppu*curU-b.overhead;cum+=net;months.push({m,net,cum,users:Math.round(curU)});if(pbm===null&&cum>=tm)pbm=m;curU*=(1+pg/100);}
+  sv('pb-period',pbm?'Bulan ke-'+pbm:'> 6 bulan');sv('pb-m6',rp(months[5].cum));
+  const tl=g('pb-timeline');if(tl){tl.innerHTML='';months.forEach(x=>{const ip=x.cum>=tm,d=document.createElement('div');d.className='pb-month'+(ip?' paid':'');d.innerHTML=`<div class="pb-num" style="color:${ip?'var(--teal)':x.cum<0?'var(--red)':'var(--amber)'};">${rp(x.cum)}</div><div class="pb-label">Bln ${x.m} · ${x.users}u</div>`;tl.appendChild(d);});}
+  const pb=g('pb-bars');if(pb){pb.innerHTML='';const mx=Math.max(...months.map(x=>Math.abs(x.net)),tm,1);const dm=document.createElement('div');dm.className='bar-row';dm.innerHTML=`<div class="bar-name">Modal</div><div class="bar-track"><div class="bar-fill red" style="width:${(tm/mx*100).toFixed(1)}%"></div></div><div class="bar-num">${rpf(tm)}</div>`;pb.appendChild(dm);months.forEach(x=>{const d=document.createElement('div');d.className='bar-row';d.innerHTML=`<div class="bar-name">Bulan ${x.m}</div><div class="bar-track"><div class="bar-fill ${x.net>=0?'teal':'red'}" style="width:${Math.max(0,x.net/mx*100).toFixed(1)}%"></div></div><div class="bar-num">${rp(x.net)}</div>`;pb.appendChild(d);});}
+}
+
+function generateExportArea(){
+  const b=getBase(),cost=b.costUsd*b.kurs*b.qty,profit=b.price-cost,margin=b.price>0?(profit/b.price*100):0,net=profit*b.users-b.overhead;
+  const txt=`====================================\nTRENOVA TERMINAL — RINGKASAN BISNIS\n====================================\nTanggal     : ${new Date().toLocaleDateString('id-ID')}\n\n--- PARAMETER ---\nCost/analisa: $${b.costUsd} (${rpf(b.costUsd*b.kurs)})\nKurs        : ${rpf(b.kurs)}\nPaket       : ${b.qty}x analisa @ ${rpf(b.price)}\nUser/bulan  : ${b.users}\nOverhead    : ${rpf(b.overhead)}\n\n--- HASIL ---\nCost/paket  : ${rpf(cost)}\nProfit/paket: ${rpf(profit)}\nMargin      : ${margin.toFixed(1)}%\nProfit bersih/bln: ${rp(net)}\nBreak even  : ${profit>0?Math.ceil(b.overhead/profit)+' user':'∞'}\n\n--- SEMUA TIER ---\n${TIERS.map(t=>{const c=b.costUsd*b.kurs*t.qty,m=((t.price-c)/t.price*100);return t.name.padEnd(8)+': '+t.qty+'x @ '+rpf(t.price)+' | margin '+m.toFixed(0)+'%';}).join('\n')}\n\n--- SKENARIO TERSIMPAN ---\n${scenarios.length?scenarios.map((s,i)=>`#${i+1} ${s.name}: margin ${s.margin.toFixed(1)}%, profit ${rp(s.net)}/bln`).join('\n'):'(tidak ada)'}\n====================================`;
+  const area=g('export-area');area.textContent=txt;area.style.display='block';
+}
+
+function exportText(){generateExportArea();navigator.clipboard.writeText(g('export-area').textContent).then(()=>alert('Ringkasan berhasil dicopy!')).catch(()=>alert('Gagal copy, silakan select manual.'));}
+
+function exportCSV(){
+  const b=getBase();const rows=[['Tier','Qty','Harga Jual','Cost','Profit','Margin']];
+  TIERS.forEach(t=>{const c=b.costUsd*b.kurs*t.qty,p=t.price-c,m=((p/t.price)*100).toFixed(1);rows.push([t.name,t.qty,t.price,Math.round(c),Math.round(p),m+'%']);});
+  const csv=rows.map(r=>r.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='trenova-pricing.csv';a.click();
+}
+
+recalcAll();recalcAds();renderScenarios();
+</script>
+</body>
+</html>

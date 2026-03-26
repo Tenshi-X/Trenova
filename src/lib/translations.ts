@@ -231,8 +231,148 @@ export type TranslationKey =
   | 'testimonial_1_text'
   | 'testimonial_2_name'
   | 'testimonial_2_text'
-  | 'testimonial_3_name'
-  | 'testimonial_3_text';
+   | 'testimonial_3_name'
+   | 'testimonial_3_text'
+   // Terminal Landing Page
+   | 'lp_hero_pill'
+   | 'lp_hero_title_prefix'
+   | 'lp_hero_title_accent'
+   | 'lp_hero_subtitle_1'
+   | 'lp_hero_subtitle_2'
+   | 'lp_hero_desc'
+   | 'lp_hero_desc_bold1'
+   | 'lp_hero_desc_bold2'
+   | 'lp_hero_cmd'
+   | 'lp_hero_btn_start'
+   | 'lp_hero_btn_how'
+   | 'lp_hero_stat1_label'
+   | 'lp_hero_stat2_label'
+   | 'lp_hero_stat3_label'
+   | 'lp_hero_win_rate'
+   | 'lp_hero_rr_ratio'
+   | 'lp_feat_pill'
+   | 'lp_feat_title'
+   | 'lp_feat_title_accent'
+   | 'lp_feat_desc'
+   | 'lp_feat1_title'
+   | 'lp_feat1_desc'
+   | 'lp_feat2_title'
+   | 'lp_feat2_desc'
+   | 'lp_feat3_title'
+   | 'lp_feat3_desc'
+   | 'lp_feat4_title'
+   | 'lp_feat4_desc'
+   | 'lp_feat5_title'
+   | 'lp_feat5_desc'
+   | 'lp_feat6_title'
+   | 'lp_feat6_desc'
+   | 'lp_comp_pill'
+   | 'lp_comp_title'
+   | 'lp_comp_title_accent'
+   | 'lp_comp_desc'
+   | 'lp_comp_col_cap'
+   | 'lp_comp_col_manual'
+   | 'lp_comp_col_signal'
+   | 'lp_comp_col_trenova'
+   | 'lp_comp_col_trenova_rec'
+   | 'lp_comp_r1'
+   | 'lp_comp_r2'
+   | 'lp_comp_r3'
+   | 'lp_comp_r4'
+   | 'lp_comp_r5'
+   | 'lp_comp_r6'
+   | 'lp_comp_r7'
+   | 'lp_comp_r8'
+   | 'lp_how_pill'
+   | 'lp_how_title'
+   | 'lp_how_title_accent'
+   | 'lp_how_desc'
+   | 'lp_how1_title'
+   | 'lp_how1_desc'
+   | 'lp_how2_title'
+   | 'lp_how2_desc'
+   | 'lp_how3_title'
+   | 'lp_how3_desc'
+   | 'lp_how4_title'
+   | 'lp_how4_desc'
+   | 'lp_proof_pill'
+   | 'lp_proof_title'
+   | 'lp_proof_title_accent'
+   | 'lp_proof_stat1_num'
+   | 'lp_proof_stat1_label'
+   | 'lp_proof_stat1_sub'
+   | 'lp_proof_stat2_num'
+   | 'lp_proof_stat2_label'
+   | 'lp_proof_stat2_sub'
+   | 'lp_proof_stat3_num'
+   | 'lp_proof_stat3_label'
+   | 'lp_proof_stat3_sub'
+   | 'lp_proof_stat4_num'
+   | 'lp_proof_stat4_label'
+   | 'lp_proof_stat4_sub'
+   | 'lp_proof_t1_name'
+   | 'lp_proof_t1_role'
+   | 'lp_proof_t1_quote'
+   | 'lp_proof_t2_name'
+   | 'lp_proof_t2_role'
+   | 'lp_proof_t2_quote'
+   | 'lp_proof_t3_name'
+   | 'lp_proof_t3_role'
+   | 'lp_proof_t3_quote'
+   | 'lp_cred_pill'
+   | 'lp_cred_title'
+   | 'lp_cred_title_accent'
+   | 'lp_cred_brand'
+   | 'lp_cred_brand_sub'
+   | 'lp_cred_ig_label'
+   | 'lp_cred_desc1'
+   | 'lp_cred_desc1_bold'
+   | 'lp_cred_desc2'
+   | 'lp_cred_desc2_bold'
+   | 'lp_cred_stat1_label'
+   | 'lp_cred_stat2_label'
+   | 'lp_cred_stat3_label'
+   | 'lp_cred_stat4_label'
+   | 'lp_cred_quote'
+   | 'lp_cred_quote_author'
+   | 'lp_faq_pill'
+   | 'lp_faq_title'
+   | 'lp_faq_title_accent'
+   | 'lp_faq1_q'
+   | 'lp_faq1_a'
+   | 'lp_faq2_q'
+   | 'lp_faq2_a'
+   | 'lp_faq3_q'
+   | 'lp_faq3_a'
+   | 'lp_faq4_q'
+   | 'lp_faq4_a'
+   | 'lp_faq5_q'
+   | 'lp_faq5_a'
+   | 'lp_faq6_q'
+   | 'lp_faq6_a'
+   | 'lp_cta_pill'
+   | 'lp_cta_title'
+   | 'lp_cta_title_accent'
+   | 'lp_cta_desc'
+   | 'lp_cta_btn1'
+   | 'lp_cta_btn2'
+   | 'lp_cta_note'
+   | 'lp_footer_brand_desc'
+   | 'lp_footer_ig'
+   | 'lp_footer_platform'
+   | 'lp_footer_features'
+   | 'lp_footer_howit'
+   | 'lp_footer_pricing'
+   | 'lp_footer_support'
+   | 'lp_footer_faq'
+   | 'lp_footer_discord'
+   | 'lp_footer_instagram'
+   | 'lp_footer_legal'
+   | 'lp_footer_tos'
+   | 'lp_footer_privacy'
+   | 'lp_footer_refund'
+   | 'lp_footer_rights'
+   | 'lp_footer_disclaimer';
 
 export const translations = {
   en: {
@@ -477,6 +617,147 @@ export const translations = {
     testimonial_2_text: '"At first I didn\'t understand, but there are friends to discuss with, finally got profit too, awesome 👍"',
     testimonial_3_name: 'Sellytya_45',
     testimonial_3_text: '"Wow, first time finding signals with such high winrate!!!! If I calculate it\'s above 80%, even if there is a loss the SL is very thin and TP is huge so overall after joining for 3 months profit is multiple times the initial capital, awesome team!!!! Keep it up!!"',
+
+    // Terminal Landing Page
+    lp_hero_pill: 'PROFESSIONAL TRADING INTELLIGENCE PLATFORM',
+    lp_hero_title_prefix: 'TRENOVA',
+    lp_hero_title_accent: 'TERMINAL',
+    lp_hero_subtitle_1: 'Institutional-level Trading Analysis.',
+    lp_hero_subtitle_2: 'Sharper decisions, every session.',
+    lp_hero_desc: 'The first AI-based trading analysis platform in Indonesia combining',
+    lp_hero_desc_bold1: 'multi-timeframe screenshots',
+    lp_hero_desc_bold2: 'structured ready-to-use output',
+    lp_hero_cmd: 'trenova --analyze --mode=multi-tf',
+    lp_hero_btn_start: 'START NOW',
+    lp_hero_btn_how: 'SEE HOW IT WORKS',
+    lp_hero_stat1_label: 'Screenshot Slots',
+    lp_hero_stat2_label: 'Powered Analysis',
+    lp_hero_stat3_label: 'Output Generation',
+    lp_hero_win_rate: 'ANALYSIS WIN RATE',
+    lp_hero_rr_ratio: 'RISK/REWARD RATIO',
+    lp_feat_pill: 'PLATFORM CAPABILITIES',
+    lp_feat_title: 'Everything a Serious Trader',
+    lp_feat_title_accent: 'Needs.',
+    lp_feat_desc: 'Designed not for everyone — but for those who know that precise analysis is a competitive edge.',
+    lp_feat1_title: 'MULTI-TIMEFRAME SYSTEM',
+    lp_feat1_desc: 'Upload screenshots from up to 15 slots — 1W, 3D, 1D, 4H, 1H, 15M, and more. Multi-timeframe analysis structured like institutional desk trading.',
+    lp_feat2_title: 'AI-POWERED ANALYSIS',
+    lp_feat2_desc: 'Claude AI reads all screenshots and produces deep technical analysis — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest in one output.',
+    lp_feat3_title: 'RISK MANAGEMENT ENGINE',
+    lp_feat3_desc: 'Input leverage and capital — the terminal automatically calculates entry range, stop loss, take profit, and maximum loss precisely based on real-time market conditions.',
+    lp_feat4_title: 'STRUCTURED OUTPUT',
+    lp_feat4_desc: 'Neatly formatted analysis output — bias, entry, SL, TP, win probability, additional notes — all in one summary that can be copied and used immediately.',
+    lp_feat5_title: 'HISTORY & TRACKING',
+    lp_feat5_desc: 'Save up to 30 recent analysis sessions with screenshots and summary. Review past trading decisions, measure accuracy, and continuously improve your edge.',
+    lp_feat6_title: 'INTEGRATED DATA GUIDE',
+    lp_feat6_desc: 'Interactive guide right inside the terminal — how to take correct screenshots, which indicators to enable, and how to read each signal with maximum accuracy.',
+    lp_comp_pill: 'WHY TRENOVA TERMINAL',
+    lp_comp_title: 'More Than Just Tools.',
+    lp_comp_title_accent: 'Different Class.',
+    lp_comp_desc: 'Compare for yourself — what you get with Trenova Terminal vs the old methods most traders still use.',
+    lp_comp_col_cap: 'CAPABILITY',
+    lp_comp_col_manual: 'Manual Analysis',
+    lp_comp_col_signal: 'Buy Signal Provider',
+    lp_comp_col_trenova: 'TRENOVA TERMINAL',
+    lp_comp_col_trenova_rec: 'Recommended',
+    lp_comp_r1: '⏱️ Time per analysis session',
+    lp_comp_r2: '📊 Multi-timeframe coverage',
+    lp_comp_r3: '🤖 AI-powered analysis',
+    lp_comp_r4: '🎯 Automatic risk management',
+    lp_comp_r5: '🧠 You learn & improve',
+    lp_comp_r6: '💡 CVD + Funding rate analysis',
+    lp_comp_r7: '📋 Copy-ready output',
+    lp_comp_r8: '💰 Monthly cost',
+    lp_how_pill: 'WORKFLOW',
+    lp_how_title: 'How',
+    lp_how_title_accent: 'Trenova Terminal Works',
+    lp_how_desc: 'Four steps from screenshot to mature trading decisions — in under 60 seconds.',
+    lp_how1_title: 'Take Screenshot & Upload',
+    lp_how1_desc: 'Open the chart on TradingView or OKX. Enable required indicators (EMA, RSI, MACD, CVD). Screenshot each timeframe — then drag & drop or paste directly into the terminal slots.',
+    lp_how2_title: 'Input Trading Parameters',
+    lp_how2_desc: 'Enter the leverage you use and the capital allocated for this trade. The terminal will automatically adjust risk management calculations — entry zone, stop loss, take profit, and maximum drawdown.',
+    lp_how3_title: 'AI Analyze & Generate Output',
+    lp_how3_desc: 'Click GENERATE. Claude AI will read all screenshots simultaneously — analyzing EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest — then produce a complete structured analysis.',
+    lp_how4_title: 'Copy Output & Execute',
+    lp_how4_desc: 'Analysis output is one-click copy — complete with entry range, stop loss, take profit, risk/reward ratio, and win probability. Save to history for long-term performance tracking. Execute trades with full confidence.',
+    lp_proof_pill: 'SOCIAL PROOF',
+    lp_proof_title: 'Used by Serious',
+    lp_proof_title_accent: 'Traders',
+    lp_proof_stat1_num: '500',
+    lp_proof_stat1_label: 'Active Traders',
+    lp_proof_stat1_sub: 'Trenova Intelligence Community',
+    lp_proof_stat2_num: '12K',
+    lp_proof_stat2_label: 'Analyses Generated',
+    lp_proof_stat2_sub: 'Since first launch',
+    lp_proof_stat3_num: '4.8',
+    lp_proof_stat3_label: 'User Rating',
+    lp_proof_stat3_sub: 'Based on community feedback',
+    lp_proof_stat4_num: '<60',
+    lp_proof_stat4_label: 'Average Output Time',
+    lp_proof_stat4_sub: 'From screenshot to full analysis',
+    lp_proof_t1_name: 'Arief R.',
+    lp_proof_t1_role: 'Altcoin Futures Trader • OKX',
+    lp_proof_t1_quote: 'Before, just 4H analysis could take over 1 hour. Now in 15 minutes I get complete output. The decision quality is totally different.',
+    lp_proof_t2_name: 'Dimas M.',
+    lp_proof_t2_role: 'BTC Perp Trader • 50× Leverage',
+    lp_proof_t2_quote: 'This terminal isn\'t just a regular tool. The way it reads CVD and funding rate together provides insights that usually only institutional traders have.',
+    lp_proof_t3_name: 'Siti F.',
+    lp_proof_t3_role: 'Crypto Trader • Trenova Member',
+    lp_proof_t3_quote: 'The history feature is the most underrated. Being able to review all trading decisions, know where I went wrong, and improve my own system. This isn\'t just a tool — it\'s a mentor.',
+    lp_cred_pill: 'WHO\'S BEHIND THIS',
+    lp_cred_title: 'Built by Traders,',
+    lp_cred_title_accent: 'for Traders.',
+    lp_cred_brand: 'Trenova Intelligence',
+    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
+    lp_cred_ig_label: 'Instagram:',
+    lp_cred_desc1: 'Trenova Intelligence was born from the same trader frustration — too much time spent on analysis setup, too little time for mature execution.',
+    lp_cred_desc1_bold: 'We\'re not a big company',
+    lp_cred_desc2: 'This terminal is used daily by the founder for BTC and altcoin trading on OKX — not a tool made to sell, but',
+    lp_cred_desc2_bold: 'a tool built out of necessity',
+    lp_cred_stat1_label: 'Instagram Followers',
+    lp_cred_stat2_label: 'Discord Members',
+    lp_cred_stat3_label: 'Active in community',
+    lp_cred_stat4_label: 'Focus: Indonesian crypto',
+    lp_cred_quote: 'I use this terminal myself every day before opening a trade. If it wasn\'t good enough, I wouldn\'t sell it. My money is on the line too.',
+    lp_cred_quote_author: 'Founder Trenova Intelligence',
+    lp_faq_pill: 'FAQ',
+    lp_faq_title: 'Frequently',
+    lp_faq_title_accent: 'Asked Questions',
+    lp_faq1_q: 'Do I need an API key or special account to use it?',
+    lp_faq1_a: 'No. Trenova Terminal is a web-based tool — you just need a browser and an access link. No installation, no API key needed. Just open, upload screenshots, and generate analysis.',
+    lp_faq2_q: 'Which exchanges are supported?',
+    lp_faq2_a: 'The terminal is optimized for OKX Perpetual Futures, but can be used with screenshots from any exchange — Binance, Bybit, and others. What matters is screenshot quality and active indicators.',
+    lp_faq3_q: 'How accurate is the AI analysis?',
+    lp_faq3_a: 'Accuracy depends on screenshot quality and input data completeness. The terminal is designed to provide objective and structured analysis — not automatic signals. Final decisions remain with the trader.',
+    lp_faq4_q: 'Can it be used on mobile?',
+    lp_faq4_a: 'Yes, Trenova Terminal is responsive and accessible from mobile browsers. However, for the best experience — especially when uploading multiple screenshots — desktop or laptop is recommended.',
+    lp_faq5_q: 'How to upgrade or downgrade a plan?',
+    lp_faq5_a: 'Contact the Trenova Intelligence team via DM on Instagram @trenova.intelligence or the community Discord. Upgrade/downgrade process is usually completed within 1×24 business hours.',
+    lp_faq6_q: 'Is my screenshot data stored on the server?',
+    lp_faq6_a: 'Screenshots are stored locally in your browser (localStorage) — not on our server. Analysis history data is also stored on your own device, not on external cloud.',
+    lp_cta_pill: 'START TODAY — DON\'T DELAY',
+    lp_cta_title: 'Traders Who Lose Lack',
+    lp_cta_title_accent: 'Analysis.',
+    lp_cta_desc: 'Every trade you execute without solid multi-timeframe analysis is money placed on a gambling table — not the market. Trenova Terminal changes that.',
+    lp_cta_btn1: 'ACCESS TERMINAL NOW',
+    lp_cta_btn2: 'FOLLOW @TRENOVA.INTELLIGENCE',
+    lp_cta_note: '7-day money-back guarantee · Instant access · No installation',
+    lp_footer_brand_desc: 'Professional trading analysis platform for Indonesian futures traders. Built by traders, for traders.',
+    lp_footer_ig: 'IG: @trenova.intelligence',
+    lp_footer_platform: 'Platform',
+    lp_footer_features: 'Features',
+    lp_footer_howit: 'How it Works',
+    lp_footer_pricing: 'Pricing',
+    lp_footer_support: 'Support',
+    lp_footer_faq: 'FAQ',
+    lp_footer_discord: 'Discord Community',
+    lp_footer_instagram: 'Instagram',
+    lp_footer_legal: 'Legal',
+    lp_footer_tos: 'Terms of Service',
+    lp_footer_privacy: 'Privacy Policy',
+    lp_footer_refund: 'Refund Policy',
+    lp_footer_rights: 'Trenova Intelligence. All rights reserved.',
+    lp_footer_disclaimer: 'Analysis is not financial advice. Trading involves risk of loss.',
   },
   id: {
     nav_dashboard: 'Dasbor',
@@ -718,5 +999,146 @@ export const translations = {
     testimonial_2_text: '"Awale aku ora ngerti, nanging ono kanca-kanca diskusi bareng, pungkasane entuk cuan uga, mantap pokoke 👍"',
     testimonial_3_name: 'Sellytya_45',
     testimonial_3_text: '"Wah baru kali ini nemu sinyal yang winratenya tinggi banget!!!! kalau aku itung itung sih 80% keatas ada ini, ada loss itupun pasang SL nya tipis banget dan TP nya besar jadi overall setelah join 3 bulanan ini profit berkali2 lipat dari modal awal, keren banget tim DEX!!!! semangattttt!!"',
+
+    // Terminal Landing Page
+    lp_hero_pill: 'PLATFORM TRADING INTELLIGENCE PROFESIONAL',
+    lp_hero_title_prefix: 'TRENOVA',
+    lp_hero_title_accent: 'TERMINAL',
+    lp_hero_subtitle_1: 'Analisa Trading seperti Institusional.',
+    lp_hero_subtitle_2: 'Keputusan yang lebih tajam, setiap sesi.',
+    lp_hero_desc: 'Platform analisa trading berbasis AI pertama di Indonesia yang menggabungkan',
+    lp_hero_desc_bold1: 'screenshot multi-timeframe',
+    lp_hero_desc_bold2: 'output terstruktur siap pakai',
+    lp_hero_cmd: 'trenova --analyze --mode=multi-tf',
+    lp_hero_btn_start: 'MULAI SEKARANG',
+    lp_hero_btn_how: 'LIHAT CARA KERJA',
+    lp_hero_stat1_label: 'Screenshot Slots',
+    lp_hero_stat2_label: 'Powered Analysis',
+    lp_hero_stat3_label: 'Output Generation',
+    lp_hero_win_rate: 'WIN RATE ANALISA',
+    lp_hero_rr_ratio: 'RISK/REWARD RATIO',
+    lp_feat_pill: 'KAPABILITAS PLATFORM',
+    lp_feat_title: 'Semua yang Dibutuhkan Trader',
+    lp_feat_title_accent: 'Serius.',
+    lp_feat_desc: 'Dirancang bukan untuk semua orang — tapi untuk mereka yang tahu bahwa analisa yang tepat adalah keunggulan kompetitif.',
+    lp_feat1_title: 'MULTI-TIMEFRAME SYSTEM',
+    lp_feat1_desc: 'Upload screenshot dari hingga 15 slot berbeda — 1W, 3D, 1D, 4H, 1H, 15M, dan lebih. Analisa multi-timeframe yang terstruktur seperti desk trading institusional.',
+    lp_feat2_title: 'AI-POWERED ANALYSIS',
+    lp_feat2_desc: 'Claude AI membaca seluruh screenshot dan menghasilkan analisa teknikal mendalam — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, dan open interest dalam satu output.',
+    lp_feat3_title: 'RISK MANAGEMENT ENGINE',
+    lp_feat3_desc: 'Input leverage dan modal — terminal otomatis menghitung entry range, stop loss, take profit, dan maksimum kerugian yang presisi berdasarkan kondisi pasar real-time.',
+    lp_feat4_title: 'STRUCTURED OUTPUT',
+    lp_feat4_desc: 'Output analisa terformat rapi — bias, entry, SL, TP, win probability, catatan tambahan — semua dalam satu ringkasan yang bisa di-copy dan langsung dipakai.',
+    lp_feat5_title: 'HISTORY & TRACKING',
+    lp_feat5_desc: 'Simpan hingga 30 sesi analisa terakhir dengan screenshot dan summary. Review keputusan trading masa lalu, ukur akurasi, dan terus improve edge kamu.',
+    lp_feat6_title: 'DATA GUIDE TERINTEGRASI',
+    lp_feat6_desc: 'Panduan interaktif langsung di dalam terminal — cara mengambil screenshot yang benar, indikator apa yang perlu diaktifkan, dan bagaimana membaca setiap sinyal dengan akurasi tertinggi.',
+    lp_comp_pill: 'KENAPA TRENOVA TERMINAL',
+    lp_comp_title: 'Bukan Sekadar Tools.',
+    lp_comp_title_accent: 'Beda Kelasnya.',
+    lp_comp_desc: 'Bandingkan sendiri — apa yang kamu dapatkan dengan Trenova Terminal vs cara lama yang masih banyak trader pakai.',
+    lp_comp_col_cap: 'KEMAMPUAN',
+    lp_comp_col_manual: 'Analisa Manual',
+    lp_comp_col_signal: 'Beli Signal Provider',
+    lp_comp_col_trenova: 'TRENOVA TERMINAL',
+    lp_comp_col_trenova_rec: 'Direkomendasikan',
+    lp_comp_r1: '⏱️ Waktu analisa per sesi',
+    lp_comp_r2: '📊 Multi-timeframe coverage',
+    lp_comp_r3: '🤖 AI-powered analysis',
+    lp_comp_r4: '🎯 Risk management otomatis',
+    lp_comp_r5: '🧠 Kamu yang belajar & improve',
+    lp_comp_r6: '💡 CVD + Funding rate analysis',
+    lp_comp_r7: '📋 Output copy-ready',
+    lp_comp_r8: '💰 Biaya per bulan',
+    lp_how_pill: 'WORKFLOW',
+    lp_how_title: 'Cara Kerja',
+    lp_how_title_accent: 'Trenova Terminal',
+    lp_how_desc: 'Empat langkah dari screenshot ke keputusan trading yang matang — dalam kurang dari 60 detik.',
+    lp_how1_title: 'Ambil Screenshot & Upload',
+    lp_how1_desc: 'Buka chart di TradingView atau OKX. Aktifkan indikator yang diperlukan (EMA, RSI, MACD, CVD). Screenshot setiap timeframe — lalu drag & drop atau paste langsung ke slot yang tersedia di terminal.',
+    lp_how2_title: 'Input Parameter Trading',
+    lp_how2_desc: 'Masukkan leverage yang kamu gunakan dan besarnya modal yang dialokasikan untuk trade ini. Terminal akan menyesuaikan kalkulasi risk management secara otomatis — entry zone, stop loss, take profit, dan maximum drawdown.',
+    lp_how3_title: 'AI Analisa & Generate Output',
+    lp_how3_desc: 'Klik tombol GENERATE. Claude AI akan membaca seluruh screenshot secara bersamaan — menganalisa confluence EMA, divergence RSI, sinyal MACD, CVD, funding rate, dan open interest — lalu menghasilkan analisa terstruktur lengkap.',
+    lp_how4_title: 'Copy Output & Execute',
+    lp_how4_desc: 'Output analisa siap satu klik copy — lengkap dengan entry range, stop loss, take profit, risk/reward ratio, dan win probability. Simpan ke history untuk tracking performa jangka panjang. Execute trade dengan konfiden penuh.',
+    lp_proof_pill: 'SOCIAL PROOF',
+    lp_proof_title: 'Digunakan oleh Trader',
+    lp_proof_title_accent: 'Serius',
+    lp_proof_stat1_num: '500',
+    lp_proof_stat1_label: 'Active Traders',
+    lp_proof_stat1_sub: 'Komunitas Trenova Intelligence',
+    lp_proof_stat2_num: '12K',
+    lp_proof_stat2_label: 'Analisa Dihasilkan',
+    lp_proof_stat2_sub: 'Sejak peluncuran pertama',
+    lp_proof_stat3_num: '4.8',
+    lp_proof_stat3_label: 'Rating Pengguna',
+    lp_proof_stat3_sub: 'Berdasarkan feedback komunitas',
+    lp_proof_stat4_num: '<60',
+    lp_proof_stat4_label: 'Rata-rata Output Time',
+    lp_proof_stat4_sub: 'Dari screenshot ke analisa lengkap',
+    lp_proof_t1_name: 'Arief R.',
+    lp_proof_t1_role: 'Altcoin Futures Trader • OKX',
+    lp_proof_t1_quote: 'Sebelumnya analisa 4H saja bisa 1 jam lebih. Sekarang 15 menit sudah dapat output lengkap. Beda banget kualitas decisionnya.',
+    lp_proof_t2_name: 'Dimas M.',
+    lp_proof_t2_role: 'BTC Perp Trader • 50× Leverage',
+    lp_proof_t2_quote: 'Terminal ini bukan tools biasa. Cara dia baca CVD sama funding rate bareng bisa ngasih insight yang biasanya cuma dimiliki trader institusional.',
+    lp_proof_t3_name: 'Siti F.',
+    lp_proof_t3_role: 'Crypto Trader • Trenova Member',
+    lp_proof_t3_quote: 'Fitur history-nya yang paling underrated. Bisa review semua keputusan trading, tahu di mana salah, dan improve sistem sendiri. Ini bukan tools — ini mentor.',
+    lp_cred_pill: 'SIAPA DI BALIK INI',
+    lp_cred_title: 'Dibangun oleh Trader,',
+    lp_cred_title_accent: 'untuk Trader.',
+    lp_cred_brand: 'Trenova Intelligence',
+    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
+    lp_cred_ig_label: 'Instagram:',
+    lp_cred_desc1: 'Trenova Intelligence lahir dari frustrasi trader yang sama — terlalu banyak waktu dihabiskan untuk setup analisa, terlalu sedikit waktu untuk eksekusi yang matang.',
+    lp_cred_desc1_bold: 'Kami bukan perusahaan besar',
+    lp_cred_desc2: 'Terminal ini dipakai langsung oleh founder untuk trading BTC dan altcoin di OKX setiap sesi — bukan tools yang dibuat untuk dijual, tapi',
+    lp_cred_desc2_bold: 'tools yang dibuat karena dibutuhkan',
+    lp_cred_stat1_label: 'Followers Instagram',
+    lp_cred_stat2_label: 'Member Discord',
+    lp_cred_stat3_label: 'Aktif di komunitas',
+    lp_cred_stat4_label: 'Fokus crypto Indonesia',
+    lp_cred_quote: 'Terminal ini saya pakai sendiri setiap hari sebelum open trade. Kalau tidak layak, tidak akan saya jual. Uang saya juga ada di sini.',
+    lp_cred_quote_author: 'Founder Trenova Intelligence',
+    lp_faq_pill: 'FAQ',
+    lp_faq_title: 'Pertanyaan yang',
+    lp_faq_title_accent: 'Sering Ditanya',
+    lp_faq1_q: 'Apakah perlu punya API key atau akun khusus untuk menggunakannya?',
+    lp_faq1_a: 'Tidak. Trenova Terminal adalah web-based tool — kamu hanya perlu browser dan link akses. Tidak ada instalasi, tidak ada API key yang perlu disiapkan. Langsung buka, upload screenshot, dan generate analisa.',
+    lp_faq2_q: 'Exchange apa saja yang didukung?',
+    lp_faq2_a: 'Terminal dioptimalkan untuk OKX Perpetual Futures, namun bisa digunakan untuk screenshot dari exchange manapun — Binance, Bybit, dan lainnya. Yang penting adalah kualitas screenshot dan indikator yang aktif.',
+    lp_faq3_q: 'Seberapa akurat analisa AI-nya?',
+    lp_faq3_a: 'Akurasi bergantung pada kualitas screenshot dan kelengkapan data yang diinput. Terminal dirancang untuk memberikan analisa yang objektif dan terstruktur — bukan sinyal otomatis. Keputusan akhir tetap di tangan trader.',
+    lp_faq4_q: 'Apakah bisa digunakan di mobile?',
+    lp_faq4_a: 'Ya, Trenova Terminal sudah responsive dan bisa diakses dari mobile browser. Namun untuk pengalaman terbaik — terutama saat upload banyak screenshot — disarankan menggunakan desktop atau laptop.',
+    lp_faq5_q: 'Bagaimana cara upgrade atau downgrade plan?',
+    lp_faq5_a: 'Hubungi tim Trenova Intelligence melalui DM Instagram @trenova.intelligence atau Discord komunitas. Proses upgrade/downgrade biasanya selesai dalam 1×24 jam kerja.',
+    lp_faq6_q: 'Apakah data screenshot saya tersimpan di server?',
+    lp_faq6_a: 'Screenshot disimpan secara lokal di browser kamu (localStorage) — bukan di server kami. Data history analisa juga tersimpan di perangkat kamu sendiri, bukan di cloud eksternal.',
+    lp_cta_pill: 'MULAI HARI INI — JANGAN TUNDA',
+    lp_cta_title: 'Trader yang Kalah Kurang',
+    lp_cta_title_accent: 'Analisa.',
+    lp_cta_desc: 'Setiap trade yang kamu eksekusi tanpa analisa multi-timeframe yang solid adalah uang yang ditaruh di meja judi — bukan pasar. Trenova Terminal mengubah itu.',
+    lp_cta_btn1: 'AKSES TERMINAL SEKARANG',
+    lp_cta_btn2: 'FOLLOW @TRENOVA.INTELLIGENCE',
+    lp_cta_note: 'Garansi 7 hari uang kembali · Akses instan · Tanpa instalasi',
+    lp_footer_brand_desc: 'Platform analisa trading profesional untuk futures trader Indonesia. Dibangun oleh trader, untuk trader.',
+    lp_footer_ig: 'IG: @trenova.intelligence',
+    lp_footer_platform: 'Platform',
+    lp_footer_features: 'Fitur',
+    lp_footer_howit: 'Cara Kerja',
+    lp_footer_pricing: 'Harga',
+    lp_footer_support: 'Support',
+    lp_footer_faq: 'FAQ',
+    lp_footer_discord: 'Discord Komunitas',
+    lp_footer_instagram: 'Instagram',
+    lp_footer_legal: 'Legal',
+    lp_footer_tos: 'Terms of Service',
+    lp_footer_privacy: 'Privacy Policy',
+    lp_footer_refund: 'Refund Policy',
+    lp_footer_rights: 'Trenova Intelligence. All rights reserved.',
+    lp_footer_disclaimer: 'Analisa bukan merupakan financial advice. Trading mengandung risiko kerugian.',
   }
 };
