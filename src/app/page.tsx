@@ -134,7 +134,17 @@ export default function LandingPage() {
                <p className="text-slate-500 dark:text-slate-400 text-lg">{t('pricing_desc')}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {/* Standard Plan Label */}
+            <div className="mb-6">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Standard Plan</span>
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+               </div>
+               <p className="text-center text-xs text-slate-400 dark:text-slate-500">Gemini AI · 1 Timeframe · Tanpa Risk Management Otomatis</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
                {/* Product 1 */}
                <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
                   <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
@@ -280,6 +290,78 @@ export default function LandingPage() {
                         {t('plan_btn')}
                      </a>
                    </div>
+               </div>
+            </div>
+
+            {/* Premium Plan Label */}
+            <div className="mb-6">
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-neon/30 to-transparent"></div>
+                  <span className="text-xs font-bold text-neon uppercase tracking-wider flex items-center gap-2">⭐ Premium Plan</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-neon/30 to-transparent"></div>
+               </div>
+               <p className="text-center text-xs text-slate-400 dark:text-slate-500">Claude AI · Hingga 15 Timeframe · Risk Management Otomatis</p>
+            </div>
+
+            {/* Premium Plan Card */}
+            <div className="max-w-lg mx-auto mb-16">
+               <div className="bg-slate-50 dark:bg-[#0f172a] border-2 border-neon/50 dark:border-neon rounded-3xl p-8 hover:shadow-2xl hover:shadow-neon/20 transition-all duration-300 flex flex-col relative shadow-xl group">
+                  <div className="absolute inset-0 bg-gradient-to-b from-neon/5 to-transparent rounded-3xl pointer-events-none"></div>
+                  <div className="absolute top-0 right-0 bg-neon text-white text-[11px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
+                     PREMIUM
+                  </div>
+                  <div className="mb-6 pt-2 relative z-10">
+                     <h3 className="text-2xl font-extrabold text-foreground uppercase tracking-wide">Trenova Premium</h3>
+                     <p className="text-emerald-500 font-semibold text-sm mt-1">Masa Aktif 30 Hari</p>
+                  </div>
+                  <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <div>
+                           <span className="text-foreground dark:text-white font-semibold">Novice</span>
+                           <span className="text-[10px] text-slate-400 ml-2">30 token</span>
+                        </div>
+                        <span className="font-bold text-foreground tracking-wide">Rp99.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <div>
+                           <span className="text-foreground dark:text-white font-semibold">Starter</span>
+                           <span className="text-[10px] text-slate-400 ml-2">50 token</span>
+                        </div>
+                        <span className="font-bold text-foreground tracking-wide">Rp159.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3 relative">
+                        <div className="flex items-center gap-2">
+                           <span className="text-neon font-semibold">Basic</span>
+                           <span className="text-[9px] bg-neon/10 text-neon px-1.5 py-0.5 rounded font-bold">POPULER</span>
+                           <span className="text-[10px] text-slate-400">100 token</span>
+                        </div>
+                        <span className="font-bold text-neon tracking-wide">Rp299.000</span>
+                     </div>
+                     <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                        <div>
+                           <span className="text-foreground dark:text-white font-semibold">Pro</span>
+                           <span className="text-[10px] text-slate-400 ml-2">150 token</span>
+                        </div>
+                        <span className="font-bold text-foreground tracking-wide">Rp439.000</span>
+                     </div>
+                     <div className="flex justify-between items-center pt-1 border-transparent">
+                        <div>
+                           <span className="text-foreground dark:text-white font-semibold">Elite</span>
+                           <span className="text-[10px] text-slate-400 ml-2">200 token</span>
+                        </div>
+                        <span className="font-bold text-foreground tracking-wide">Rp579.000</span>
+                     </div>
+                  </div>
+                  <div className="mt-auto relative z-10">
+                     <a 
+                        href="https://s.shopee.co.id/3LMSSvgsMT" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 bg-neon hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all text-center text-sm flex items-center justify-center gap-2 shadow-lg shadow-neon/30 active:scale-95"
+                     >
+                        Dapatkan Premium <ArrowRight size={18} />
+                     </a>
+                  </div>
                </div>
             </div>
 

@@ -116,6 +116,52 @@ export type TranslationKey =
   | 'feedback_message_label'
   | 'feedback_message_placeholder'
   | 'feedback_send_btn'
+  | 'lp_proof_header'
+  | 'lp_proof_title'
+  | 'lp_proof_title_accent'
+  | 'lp_proof_desc'
+  | 'lp_proof_more'
+  | 'lp_comp_std'
+  | 'lp_comp_prem'
+  | 'lp_comp_val_1_m'
+  | 'lp_comp_val_1_s'
+  | 'lp_comp_val_1_t'
+  | 'lp_comp_val_2_m'
+  | 'lp_comp_val_2_s'
+  | 'lp_comp_val_2_t'
+  | 'lp_comp_val_2_p'
+  | 'lp_comp_val_3_m'
+  | 'lp_comp_val_3_s'
+  | 'lp_comp_val_3_t'
+  | 'lp_comp_val_3_p'
+  | 'lp_comp_val_4_m'
+  | 'lp_comp_val_4_s'
+  | 'lp_comp_val_4_t'
+  | 'lp_comp_val_4_p'
+  | 'lp_comp_val_5_m'
+  | 'lp_comp_val_5_s'
+  | 'lp_comp_val_5_t'
+  | 'lp_comp_val_5_p'
+  | 'lp_comp_val_6_m'
+  | 'lp_comp_val_6_s'
+  | 'lp_comp_val_6_t'
+  | 'lp_comp_val_6_p'
+  | 'lp_comp_val_7_m'
+  | 'lp_comp_val_7_s'
+  | 'lp_comp_val_7_t'
+  | 'lp_comp_val_7_p'
+  | 'lp_comp_val_8_m'
+  | 'lp_comp_val_8_s'
+  | 'lp_comp_val_8_t'
+  | 'lp_comp_val_8_p'
+  | 'lp_comp_terbaik'
+  | 'plan_st_label'
+  | 'plan_st_desc'
+  | 'plan_pr_label'
+  | 'plan_pr_desc'
+  | 'plan_token_gen'
+  | 'plan_period'
+  | 'plan_btn_pr'
 
   | 'admin_console'
   | 'admin_subtitle'
@@ -481,6 +527,106 @@ export const translations = {
     feedback_message_label: 'Message',
     feedback_message_placeholder: 'Tell us what you think...',
     feedback_send_btn: 'Send Feedback',
+  lp_proof_header: 'REAL TRADE RECORD',
+  lp_proof_title: 'Not a Claim.',
+  lp_proof_title_accent: 'Here is the Proof.',
+  lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
+  lp_proof_more: 'MORE RESULTS → SWIPE →',
+  lp_proof_stat1: 'MAX ROI',
+  lp_proof_stat2: 'TOTAL ANALYSIS',
+  lp_proof_stat3: 'USER RATING',
+  lp_proof_stat4: 'ANALYSIS TIME',
+  lp_proof_stat1_desc: 'Highest community record',
+  lp_proof_stat2_desc: 'Processed by AI',
+  lp_proof_stat3_desc: '100+ verified reviews',
+  lp_proof_stat4_desc: 'Average per session',
+  lp_comp_std: 'TRENOVA STANDARD',
+  lp_comp_prem: 'TRENOVA PREMIUM',
+  lp_comp_val_1_m: '45–90 min',
+  lp_comp_val_1_s: 'Wait for signal',
+  lp_comp_val_1_t: '≤ 60 sec',
+  lp_comp_val_2_m: 'Depends on skill',
+  lp_comp_val_2_s: '✗',
+  lp_comp_val_2_t: '1 Timeframe',
+  lp_comp_val_2_p: '✓ Up to 15 TF',
+  lp_comp_val_3_m: '✗',
+  lp_comp_val_3_s: '✗',
+  lp_comp_val_3_t: '✓ Gemini AI',
+  lp_comp_val_3_p: '✓ Claude AI',
+  lp_comp_val_4_m: 'Manual calculation',
+  lp_comp_val_4_s: '✗',
+  lp_comp_val_4_t: '✗',
+  lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
+  lp_comp_val_5_m: '✓',
+  lp_comp_val_5_s: '✗ Dependent',
+  lp_comp_val_5_t: '✓ + History track',
+  lp_comp_val_5_p: '✓ + History track',
+  lp_comp_val_6_m: 'Manual',
+  lp_comp_val_6_s: '✗',
+  lp_comp_val_6_t: '✓ Integrated',
+  lp_comp_val_6_p: '✓ Integrated',
+  lp_comp_val_7_m: '✗',
+  lp_comp_val_7_s: 'Different formats',
+  lp_comp_val_7_t: '✓ 1-Click Copy',
+  lp_comp_val_7_p: '✓ 1-Click Copy',
+  lp_comp_val_8_m: 'Your time',
+  lp_comp_val_8_s: 'Rp 200K–1jt+',
+  lp_comp_val_8_t: 'Rp 55K–450K',
+  lp_comp_val_8_p: 'Rp 99K–579K',
+  lp_comp_terbaik: 'BEST',
+  plan_st_label: 'Standard Plan',
+  plan_st_desc: 'Gemini AI · 1 Timeframe · No Auto Risk Management',
+  plan_pr_label: 'Premium Plan',
+  plan_pr_desc: 'Claude AI · Up to 15 Timeframes · Auto Risk Management',
+  plan_token_gen: 'generate',
+  plan_period: 'Validity 30 Days',
+  plan_btn_pr: 'Get Premium',
+    lp_proof_header: 'REAL TRADE RECORD',
+    lp_proof_title: 'Not a Claim.',
+    lp_proof_title_accent: 'Here is the Proof.',
+    lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
+    lp_proof_more: 'MORE RESULTS → SWIPE →',
+    lp_comp_std: 'TRENOVA STANDARD',
+    lp_comp_prem: 'TRENOVA PREMIUM',
+    lp_comp_val_1_m: '45–90 min',
+    lp_comp_val_1_s: 'Wait for signal',
+    lp_comp_val_1_t: '≤ 60 sec',
+    lp_comp_val_2_m: 'Depends on skill',
+    lp_comp_val_2_s: '✗',
+    lp_comp_val_2_t: '1 Timeframe',
+    lp_comp_val_2_p: '✓ Up to 15 TF',
+    lp_comp_val_3_m: '✗',
+    lp_comp_val_3_s: '✗',
+    lp_comp_val_3_t: '✓ Gemini AI',
+    lp_comp_val_3_p: '✓ Claude AI',
+    lp_comp_val_4_m: 'Manual calculation',
+    lp_comp_val_4_s: '✗',
+    lp_comp_val_4_t: '✗',
+    lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
+    lp_comp_val_5_m: '✓',
+    lp_comp_val_5_s: '✗ Dependent',
+    lp_comp_val_5_t: '✓ + History track',
+    lp_comp_val_5_p: '✓ + History track',
+    lp_comp_val_6_m: 'Manual',
+    lp_comp_val_6_s: '✗',
+    lp_comp_val_6_t: '✓ Integrated',
+    lp_comp_val_6_p: '✓ Integrated',
+    lp_comp_val_7_m: '✗',
+    lp_comp_val_7_s: 'Different formats',
+    lp_comp_val_7_t: '✓ 1-Click Copy',
+    lp_comp_val_7_p: '✓ 1-Click Copy',
+    lp_comp_val_8_m: 'Your time',
+    lp_comp_val_8_s: 'Rp 200K–1jt+',
+    lp_comp_val_8_t: 'Rp 55K–450K',
+    lp_comp_val_8_p: 'Rp 99K–579K',
+    lp_comp_terbaik: 'BEST',
+    plan_st_label: 'Standard Plan',
+    plan_st_desc: 'Gemini AI · 1 Timeframe · No Auto Risk Management',
+    plan_pr_label: 'Premium Plan',
+    plan_pr_desc: 'Claude AI · Up to 15 Timeframes · Auto Risk Management',
+    plan_token_gen: 'generate',
+    plan_period: 'Validity 30 Days',
+    plan_btn_pr: 'Get Premium',
     feedback_footer_note: 'This will open your default email client to send your feedback.',
     // Admin translations
     admin_console: 'Admin Console',
@@ -872,6 +1018,106 @@ export const translations = {
     feedback_message_label: 'Pesan',
     feedback_message_placeholder: 'Katakan pendapat Anda...',
     feedback_send_btn: 'Kirim Masukan',
+  lp_proof_header: 'TRACK RECORD NYATA',
+  lp_proof_title: 'Bukan Klaim.',
+  lp_proof_title_accent: 'Ini Buktinya.',
+  lp_proof_desc: 'Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.',
+  lp_proof_more: 'LEBIH BANYAK HASIL → GESER →',
+  lp_proof_stat1: 'MAX ROI',
+  lp_proof_stat2: 'TOTAL ANALISA',
+  lp_proof_stat3: 'USER RATING',
+  lp_proof_stat4: 'ANALISA TIME',
+  lp_proof_stat1_desc: 'Rekor tertinggi komunitas',
+  lp_proof_stat2_desc: 'Diproses oleh AI',
+  lp_proof_stat3_desc: '100+ ulasan verified',
+  lp_proof_stat4_desc: 'Rata-rata per sesi',
+  lp_comp_std: 'TRENOVA STANDARD',
+  lp_comp_prem: 'TRENOVA PREMIUM',
+  lp_comp_val_1_m: '45–90 menit',
+  lp_comp_val_1_s: 'Tunggu kiriman',
+  lp_comp_val_1_t: '≤ 60 detik',
+  lp_comp_val_2_m: 'Tergantung skill',
+  lp_comp_val_2_s: '✗',
+  lp_comp_val_2_t: '1 Timeframe',
+  lp_comp_val_2_p: '✓ Hingga 15 TF',
+  lp_comp_val_3_m: '✗',
+  lp_comp_val_3_s: '✗',
+  lp_comp_val_3_t: '✓ Gemini AI',
+  lp_comp_val_3_p: '✓ Claude AI',
+  lp_comp_val_4_m: 'Manual hitung',
+  lp_comp_val_4_s: '✗',
+  lp_comp_val_4_t: '✗',
+  lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
+  lp_comp_val_5_m: '✓',
+  lp_comp_val_5_s: '✗ Dependent',
+  lp_comp_val_5_t: '✓ + History track',
+  lp_comp_val_5_p: '✓ + History track',
+  lp_comp_val_6_m: 'Harus manual',
+  lp_comp_val_6_s: '✗',
+  lp_comp_val_6_t: '✓ Terintegrasi',
+  lp_comp_val_6_p: '✓ Terintegrasi',
+  lp_comp_val_7_m: '✗',
+  lp_comp_val_7_s: 'Format berbeda',
+  lp_comp_val_7_t: '✓ 1-Click Copy',
+  lp_comp_val_7_p: '✓ 1-Click Copy',
+  lp_comp_val_8_m: 'Waktu kamu',
+  lp_comp_val_8_s: 'Rp 200K–1jt+',
+  lp_comp_val_8_t: 'Rp 55K–450K',
+  lp_comp_val_8_p: 'Rp 99K–579K',
+  lp_comp_terbaik: 'TERBAIK',
+  plan_st_label: 'Standard Plan',
+  plan_st_desc: 'Gemini AI · 1 Timeframe · Tanpa Risk Management Otomatis',
+  plan_pr_label: 'Premium Plan',
+  plan_pr_desc: 'Claude AI · Hingga 15 Timeframe · Risk Management Otomatis',
+  plan_token_gen: 'Generate',
+  plan_period: 'Masa Aktif 30 Hari',
+  plan_btn_pr: 'Dapatkan Premium',
+    lp_proof_header: 'TRACK RECORD NYATA',
+    lp_proof_title: 'Bukan Klaim.',
+    lp_proof_title_accent: 'Ini Buktinya.',
+    lp_proof_desc: 'Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.',
+    lp_proof_more: 'LEBIH BANYAK HASIL → GESER →',
+    lp_comp_std: 'TRENOVA STANDARD',
+    lp_comp_prem: 'TRENOVA PREMIUM',
+    lp_comp_val_1_m: '45–90 menit',
+    lp_comp_val_1_s: 'Tunggu kiriman',
+    lp_comp_val_1_t: '≤ 60 detik',
+    lp_comp_val_2_m: 'Tergantung skill',
+    lp_comp_val_2_s: '✗',
+    lp_comp_val_2_t: '1 Timeframe',
+    lp_comp_val_2_p: '✓ Hingga 15 TF',
+    lp_comp_val_3_m: '✗',
+    lp_comp_val_3_s: '✗',
+    lp_comp_val_3_t: '✓ Gemini AI',
+    lp_comp_val_3_p: '✓ Claude AI',
+    lp_comp_val_4_m: 'Manual hitung',
+    lp_comp_val_4_s: '✗',
+    lp_comp_val_4_t: '✗',
+    lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
+    lp_comp_val_5_m: '✓',
+    lp_comp_val_5_s: '✗ Dependent',
+    lp_comp_val_5_t: '✓ + History track',
+    lp_comp_val_5_p: '✓ + History track',
+    lp_comp_val_6_m: 'Harus manual',
+    lp_comp_val_6_s: '✗',
+    lp_comp_val_6_t: '✓ Terintegrasi',
+    lp_comp_val_6_p: '✓ Terintegrasi',
+    lp_comp_val_7_m: '✗',
+    lp_comp_val_7_s: 'Format berbeda',
+    lp_comp_val_7_t: '✓ 1-Click Copy',
+    lp_comp_val_7_p: '✓ 1-Click Copy',
+    lp_comp_val_8_m: 'Waktu kamu',
+    lp_comp_val_8_s: 'Rp 200K–1jt+',
+    lp_comp_val_8_t: 'Rp 55K–450K',
+    lp_comp_val_8_p: 'Rp 99K–579K',
+    lp_comp_terbaik: 'TERBAIK',
+    plan_st_label: 'Standard Plan',
+    plan_st_desc: 'Gemini AI · 1 Timeframe · Tanpa Risk Management Otomatis',
+    plan_pr_label: 'Premium Plan',
+    plan_pr_desc: 'Claude AI · Hingga 15 Timeframe · Risk Management Otomatis',
+    plan_token_gen: 'Generate',
+    plan_period: 'Masa Aktif 30 Hari',
+    plan_btn_pr: 'Dapatkan Premium',
     feedback_footer_note: 'Ini akan membuka aplikasi email default Anda untuk mengirim masukan.',
     // Khusus Admin
     admin_console: 'Konsol Admin',
