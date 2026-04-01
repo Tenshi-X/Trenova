@@ -35,6 +35,11 @@ export default async function DashboardLayout({
       .eq('id', user.id)
       .single();
 
+    if (profile?.role === 'premium') {
+      const { redirect } = await import('next/navigation');
+      redirect('/terminal');
+    }
+
     if (profile?.subscription_end_at) {
       const end = new Date(profile.subscription_end_at);
       const now = new Date();

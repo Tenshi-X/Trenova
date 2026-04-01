@@ -581,7 +581,7 @@ export const translations = {
   plan_token_gen: 'generate',
   plan_period: 'Validity 30 Days',
   plan_btn_pr: 'Get Premium',
-    lp_proof_header: 'REAL TRADE RECORD',
+  lp_proof_header: 'REAL TRADE RECORD',
     lp_proof_title: 'Not a Claim.',
     lp_proof_title_accent: 'Here is the Proof.',
     lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
