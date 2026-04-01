@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AppShell from "@/components/AppShell";
@@ -81,7 +82,9 @@ export default function RootLayout({
             <Toaster position="top-center" richColors />
           </AppShell>
         </LanguageProvider>
-        <MetaPixel />
+        <Suspense>
+          <MetaPixel />
+        </Suspense>
       </body>
     </html>
   );
