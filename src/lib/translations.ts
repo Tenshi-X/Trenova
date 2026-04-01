@@ -100,11 +100,6 @@ export type TranslationKey =
   | 'loading'
   | 'coin_search_disclaimer'
   | 'searching_global'
-
-  | 'footer_rights'
-  | 'footer_privacy'
-  | 'footer_terms'
-  | 'footer_feedback'
   | 'btn_back_home'
   | 'feedback_pill'
   | 'feedback_title'
@@ -121,48 +116,36 @@ export type TranslationKey =
   | 'lp_proof_title_accent'
   | 'lp_proof_desc'
   | 'lp_proof_more'
-  | 'lp_comp_std'
-  | 'lp_comp_prem'
-  | 'lp_comp_val_1_m'
-  | 'lp_comp_val_1_s'
-  | 'lp_comp_val_1_t'
-  | 'lp_comp_val_2_m'
-  | 'lp_comp_val_2_s'
-  | 'lp_comp_val_2_t'
-  | 'lp_comp_val_2_p'
-  | 'lp_comp_val_3_m'
-  | 'lp_comp_val_3_s'
-  | 'lp_comp_val_3_t'
-  | 'lp_comp_val_3_p'
-  | 'lp_comp_val_4_m'
-  | 'lp_comp_val_4_s'
-  | 'lp_comp_val_4_t'
-  | 'lp_comp_val_4_p'
-  | 'lp_comp_val_5_m'
-  | 'lp_comp_val_5_s'
-  | 'lp_comp_val_5_t'
-  | 'lp_comp_val_5_p'
-  | 'lp_comp_val_6_m'
-  | 'lp_comp_val_6_s'
-  | 'lp_comp_val_6_t'
-  | 'lp_comp_val_6_p'
-  | 'lp_comp_val_7_m'
-  | 'lp_comp_val_7_s'
-  | 'lp_comp_val_7_t'
-  | 'lp_comp_val_7_p'
-  | 'lp_comp_val_8_m'
-  | 'lp_comp_val_8_s'
-  | 'lp_comp_val_8_t'
-  | 'lp_comp_val_8_p'
-  | 'lp_comp_terbaik'
-  | 'plan_st_label'
-  | 'plan_st_desc'
-  | 'plan_pr_label'
-  | 'plan_pr_desc'
-  | 'plan_token_gen'
-  | 'plan_period'
-  | 'plan_btn_pr'
-
+  | 'lp_proof_pill'
+  | 'lp_proof_stat1'
+  | 'lp_proof_stat2'
+  | 'lp_proof_stat3'
+  | 'lp_proof_stat4'
+  | 'lp_proof_stat1_desc'
+  | 'lp_proof_stat2_desc'
+  | 'lp_proof_stat3_desc'
+  | 'lp_proof_stat4_desc'
+  | 'lp_proof_stat1_num'
+  | 'lp_proof_stat1_label'
+  | 'lp_proof_stat1_sub'
+  | 'lp_proof_stat2_num'
+  | 'lp_proof_stat2_label'
+  | 'lp_proof_stat2_sub'
+  | 'lp_proof_stat3_num'
+  | 'lp_proof_stat3_label'
+  | 'lp_proof_stat3_sub'
+  | 'lp_proof_stat4_num'
+  | 'lp_proof_stat4_label'
+  | 'lp_proof_stat4_sub'
+  | 'lp_proof_t1_name'
+  | 'lp_proof_t1_role'
+  | 'lp_proof_t1_quote'
+  | 'lp_proof_t2_name'
+  | 'lp_proof_t2_role'
+  | 'lp_proof_t2_quote'
+  | 'lp_proof_t3_name'
+  | 'lp_proof_t3_role'
+  | 'lp_proof_t3_quote'
   | 'admin_console'
   | 'admin_subtitle'
   | 'btn_create_auth'
@@ -218,27 +201,18 @@ export type TranslationKey =
   | 'filter_from'
   | 'filter_to'
   | 'filter_start_date'
-
   | 'filter_end_date'
   | 'filter_select_date'
-  
-  // Problem
   | 'problem_pill'
   | 'problem_title'
   | 'problem_desc'
-  
-  // Feature (Updated)
   | 'feature_main_pill'
   | 'feature_main_title'
   | 'feature_main_desc'
-  
-  // Demo
   | 'demo_pill'
   | 'demo_title'
   | 'demo_desc'
   | 'demo_btn_try'
-  
-  // Pricing
   | 'pricing_pill'
   | 'pricing_title'
   | 'pricing_desc'
@@ -258,7 +232,6 @@ export type TranslationKey =
   | 'plan_feature_2'
   | 'plan_feature_3'
   | 'plan_feature_4'
-
   | 'plan_btn'
   | 'faq_pill'
   | 'faq_title'
@@ -277,150 +250,166 @@ export type TranslationKey =
   | 'testimonial_1_text'
   | 'testimonial_2_name'
   | 'testimonial_2_text'
-   | 'testimonial_3_name'
-   | 'testimonial_3_text'
-   // Terminal Landing Page
-   | 'lp_hero_pill'
-   | 'lp_hero_title_prefix'
-   | 'lp_hero_title_accent'
-   | 'lp_hero_subtitle_1'
-   | 'lp_hero_subtitle_2'
-   | 'lp_hero_desc'
-   | 'lp_hero_desc_bold1'
-   | 'lp_hero_desc_bold2'
-   | 'lp_hero_cmd'
-   | 'lp_hero_btn_start'
-   | 'lp_hero_btn_how'
-   | 'lp_hero_stat1_label'
-   | 'lp_hero_stat2_label'
-   | 'lp_hero_stat3_label'
-   | 'lp_hero_win_rate'
-   | 'lp_hero_rr_ratio'
-   | 'lp_feat_pill'
-   | 'lp_feat_title'
-   | 'lp_feat_title_accent'
-   | 'lp_feat_desc'
-   | 'lp_feat1_title'
-   | 'lp_feat1_desc'
-   | 'lp_feat2_title'
-   | 'lp_feat2_desc'
-   | 'lp_feat3_title'
-   | 'lp_feat3_desc'
-   | 'lp_feat4_title'
-   | 'lp_feat4_desc'
-   | 'lp_feat5_title'
-   | 'lp_feat5_desc'
-   | 'lp_feat6_title'
-   | 'lp_feat6_desc'
-   | 'lp_comp_pill'
-   | 'lp_comp_title'
-   | 'lp_comp_title_accent'
-   | 'lp_comp_desc'
-   | 'lp_comp_col_cap'
-   | 'lp_comp_col_manual'
-   | 'lp_comp_col_signal'
-   | 'lp_comp_col_trenova'
-   | 'lp_comp_col_trenova_rec'
-   | 'lp_comp_r1'
-   | 'lp_comp_r2'
-   | 'lp_comp_r3'
-   | 'lp_comp_r4'
-   | 'lp_comp_r5'
-   | 'lp_comp_r6'
-   | 'lp_comp_r7'
-   | 'lp_comp_r8'
-   | 'lp_how_pill'
-   | 'lp_how_title'
-   | 'lp_how_title_accent'
-   | 'lp_how_desc'
-   | 'lp_how1_title'
-   | 'lp_how1_desc'
-   | 'lp_how2_title'
-   | 'lp_how2_desc'
-   | 'lp_how3_title'
-   | 'lp_how3_desc'
-   | 'lp_how4_title'
-   | 'lp_how4_desc'
-   | 'lp_proof_pill'
-   | 'lp_proof_title'
-   | 'lp_proof_title_accent'
-   | 'lp_proof_stat1_num'
-   | 'lp_proof_stat1_label'
-   | 'lp_proof_stat1_sub'
-   | 'lp_proof_stat2_num'
-   | 'lp_proof_stat2_label'
-   | 'lp_proof_stat2_sub'
-   | 'lp_proof_stat3_num'
-   | 'lp_proof_stat3_label'
-   | 'lp_proof_stat3_sub'
-   | 'lp_proof_stat4_num'
-   | 'lp_proof_stat4_label'
-   | 'lp_proof_stat4_sub'
-   | 'lp_proof_t1_name'
-   | 'lp_proof_t1_role'
-   | 'lp_proof_t1_quote'
-   | 'lp_proof_t2_name'
-   | 'lp_proof_t2_role'
-   | 'lp_proof_t2_quote'
-   | 'lp_proof_t3_name'
-   | 'lp_proof_t3_role'
-   | 'lp_proof_t3_quote'
-   | 'lp_cred_pill'
-   | 'lp_cred_title'
-   | 'lp_cred_title_accent'
-   | 'lp_cred_brand'
-   | 'lp_cred_brand_sub'
-   | 'lp_cred_ig_label'
-   | 'lp_cred_desc1'
-   | 'lp_cred_desc1_bold'
-   | 'lp_cred_desc2'
-   | 'lp_cred_desc2_bold'
-   | 'lp_cred_stat1_label'
-   | 'lp_cred_stat2_label'
-   | 'lp_cred_stat3_label'
-   | 'lp_cred_stat4_label'
-   | 'lp_cred_quote'
-   | 'lp_cred_quote_author'
-   | 'lp_faq_pill'
-   | 'lp_faq_title'
-   | 'lp_faq_title_accent'
-   | 'lp_faq1_q'
-   | 'lp_faq1_a'
-   | 'lp_faq2_q'
-   | 'lp_faq2_a'
-   | 'lp_faq3_q'
-   | 'lp_faq3_a'
-   | 'lp_faq4_q'
-   | 'lp_faq4_a'
-   | 'lp_faq5_q'
-   | 'lp_faq5_a'
-   | 'lp_faq6_q'
-   | 'lp_faq6_a'
-   | 'lp_cta_pill'
-   | 'lp_cta_title'
-   | 'lp_cta_title_accent'
-   | 'lp_cta_desc'
-   | 'lp_cta_btn1'
-   | 'lp_cta_btn2'
-   | 'lp_cta_note'
-   | 'lp_footer_brand_desc'
-   | 'lp_footer_ig'
-   | 'lp_footer_platform'
-   | 'lp_footer_features'
-   | 'lp_footer_howit'
-   | 'lp_footer_pricing'
-   | 'lp_footer_support'
-   | 'lp_footer_faq'
-   | 'lp_footer_discord'
-   | 'lp_footer_instagram'
-   | 'lp_footer_legal'
-   | 'lp_footer_tos'
-   | 'lp_footer_privacy'
-   | 'lp_footer_refund'
-   | 'lp_footer_rights'
-   | 'lp_footer_disclaimer';
+  | 'testimonial_3_name'
+  | 'testimonial_3_text'
+  | 'lp_hero_pill'
+  | 'lp_hero_title_prefix'
+  | 'lp_hero_title_accent'
+  | 'lp_hero_subtitle_1'
+  | 'lp_hero_subtitle_2'
+  | 'lp_hero_desc'
+  | 'lp_hero_desc_bold1'
+  | 'lp_hero_desc_bold2'
+  | 'lp_hero_cmd'
+  | 'lp_hero_btn_start'
+  | 'lp_hero_btn_how'
+  | 'lp_hero_stat1_label'
+  | 'lp_hero_stat2_label'
+  | 'lp_hero_stat3_label'
+  | 'lp_hero_win_rate'
+  | 'lp_hero_rr_ratio'
+  | 'lp_feat_pill'
+  | 'lp_feat_title'
+  | 'lp_feat_title_accent'
+  | 'lp_feat_desc'
+  | 'lp_feat1_title'
+  | 'lp_feat1_desc'
+  | 'lp_feat2_title'
+  | 'lp_feat2_desc'
+  | 'lp_feat3_title'
+  | 'lp_feat3_desc'
+  | 'lp_feat4_title'
+  | 'lp_feat4_desc'
+  | 'lp_feat5_title'
+  | 'lp_feat5_desc'
+  | 'lp_feat6_title'
+  | 'lp_feat6_desc'
+  | 'lp_comp_pill'
+  | 'lp_comp_title'
+  | 'lp_comp_title_accent'
+  | 'lp_comp_desc'
+  | 'lp_comp_col_cap'
+  | 'lp_comp_col_manual'
+  | 'lp_comp_col_signal'
+  | 'lp_comp_col_trenova'
+  | 'lp_comp_col_trenova_rec'
+  | 'lp_comp_r1'
+  | 'lp_comp_r2'
+  | 'lp_comp_r3'
+  | 'lp_comp_r4'
+  | 'lp_comp_r5'
+  | 'lp_comp_r6'
+  | 'lp_comp_r7'
+  | 'lp_comp_r8'
+  | 'lp_how_pill'
+  | 'lp_how_title'
+  | 'lp_how_title_accent'
+  | 'lp_how_desc'
+  | 'lp_how1_title'
+  | 'lp_how1_desc'
+  | 'lp_how2_title'
+  | 'lp_how2_desc'
+  | 'lp_how3_title'
+  | 'lp_how3_desc'
+  | 'lp_how4_title'
+  | 'lp_how4_desc'
+  | 'lp_cred_pill'
+  | 'lp_cred_title'
+  | 'lp_cred_title_accent'
+  | 'lp_cred_brand'
+  | 'lp_cred_brand_sub'
+  | 'lp_cred_ig_label'
+  | 'lp_cred_desc1'
+  | 'lp_cred_desc1_bold'
+  | 'lp_cred_desc2'
+  | 'lp_cred_desc2_bold'
+  | 'lp_cred_stat1_label'
+  | 'lp_cred_stat2_label'
+  | 'lp_cred_stat3_label'
+  | 'lp_cred_stat4_label'
+  | 'lp_cred_quote'
+  | 'lp_cred_quote_author'
+  | 'lp_faq_pill'
+  | 'lp_faq_title'
+  | 'lp_faq_title_accent'
+  | 'lp_faq1_q'
+  | 'lp_faq1_a'
+  | 'lp_faq2_q'
+  | 'lp_faq2_a'
+  | 'lp_faq3_q'
+  | 'lp_faq3_a'
+  | 'lp_faq4_q'
+  | 'lp_faq4_a'
+  | 'lp_faq5_q'
+  | 'lp_faq5_a'
+  | 'lp_faq6_q'
+  | 'lp_faq6_a'
+  | 'lp_cta_pill'
+  | 'lp_cta_title'
+  | 'lp_cta_title_accent'
+  | 'lp_cta_desc'
+  | 'lp_cta_btn1'
+  | 'lp_cta_btn2'
+  | 'lp_cta_note'
+  | 'lp_footer_brand_desc'
+  | 'lp_footer_ig'
+  | 'lp_footer_platform'
+  | 'lp_footer_features'
+  | 'lp_footer_howit'
+  | 'lp_footer_pricing'
+  | 'lp_footer_support'
+  | 'lp_footer_faq'
+  | 'lp_footer_discord'
+  | 'lp_footer_instagram'
+  | 'lp_footer_legal'
+  | 'lp_footer_tos'
+  | 'lp_footer_refund'
+  | 'lp_footer_disclaimer'
+  | 'lp_comp_std'
+  | 'lp_comp_prem'
+  | 'lp_comp_val_1_m'
+  | 'lp_comp_val_1_s'
+  | 'lp_comp_val_1_t'
+  | 'lp_comp_val_2_m'
+  | 'lp_comp_val_2_s'
+  | 'lp_comp_val_2_t'
+  | 'lp_comp_val_2_p'
+  | 'lp_comp_val_3_m'
+  | 'lp_comp_val_3_s'
+  | 'lp_comp_val_3_t'
+  | 'lp_comp_val_3_p'
+  | 'lp_comp_val_4_m'
+  | 'lp_comp_val_4_s'
+  | 'lp_comp_val_4_t'
+  | 'lp_comp_val_4_p'
+  | 'lp_comp_val_5_m'
+  | 'lp_comp_val_5_s'
+  | 'lp_comp_val_5_t'
+  | 'lp_comp_val_5_p'
+  | 'lp_comp_val_6_m'
+  | 'lp_comp_val_6_s'
+  | 'lp_comp_val_6_t'
+  | 'lp_comp_val_6_p'
+  | 'lp_comp_val_7_m'
+  | 'lp_comp_val_7_s'
+  | 'lp_comp_val_7_t'
+  | 'lp_comp_val_7_p'
+  | 'lp_comp_val_8_m'
+  | 'lp_comp_val_8_s'
+  | 'lp_comp_val_8_t'
+  | 'lp_comp_val_8_p'
+  | 'lp_comp_terbaik'
+  | 'plan_st_label'
+  | 'plan_st_desc'
+  | 'plan_pr_label'
+  | 'plan_pr_desc'
+  | 'plan_token_gen'
+  | 'plan_period'
+  | 'plan_btn_pr'
+  | 'lp_footer_privacy'
+  | 'lp_footer_rights';
 
-export const translations = {
+export const translations: Record<'en' | 'id', Record<TranslationKey, string>> = {
   en: {
     nav_dashboard: 'Dashboard',
     nav_market: 'Market',
@@ -527,65 +516,7 @@ export const translations = {
     feedback_message_label: 'Message',
     feedback_message_placeholder: 'Tell us what you think...',
     feedback_send_btn: 'Send Feedback',
-  lp_proof_header: 'REAL TRADE RECORD',
-  lp_proof_title: 'Not a Claim.',
-  lp_proof_title_accent: 'Here is the Proof.',
-  lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
-  lp_proof_more: 'MORE RESULTS → SWIPE →',
-  lp_proof_stat1: 'MAX ROI',
-  lp_proof_stat2: 'TOTAL ANALYSIS',
-  lp_proof_stat3: 'USER RATING',
-  lp_proof_stat4: 'ANALYSIS TIME',
-  lp_proof_stat1_desc: 'Highest community record',
-  lp_proof_stat2_desc: 'Processed by AI',
-  lp_proof_stat3_desc: '100+ verified reviews',
-  lp_proof_stat4_desc: 'Average per session',
-  lp_comp_std: 'TRENOVA STANDARD',
-  lp_comp_prem: 'TRENOVA PREMIUM',
-  lp_comp_val_1_m: '45–90 min',
-  lp_comp_val_1_s: 'Wait for signal',
-  lp_comp_val_1_t: '≤ 60 sec',
-  lp_comp_val_2_m: 'Depends on skill',
-  lp_comp_val_2_s: '✗',
-  lp_comp_val_2_t: '1 Timeframe',
-  lp_comp_val_2_p: '✓ Up to 15 TF',
-  lp_comp_val_3_m: '✗',
-  lp_comp_val_3_s: '✗',
-  lp_comp_val_3_t: '✓ Gemini AI',
-  lp_comp_val_3_p: '✓ Claude AI',
-  lp_comp_val_4_m: 'Manual calculation',
-  lp_comp_val_4_s: '✗',
-  lp_comp_val_4_t: '✗',
-  lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
-  lp_comp_val_5_m: '✓',
-  lp_comp_val_5_s: '✗ Dependent',
-  lp_comp_val_5_t: '✓ + History track',
-  lp_comp_val_5_p: '✓ + History track',
-  lp_comp_val_6_m: 'Manual',
-  lp_comp_val_6_s: '✗',
-  lp_comp_val_6_t: '✓ Integrated',
-  lp_comp_val_6_p: '✓ Integrated',
-  lp_comp_val_7_m: '✗',
-  lp_comp_val_7_s: 'Different formats',
-  lp_comp_val_7_t: '✓ 1-Click Copy',
-  lp_comp_val_7_p: '✓ 1-Click Copy',
-  lp_comp_val_8_m: 'Your time',
-  lp_comp_val_8_s: 'Rp 200K–1jt+',
-  lp_comp_val_8_t: 'Rp 55K–450K',
-  lp_comp_val_8_p: 'Rp 99K–579K',
-  lp_comp_terbaik: 'BEST',
-  plan_st_label: 'Standard Plan',
-  plan_st_desc: 'Gemini AI · 1 Timeframe · No Auto Risk Management',
-  plan_pr_label: 'Premium Plan',
-  plan_pr_desc: 'Claude AI · Up to 15 Timeframes · Auto Risk Management',
-  plan_token_gen: 'generate',
-  plan_period: 'Validity 30 Days',
-  plan_btn_pr: 'Get Premium',
-  lp_proof_header: 'REAL TRADE RECORD',
-    lp_proof_title: 'Not a Claim.',
-    lp_proof_title_accent: 'Here is the Proof.',
-    lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
-    lp_proof_more: 'MORE RESULTS → SWIPE →',
+
     lp_comp_std: 'TRENOVA STANDARD',
     lp_comp_prem: 'TRENOVA PREMIUM',
     lp_comp_val_1_m: '45–90 min',
@@ -826,46 +757,7 @@ export const translations = {
     lp_how3_desc: 'Click GENERATE. Claude AI will read all screenshots simultaneously — analyzing EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest — then produce a complete structured analysis.',
     lp_how4_title: 'Copy Output & Execute',
     lp_how4_desc: 'Analysis output is one-click copy — complete with entry range, stop loss, take profit, risk/reward ratio, and win probability. Save to history for long-term performance tracking. Execute trades with full confidence.',
-    lp_proof_pill: 'SOCIAL PROOF',
-    lp_proof_title: 'Used by Serious',
-    lp_proof_title_accent: 'Traders',
-    lp_proof_stat1_num: '500',
-    lp_proof_stat1_label: 'Active Traders',
-    lp_proof_stat1_sub: 'Trenova Intelligence Community',
-    lp_proof_stat2_num: '12K',
-    lp_proof_stat2_label: 'Analyses Generated',
-    lp_proof_stat2_sub: 'Since first launch',
-    lp_proof_stat3_num: '4.8',
-    lp_proof_stat3_label: 'User Rating',
-    lp_proof_stat3_sub: 'Based on community feedback',
-    lp_proof_stat4_num: '<60',
-    lp_proof_stat4_label: 'Average Output Time',
-    lp_proof_stat4_sub: 'From screenshot to full analysis',
-    lp_proof_t1_name: 'Arief R.',
-    lp_proof_t1_role: 'Altcoin Futures Trader • OKX',
-    lp_proof_t1_quote: 'Before, just 4H analysis could take over 1 hour. Now in 15 minutes I get complete output. The decision quality is totally different.',
-    lp_proof_t2_name: 'Dimas M.',
-    lp_proof_t2_role: 'BTC Perp Trader • 50× Leverage',
-    lp_proof_t2_quote: 'This terminal isn\'t just a regular tool. The way it reads CVD and funding rate together provides insights that usually only institutional traders have.',
-    lp_proof_t3_name: 'Siti F.',
-    lp_proof_t3_role: 'Crypto Trader • Trenova Member',
-    lp_proof_t3_quote: 'The history feature is the most underrated. Being able to review all trading decisions, know where I went wrong, and improve my own system. This isn\'t just a tool — it\'s a mentor.',
-    lp_cred_pill: 'WHO\'S BEHIND THIS',
-    lp_cred_title: 'Built by Traders,',
-    lp_cred_title_accent: 'for Traders.',
-    lp_cred_brand: 'Trenova Intelligence',
-    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
-    lp_cred_ig_label: 'Instagram:',
-    lp_cred_desc1: 'Trenova Intelligence was born from the same trader frustration — too much time spent on analysis setup, too little time for mature execution.',
-    lp_cred_desc1_bold: 'We\'re not a big company',
-    lp_cred_desc2: 'This terminal is used daily by the founder for BTC and altcoin trading on OKX — not a tool made to sell, but',
-    lp_cred_desc2_bold: 'a tool built out of necessity',
-    lp_cred_stat1_label: 'Instagram Followers',
-    lp_cred_stat2_label: 'Discord Members',
-    lp_cred_stat3_label: 'Active in community',
-    lp_cred_stat4_label: 'Focus: Indonesian crypto',
-    lp_cred_quote: 'I use this terminal myself every day before opening a trade. If it wasn\'t good enough, I wouldn\'t sell it. My money is on the line too.',
-    lp_cred_quote_author: 'Founder Trenova Intelligence',
+
     lp_faq_pill: 'FAQ',
     lp_faq_title: 'Frequently',
     lp_faq_title_accent: 'Asked Questions',
@@ -904,6 +796,57 @@ export const translations = {
     lp_footer_refund: 'Refund Policy',
     lp_footer_rights: 'Trenova Intelligence. All rights reserved.',
     lp_footer_disclaimer: 'Analysis is not financial advice. Trading involves risk of loss.',
+    lp_cred_quote_author: 'Founder Trenova Intelligence',
+    lp_proof_header: 'REAL TRADE RECORD',
+    lp_proof_title: 'Not a Claim.',
+    lp_proof_title_accent: 'Here is the Proof.',
+    lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
+    lp_proof_more: 'MORE RESULTS → SWIPE →',
+    lp_proof_stat1: 'MAX ROI',
+    lp_proof_stat2: 'TOTAL ANALYSIS',
+    lp_proof_stat3: 'USER RATING',
+    lp_proof_stat4: 'ANALYSIS TIME',
+    lp_proof_stat1_desc: 'Highest community record',
+    lp_proof_stat2_desc: 'Processed by AI',
+    lp_proof_stat3_desc: '100+ verified reviews',
+    lp_proof_stat4_desc: 'Average per session',
+    lp_proof_pill: 'SOCIAL PROOF',
+    lp_proof_stat1_num: '327',
+    lp_proof_stat1_label: 'MAX ROI',
+    lp_proof_stat1_sub: 'Highest community record',
+    lp_proof_stat2_num: '1,200',
+    lp_proof_stat2_label: 'TOTAL ANALYSIS',
+    lp_proof_stat2_sub: 'Processed by AI',
+    lp_proof_stat3_num: '4.8',
+    lp_proof_stat3_label: 'USER RATING',
+    lp_proof_stat3_sub: '100+ verified reviews',
+    lp_proof_stat4_num: '<60',
+    lp_proof_stat4_label: 'ANALYSIS TIME',
+    lp_proof_stat4_sub: 'Average per session',
+    lp_proof_t1_name: 'AR',
+    lp_proof_t1_role: 'Swing Trader · 2 years',
+    lp_proof_t1_quote: 'Analysis from Trenova is very detailed. My ROI increased significantly since using these tools. Highly recommended!',
+    lp_proof_t2_name: 'DM',
+    lp_proof_t2_role: 'Day Trader · Binance',
+    lp_proof_t2_quote: 'Saves so much time! Usually manual analysis takes 1 hour, now only 1 minute. The output is also ready to copy.',
+    lp_proof_t3_name: 'SF',
+    lp_proof_t3_role: 'Crypto Enthusiast',
+    lp_proof_t3_quote: 'Initially hesitated, but after trying directly subscribed. The AI is truly advanced and risk management is comprehensive.',
+    lp_cred_pill: 'WHO IS BEHIND THIS',
+    lp_cred_title: 'Built by Traders,',
+    lp_cred_title_accent: 'for Traders.',
+    lp_cred_brand: 'Trenova Intelligence',
+    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
+    lp_cred_ig_label: 'Instagram:',
+    lp_cred_desc1: 'Trenova Intelligence was born from the frustration of many traders — too much time spent on analysis setup, too little time for mature execution.',
+    lp_cred_desc1_bold: 'We are not a big company',
+    lp_cred_desc2: 'This terminal is used directly by the founder for BTC and altcoin trading on OKX every session — not a tool made to be sold, but',
+    lp_cred_desc2_bold: 'a tool made because it was needed',
+    lp_cred_stat1_label: 'Instagram Followers',
+    lp_cred_stat2_label: 'Discord Members',
+    lp_cred_stat3_label: 'Active in community',
+    lp_cred_stat4_label: 'Indonesia crypto focus',
+    lp_cred_quote: 'This terminal I use myself every day before opening a trade. If it was not worthy, I would not sell it. My money is also here.',
   },
   id: {
     nav_dashboard: 'Dasbor',
@@ -1018,65 +961,7 @@ export const translations = {
     feedback_message_label: 'Pesan',
     feedback_message_placeholder: 'Katakan pendapat Anda...',
     feedback_send_btn: 'Kirim Masukan',
-  lp_proof_header: 'TRACK RECORD NYATA',
-  lp_proof_title: 'Bukan Klaim.',
-  lp_proof_title_accent: 'Ini Buktinya.',
-  lp_proof_desc: 'Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.',
-  lp_proof_more: 'LEBIH BANYAK HASIL → GESER →',
-  lp_proof_stat1: 'MAX ROI',
-  lp_proof_stat2: 'TOTAL ANALISA',
-  lp_proof_stat3: 'USER RATING',
-  lp_proof_stat4: 'ANALISA TIME',
-  lp_proof_stat1_desc: 'Rekor tertinggi komunitas',
-  lp_proof_stat2_desc: 'Diproses oleh AI',
-  lp_proof_stat3_desc: '100+ ulasan verified',
-  lp_proof_stat4_desc: 'Rata-rata per sesi',
-  lp_comp_std: 'TRENOVA STANDARD',
-  lp_comp_prem: 'TRENOVA PREMIUM',
-  lp_comp_val_1_m: '45–90 menit',
-  lp_comp_val_1_s: 'Tunggu kiriman',
-  lp_comp_val_1_t: '≤ 60 detik',
-  lp_comp_val_2_m: 'Tergantung skill',
-  lp_comp_val_2_s: '✗',
-  lp_comp_val_2_t: '1 Timeframe',
-  lp_comp_val_2_p: '✓ Hingga 15 TF',
-  lp_comp_val_3_m: '✗',
-  lp_comp_val_3_s: '✗',
-  lp_comp_val_3_t: '✓ Gemini AI',
-  lp_comp_val_3_p: '✓ Claude AI',
-  lp_comp_val_4_m: 'Manual hitung',
-  lp_comp_val_4_s: '✗',
-  lp_comp_val_4_t: '✗',
-  lp_comp_val_4_p: '✓ Auto SL/TP/R:R',
-  lp_comp_val_5_m: '✓',
-  lp_comp_val_5_s: '✗ Dependent',
-  lp_comp_val_5_t: '✓ + History track',
-  lp_comp_val_5_p: '✓ + History track',
-  lp_comp_val_6_m: 'Harus manual',
-  lp_comp_val_6_s: '✗',
-  lp_comp_val_6_t: '✓ Terintegrasi',
-  lp_comp_val_6_p: '✓ Terintegrasi',
-  lp_comp_val_7_m: '✗',
-  lp_comp_val_7_s: 'Format berbeda',
-  lp_comp_val_7_t: '✓ 1-Click Copy',
-  lp_comp_val_7_p: '✓ 1-Click Copy',
-  lp_comp_val_8_m: 'Waktu kamu',
-  lp_comp_val_8_s: 'Rp 200K–1jt+',
-  lp_comp_val_8_t: 'Rp 55K–450K',
-  lp_comp_val_8_p: 'Rp 99K–579K',
-  lp_comp_terbaik: 'TERBAIK',
-  plan_st_label: 'Standard Plan',
-  plan_st_desc: 'Gemini AI · 1 Timeframe · Tanpa Risk Management Otomatis',
-  plan_pr_label: 'Premium Plan',
-  plan_pr_desc: 'Claude AI · Hingga 15 Timeframe · Risk Management Otomatis',
-  plan_token_gen: 'Generate',
-  plan_period: 'Masa Aktif 30 Hari',
-  plan_btn_pr: 'Dapatkan Premium',
-    lp_proof_header: 'TRACK RECORD NYATA',
-    lp_proof_title: 'Bukan Klaim.',
-    lp_proof_title_accent: 'Ini Buktinya.',
-    lp_proof_desc: 'Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.',
-    lp_proof_more: 'LEBIH BANYAK HASIL → GESER →',
+
     lp_comp_std: 'TRENOVA STANDARD',
     lp_comp_prem: 'TRENOVA PREMIUM',
     lp_comp_val_1_m: '45–90 menit',
@@ -1308,9 +1193,20 @@ export const translations = {
     lp_how3_desc: 'Klik tombol GENERATE. Claude AI akan membaca seluruh screenshot secara bersamaan — menganalisa confluence EMA, divergence RSI, sinyal MACD, CVD, funding rate, dan open interest — lalu menghasilkan analisa terstruktur lengkap.',
     lp_how4_title: 'Copy Output & Execute',
     lp_how4_desc: 'Output analisa siap satu klik copy — lengkap dengan entry range, stop loss, take profit, risk/reward ratio, dan win probability. Simpan ke history untuk tracking performa jangka panjang. Execute trade dengan konfiden penuh.',
+    lp_proof_header: 'TRACK RECORD NYATA',
+    lp_proof_title: 'Bukan Klaim.',
+    lp_proof_title_accent: 'Ini Buktinya.',
+    lp_proof_desc: 'Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.',
+    lp_proof_more: 'LEBIH BANYAK HASIL → GESER →',
+    lp_proof_stat1: 'MAX ROI',
+    lp_proof_stat2: 'TOTAL ANALISA',
+    lp_proof_stat3: 'USER RATING',
+    lp_proof_stat4: 'ANALISA TIME',
+    lp_proof_stat1_desc: 'Rekor tertinggi komunitas',
+    lp_proof_stat2_desc: 'Diproses oleh AI',
+    lp_proof_stat3_desc: '100+ ulasan verified',
+    lp_proof_stat4_desc: 'Rata-rata per sesi',
     lp_proof_pill: 'SOCIAL PROOF',
-    lp_proof_title: 'Digunakan oleh Trader',
-    lp_proof_title_accent: 'Serius',
     lp_proof_stat1_num: '500',
     lp_proof_stat1_label: 'Active Traders',
     lp_proof_stat1_sub: 'Komunitas Trenova Intelligence',
@@ -1382,9 +1278,9 @@ export const translations = {
     lp_footer_instagram: 'Instagram',
     lp_footer_legal: 'Legal',
     lp_footer_tos: 'Terms of Service',
-    lp_footer_privacy: 'Privacy Policy',
-    lp_footer_refund: 'Refund Policy',
-    lp_footer_rights: 'Trenova Intelligence. All rights reserved.',
+    lp_footer_privacy: 'Kebijakan Privasi',
+    lp_footer_refund: 'Kebijakan Pengembalian',
+    lp_footer_rights: 'Trenova Intelligence. Hak cipta dilindungi.',
     lp_footer_disclaimer: 'Analisa bukan merupakan financial advice. Trading mengandung risiko kerugian.',
   }
 };
