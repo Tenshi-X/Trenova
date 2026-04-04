@@ -6,15 +6,15 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Don't show sidebar on login page
-  const isLoginPage = pathname === '/login' || pathname === '/sign-in' || pathname === '/' || pathname === '/feedback';
+  // Don't show sidebar on certain pages
+  const hideSidebar = pathname === '/login' || pathname === '/sign-in' || pathname === '/' || pathname === '/feedback' || pathname === '/terminal';
   
   return (
     <ThemeProvider>
-      {!isLoginPage && <Sidebar />}
+      {!hideSidebar && <Sidebar />}
       <main 
         className={`flex-1 h-screen overflow-y-auto relative transition-all duration-300 ${
-          isLoginPage ? 'w-full' : 'ml-0 md:ml-20' /* ml-0 on mobile, ml-20 on desktop */
+          hideSidebar ? 'w-full' : 'ml-0 md:ml-20' /* ml-0 on mobile, ml-20 on desktop */
         }`}
       >
         {/* Background Gradient/Glow effects */}

@@ -478,18 +478,42 @@ body::after {
 .hist-clr { font-size:10px; color:var(--dim); background:transparent; border:1px solid var(--brd2); padding:4px 10px; cursor:pointer; font-family:'IBM Plex Mono',monospace; transition:all .15s; }
 .hist-clr:hover { border-color:var(--re); color:var(--re); }
 .hist-empty { padding:60px; text-align:center; color:var(--dim); font-size:12px; letter-spacing:.1em; line-height:2.5; border:1px solid var(--brd2); }
-.hist-tbl { border:1px solid var(--brd2); }
-.h-head { background:var(--bg3); display:grid; grid-template-columns:1fr 100px 120px 36px; border-bottom:1px solid var(--brd2); }
-.h-th { padding:7px 12px; font-size:10px; color:#999; letter-spacing:.1em; text-transform:uppercase; border-right:1px solid var(--brd); }
-.h-th:last-child { border-right:none; }
-.h-row { display:grid; grid-template-columns:1fr 100px 120px 36px; border-bottom:1px solid var(--brd); cursor:pointer; transition:background .1s; }
-.h-row:last-child { border-bottom:none; }
-.h-row:hover { background: var(--acc-d); }
-.h-td { padding:9px 12px; font-size:11px; color:var(--wh2); border-right:1px solid var(--brd); display:flex; align-items:center; overflow:hidden; }
-.h-td:last-child { border-right:none; justify-content:center; }
-.h-lev { font-size:13px; font-weight:700; color:var(--acc3); }
-.h-del { background:transparent; border:none; color:var(--dim); cursor:pointer; font-size:14px; transition:color .1s; font-family:monospace; }
-.h-del:hover { color:var(--re); }
+
+/* ── HISTORY CARDS ── */
+.h-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg2);
+  border: 1px solid var(--brd2);
+  border-bottom: none;
+  cursor: pointer;
+  transition: background .12s;
+  overflow: hidden;
+}
+.h-card:last-child { border-bottom: 1px solid var(--brd2); }
+.h-card:hover { background: var(--bg3); }
+.h-card:hover .h-card-koin { color: var(--acc3); }
+.h-card-left {
+  padding: 12px 14px;
+  min-width: 130px;
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  border-right: 1px solid var(--brd2);
+  flex-shrink: 0;
+}
+.h-card-koin { font-size: 14px; font-weight: 700; color: var(--wh); letter-spacing: .04em; transition: color .12s; }
+.h-card-meta { font-size: 10px; color: var(--dim); letter-spacing: .04em; }
+.h-card-center {
+  padding: 12px 14px; flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  border-right: 1px solid var(--brd2);
+}
+.h-card-right {
+  padding: 12px 16px; min-width: 110px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; flex-shrink: 0;
+}
+.h-del { background:rgba(201,64,64,0.15); border:1px solid rgba(201,64,64,0.3); color:#c94040; font-size:10px; padding:3px 8px; cursor:pointer; font-family:'IBM Plex Mono',monospace; transition:all .12s; }
+.h-del:hover { background:var(--re); color:#fff; }
 
 /* ── GUIDE ── */
 .guide-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
@@ -509,15 +533,14 @@ body::after {
 /* ── MODAL ── */
 .mbg { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:500; display:none; align-items:center; justify-content:center; padding:20px; }
 .mbg.show { display:flex; }
-.mbox { background:var(--bg2); border:1px solid var(--brd2); border-top:2px solid var(--acc2); width:100%; max-width:960px; max-height:88vh; overflow-y:auto; }
-.m-top { background:var(--acc2); padding:8px 14px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; }
-.m-ttl { font-size:12px; font-weight:700; color:#000; }
+.mbox { background:var(--bg2); border:1px solid var(--brd2); border-top:2px solid var(--acc2); width:100%; max-width:1100px; max-height:92vh; overflow-y:auto; }
+.m-top { background:var(--acc2); padding:8px 14px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+.m-ttl { font-size:12px; font-weight:700; color:#000; letter-spacing:.04em; }
 .m-close { background:rgba(0,0,0,.2); border:none; color:#000; font-size:14px; width:26px; height:26px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .m-inner { padding:14px; }
 .m-shots { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; margin-bottom:12px; }
 .m-shot { aspect-ratio:16/9; object-fit:cover; width:100%; border:1px solid var(--brd2); }
-.m-sum { background:var(--bg); border:1px solid var(--brd2); padding:12px; font-size:11px; line-height:1.9; white-space:pre-wrap; color:var(--wh2); margin-bottom:10px; max-height:320px; overflow-y:auto; }
-.m-copy { width:100%; padding:12px; background:var(--acc2); border:none; color:#000; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.12em; cursor:pointer; transition:background .15s; }
+.m-copy { width:100%; padding:12px; background:var(--acc2); border:none; color:#000; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.12em; cursor:pointer; transition:background .15s; margin-top:14px; display:block; }
 .m-copy:hover { background:var(--acc3); }
 
 ::-webkit-scrollbar { width:4px; height:4px; }
@@ -655,7 +678,50 @@ body::after {
 .news-src-cn{background:rgba(212,168,67,0.12);color:var(--acc);border:1px solid rgba(212,168,67,0.3);}
 .news-src-dc{background:rgba(76,175,125,0.12);color:#4caf7d;border:1px solid rgba(76,175,125,0.3);}
 .news-src-td{background:rgba(201,64,64,0.12);color:#c94040;border:1px solid rgba(201,64,64,0.3);}
+.news-src-tb{background:rgba(130,80,255,0.15);color:#a070ff;border:1px solid rgba(130,80,255,0.3);}
+.news-src-rt{background:rgba(255,140,0,0.15);color:#ff9a30;border:1px solid rgba(255,140,0,0.3);}
+.news-src-bbc{background:rgba(187,0,0,0.15);color:#ff5555;border:1px solid rgba(187,0,0,0.3);}
+.news-src-cnbc{background:rgba(0,100,255,0.15);color:#4488ff;border:1px solid rgba(0,100,255,0.3);}
+.news-src-ft{background:rgba(255,200,0,0.12);color:#ffd040;border:1px solid rgba(255,200,0,0.3);}
+.news-src-rw{background:rgba(255,100,50,0.15);color:#ff7744;border:1px solid rgba(255,100,50,0.3);}
+.news-src-aj{background:rgba(0,180,100,0.15);color:#00cc77;border:1px solid rgba(0,180,100,0.3);}
+.news-src-ap{background:rgba(150,150,255,0.15);color:#aaaaff;border:1px solid rgba(150,150,255,0.3);}
 .news-src-other{background:rgba(80,80,80,0.2);color:#888;border:1px solid rgba(80,80,80,0.3);}
+
+/* ── NEWS CAT BADGES ── */
+.news-cat-crypto{font-size:8px;padding:1px 5px;background:rgba(91,163,201,0.1);color:var(--cy);border:1px solid rgba(91,163,201,0.2);letter-spacing:.04em;}
+.news-cat-macro{font-size:8px;padding:1px 5px;background:rgba(212,168,67,0.1);color:var(--acc);border:1px solid rgba(212,168,67,0.2);letter-spacing:.04em;}
+.news-cat-geo{font-size:8px;padding:1px 5px;background:rgba(201,64,64,0.1);color:#e07070;border:1px solid rgba(201,64,64,0.2);letter-spacing:.04em;}
+
+/* ── NEWS READER MODAL ── */
+.news-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:6000;display:none;align-items:center;justify-content:center;padding:20px;}
+.news-modal-bg.show{display:flex;}
+.news-modal-box{background:var(--bg2);border:1px solid var(--brd2);border-top:2px solid var(--acc2);width:100%;max-width:800px;max-height:90vh;display:flex;flex-direction:column;animation:nmSlideIn .2s ease;}
+@keyframes nmSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.news-modal-hdr{background:var(--bg3);border-bottom:1px solid var(--brd2);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
+.news-modal-hdr-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.news-modal-src-tag{font-size:9px;font-weight:700;padding:2px 8px;letter-spacing:.05em;flex-shrink:0;}
+.news-modal-title{font-size:11px;font-weight:600;color:var(--wh);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.news-modal-close{background:transparent;border:1px solid var(--brd2);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;transition:all .12s;flex-shrink:0;letter-spacing:.04em;}
+.news-modal-close:hover{border-color:var(--re);color:var(--re);}
+.news-modal-meta{padding:8px 16px;border-bottom:1px solid var(--brd2);display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap;}
+.news-modal-body{flex:1;overflow-y:auto;padding:0;}
+.news-modal-loading{display:flex;align-items:center;justify-content:center;padding:60px;flex-direction:column;gap:12px;}
+.news-modal-spinner{width:24px;height:24px;border:2px solid var(--brd2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite;}
+.news-modal-footer{border-top:1px solid var(--brd2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg3);}
+.news-modal-url{font-size:9px;color:var(--dim);letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:500px;}
+.news-modal-open-btn{font-size:10px;font-weight:600;color:var(--cy);background:transparent;border:1px solid var(--cy);padding:4px 12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;transition:all .12s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
+.news-modal-open-btn:hover{background:rgba(91,163,201,0.15);color:#fff;}
+
+/* ── ARTICLE READER TYPOGRAPHY ── */
+.nm-article{padding:24px 32px 40px;max-width:720px;margin:0 auto;font-family:'IBM Plex Mono',monospace;}
+.nm-article p{font-size:12px;color:#d0d0d0;line-height:1.9;margin-bottom:14px;}
+.nm-article h3{font-size:13px;font-weight:700;color:var(--acc3);letter-spacing:.04em;margin:22px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--brd2);}
+.nm-article ul,.nm-article ol{margin:0 0 14px 18px;padding:0;}
+.nm-article li{font-size:12px;color:#c0c0c0;line-height:1.8;margin-bottom:4px;}
+.nm-article blockquote{border-left:3px solid var(--acc2);margin:16px 0;padding:10px 16px;background:var(--bg3);font-size:12px;color:#aaa;font-style:italic;line-height:1.7;}
+.nm-article strong{color:var(--wh);font-weight:700;}
+.nm-article em{color:#bbb;font-style:italic;}
 .news-time{font-size:9px;color:#555;letter-spacing:.03em;}
 .news-new-badge{font-size:8px;background:rgba(76,175,125,0.2);color:#4caf7d;border:1px solid rgba(76,175,125,0.4);padding:1px 6px;letter-spacing:.04em;font-weight:700;}
 .news-src-tab{background:transparent;border:none;border-right:1px solid var(--brd2);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:6px 12px;cursor:pointer;letter-spacing:.05em;transition:all .12s;white-space:nowrap;}
@@ -889,7 +955,14 @@ body::after {
 <!-- HISTORY PAGE -->
 <div class="page" id="page-history">
 <div class="wrap">
-  <div class="hist-top"><span class="hist-ttl">ANALYSIS HISTORY LOG</span><button class="hist-clr" onclick="clearAll()">CLEAR ALL</button></div>
+  <div class="hist-top">
+    <span class="hist-ttl">ANALYSIS HISTORY LOG</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input id="hist-search" type="text" placeholder="Cari koin..." oninput="renderHist()" style="background:var(--bg3);border:1px solid var(--brd2);color:var(--wh);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 10px;outline:none;width:160px;letter-spacing:.04em">
+      <span id="hist-count" style="font-size:10px;color:var(--dim)"></span>
+      <button class="hist-clr" onclick="clearAll()">CLEAR ALL</button>
+    </div>
+  </div>
   <div id="hist-body"></div>
 </div>
 </div>
@@ -1602,21 +1675,30 @@ body::after {
     <!-- CRYPTO NEWS FEED -->
     <div class="mi-card">
       <div class="mi-head">
-        <span class="mi-title">Crypto News Feed</span>
+        <span class="mi-title">News Feed — Crypto · Makro · Geopolitik</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="mi-badge mi-live" id="news-live-badge">LIVE</span>
           <span class="mi-updated" id="news-updated">—</span>
           <button class="mi-refresh" onclick="loadNews(true)">↺</button>
         </div>
       </div>
-      <!-- Source tabs -->
-      <div style="display:flex;gap:0;border-bottom:1px solid var(--brd2);background:var(--bg3);">
-        <button class="news-src-tab news-src-active" onclick="newsSetSource('all',this)">ALL</button>
+      <!-- Category + Source tabs -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--brd2);background:var(--bg3);flex-wrap:wrap;">
+        <button class="news-src-tab news-src-active" onclick="newsSetSource('all',this)" data-cat="">ALL</button>
+        <button class="news-src-tab" onclick="newsSetSource('cat:crypto',this)" data-cat="crypto" style="color:#5ba3c9;">⬡ CRYPTO</button>
+        <button class="news-src-tab" onclick="newsSetSource('cat:macro',this)" data-cat="macro" style="color:#d4a843;">$ MAKRO</button>
+        <button class="news-src-tab" onclick="newsSetSource('cat:geo',this)" data-cat="geo" style="color:#e07070;">⊕ GEO</button>
+        <div style="width:1px;background:var(--brd2);margin:4px 0;"></div>
         <button class="news-src-tab" onclick="newsSetSource('cointelegraph',this)">CT</button>
         <button class="news-src-tab" onclick="newsSetSource('cryptonews',this)">CN</button>
         <button class="news-src-tab" onclick="newsSetSource('decrypt',this)">DC</button>
-        <button class="news-src-tab" onclick="newsSetSource('thedefiant',this)">TD</button>
-        <div style="flex:1;display:flex;align-items:center;padding:0 8px;">
+        <button class="news-src-tab" onclick="newsSetSource('bitcoinist',this)">BI</button>
+        <button class="news-src-tab" onclick="newsSetSource('theblock',this)">TB</button>
+        <button class="news-src-tab" onclick="newsSetSource('reuters_eco',this)" style="color:#ff9a30;">RT</button>
+        <button class="news-src-tab" onclick="newsSetSource('bbc_biz',this)" style="color:#ff5555;">BBC</button>
+        <button class="news-src-tab" onclick="newsSetSource('reuters_world',this)" style="color:#ff7744;">RW</button>
+        <button class="news-src-tab" onclick="newsSetSource('aljazeera',this)" style="color:#00cc77;">AJ</button>
+        <div style="flex:1;display:flex;align-items:center;padding:0 8px;min-width:100px;">
           <input id="news-search" type="text" placeholder="Filter berita..." style="background:transparent;border:none;color:var(--wh2);font-family:'IBM Plex Mono',monospace;font-size:10px;outline:none;width:100%;" oninput="newsFilterRender()">
         </div>
       </div>
@@ -1654,6 +1736,50 @@ body::after {
     </div>
   </div>
 
+  <!-- DOMINANCE STRIP -->
+  <div id="dom-strip" style="background:var(--bg2);border-bottom:2px solid var(--brd2);padding:0;flex-shrink:0;">
+    <div style="display:flex;align-items:center;padding:5px 16px 0;gap:8px;border-bottom:1px solid var(--brd2);">
+      <span style="font-size:9px;font-weight:700;color:var(--acc);letter-spacing:.12em">DOMINANCE &amp; MARKET</span>
+      <span style="font-size:9px;color:var(--dim)">— klik untuk chart</span>
+      <div style="margin-left:auto;display:flex;gap:4px;">
+        <button class="lm-tf-btn dom-tf-active" id="dom-tf-btn-15" onclick="domSetTF('15',this)">15m</button>
+        <button class="lm-tf-btn" id="dom-tf-btn-60" onclick="domSetTF('60',this)">1H</button>
+        <button class="lm-tf-btn" id="dom-tf-btn-240" onclick="domSetTF('240',this)">4H</button>
+        <button class="lm-tf-btn" id="dom-tf-btn-D" onclick="domSetTF('D',this)">1D</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;">
+      <!-- USDT.D -->
+      <div class="dom-card" onclick="domOpenChart('USDTdominance','USDT DOMINANCE','CRYPTOCAP')" id="dom-usdtd">
+        <div class="dom-label">USDT.D</div>
+        <div class="dom-price" id="dom-usdtd-price">—</div>
+        <div class="dom-chg" id="dom-usdtd-chg">—</div>
+        <div class="dom-spark" id="dom-usdtd-spark"></div>
+      </div>
+      <!-- BTC.D -->
+      <div class="dom-card" onclick="domOpenChart('BTCDOMUSDT.P','BTC DOMINANCE','CRYPTOCAP')" id="dom-btcd" style="border-left:1px solid var(--brd2);">
+        <div class="dom-label">BTC.D</div>
+        <div class="dom-price" id="dom-btcd-price">—</div>
+        <div class="dom-chg" id="dom-btcd-chg">—</div>
+        <div class="dom-spark" id="dom-btcd-spark"></div>
+      </div>
+      <!-- TOTAL2 -->
+      <div class="dom-card" onclick="domOpenChart('TOTAL2','TOTAL2 (ex-BTC)','CRYPTOCAP')" id="dom-total2" style="border-left:1px solid var(--brd2);">
+        <div class="dom-label">TOTAL2</div>
+        <div class="dom-price" id="dom-total2-price">—</div>
+        <div class="dom-chg" id="dom-total2-chg">—</div>
+        <div class="dom-spark" id="dom-total2-spark"></div>
+      </div>
+      <!-- TOTAL3 -->
+      <div class="dom-card" onclick="domOpenChart('TOTAL3','TOTAL3 (ex-BTC/ETH)','CRYPTOCAP')" id="dom-total3" style="border-left:1px solid var(--brd2);">
+        <div class="dom-label">TOTAL3</div>
+        <div class="dom-price" id="dom-total3-price">—</div>
+        <div class="dom-chg" id="dom-total3-chg">—</div>
+        <div class="dom-spark" id="dom-total3-spark"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- FILTER BAR -->
   <div style="display:flex;align-items:center;gap:10px;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--brd);flex-wrap:wrap;flex-shrink:0;">
     <div style="position:relative;">
@@ -1661,9 +1787,7 @@ body::after {
       <input id="lm-search" type="text" placeholder="Cari koin... BTC, ETH" style="background:var(--bg3);border:1px solid var(--brd3);color:var(--wh);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 8px 5px 24px;outline:none;width:200px;letter-spacing:.03em" oninput="lmTriggerRender()">
     </div>
     <div style="display:flex;gap:2px;" id="lm-filter-tabs">
-      <button class="lm-ftab lm-ftab-active" data-f="all" data-filter="all" onclick="lmSetFilter('all',this)">ALL</button>
-      <button class="lm-ftab" data-f="usdt" data-filter="usdt" onclick="lmSetFilter('usdt',this)">USDT</button>
-      <button class="lm-ftab" data-f="usdc" data-filter="usdc" onclick="lmSetFilter('usdc',this)">USDC</button>
+      <button class="lm-ftab lm-ftab-active" data-f="usdt" data-filter="usdt" onclick="lmSetFilter('usdt',this)">ALL USDT</button>
       <button class="lm-ftab" data-f="btc" data-filter="btc" onclick="lmSetFilter('btc',this)">BTC</button>
       <button class="lm-ftab" data-f="star" data-filter="star" onclick="lmSetFilter('star',this)">★ FAV</button>
     </div>
@@ -1900,13 +2024,15 @@ function up(){
   document.getElementById('s-files').textContent = `${total} / ${TOTAL}`;
 
   const lev = document.getElementById('ip-lev').value;
-  const allOk = total === TOTAL && lev;
-  document.getElementById('exec-btn').disabled = !allOk;
+  // Enable execute if at least 1 file uploaded AND leverage selected
+  const canExec = total >= 1 && lev;
+  document.getElementById('exec-btn').disabled = !canExec;
 
   const st = document.getElementById('s-txt');
-  if(allOk){ st.textContent = 'READY TO EXECUTE'; st.className = 'sv gr'; }
-  else if(total === TOTAL && !lev){ st.textContent = 'ISI LEVERAGE DULU'; st.className = 'sv ac'; }
-  else { st.textContent = `${TOTAL - total} FILE KURANG`; st.className = 'sv ac'; }
+  if(total === TOTAL && lev){ st.textContent = 'READY — DATA LENGKAP'; st.className = 'sv gr'; }
+  else if(canExec){ st.textContent = `SIAP — ${total}/${TOTAL} FILE`; st.className = 'sv ac'; }
+  else if(total >= 1 && !lev){ st.textContent = 'ISI LEVERAGE DULU'; st.className = 'sv ac'; }
+  else { st.textContent = 'AWAITING INPUT'; st.className = 'sv ac'; }
 
   updHC();
 }
@@ -1957,13 +2083,55 @@ async function gen(){
   const modalTxt = modal ? ', Modal: ' + modal + ' USDT' : '';
 
   const promptText = [
-    'Kamu adalah analis trading crypto profesional dari Trenova Intelligence.',
+    'Kamu adalah sistem analisis trading algoritmik dari Trenova Intelligence.',
+    'Tugasmu: baca screenshot chart dan data market, lalu hasilkan analisis KONSISTEN dan DETERMINISTIK.',
     '',
-    'Data: ' + Object.keys(F).length + ' screenshot koin ' + koin + ', Leverage: ' + lev + modalTxt + '.',
+    '════════════════════════════════════════════',
+    'ATURAN WAJIB — BACA SEBELUM ANALISIS:',
+    '════════════════════════════════════════════',
     '',
-    'Screenshot: ' + slotList,
+    '1. HARGA HARUS DARI CHART — BUKAN ESTIMASI',
+    '   - Entry: ambil dari level support/resistance, demand/supply zone, atau harga terakhir yang terlihat JELAS di chart.',
+    '   - SL: letakkan di bawah candle low terdekat (untuk LONG) atau di atas candle high terdekat (untuk SHORT) yang terlihat di chart.',
+    '   - TP1: target resistance terdekat yang terlihat di chart.',
+    '   - TP2: resistance berikutnya atau proyeksi struktur.',
+    '   - TP3: target makro berdasarkan struktur Weekly/Daily.',
+    '   - JANGAN pernah mengarang angka — hanya gunakan harga yang benar-benar terlihat di screenshot.',
     '',
-    'Analisa semua screenshot dan kembalikan HANYA JSON valid (tanpa teks lain, tanpa markdown, tanpa backtick) dengan struktur ini:',
+    '2. SCORING KEYAKINAN — HARUS KONSISTEN:',
+    '   Hitung skor berdasarkan sinyal yang ON (true):',
+    '   - 1-2 sinyal ON  → keyakinan 30-45%  → SKIP',
+    '   - 3-4 sinyal ON  → keyakinan 46-59%  → SKIP atau entry sizing minimal',
+    '   - 5-6 sinyal ON  → keyakinan 60-74%  → entry sizing kecil',
+    '   - 7-8 sinyal ON  → keyakinan 75-89%  → entry sizing normal',
+    '   - 9 sinyal ON    → keyakinan 90-95%  → entry sizing penuh',
+    '   WAJIB: keyakinan harus mencerminkan jumlah sinyal ON, tidak boleh berubah jika data sama.',
+    '',
+    '3. ARAH BIAS — OBJEKTIF:',
+    '   - Hitung: berapa timeframe menunjukkan BEARISH vs BULLISH.',
+    '   - Mayoritas BEARISH (3+/5) → bias BEARISH.',
+    '   - Mayoritas BULLISH (3+/5) → bias BULLISH.',
+    '   - Imbang → SIDEWAYS.',
+    '   - Arah setup SHORT hanya kalau bias BEARISH. LONG hanya kalau bias BULLISH.',
+    '',
+    '4. TIDAK ADA INTERPRETASI BEBAS:',
+    '   - Setiap sinyal ON/OFF harus berdasarkan apa yang TERLIHAT di screenshot.',
+    '   - Jika data tidak ada di screenshot, default ke false.',
+    '   - Jangan menambahkan opini subjektif.',
+    '',
+    '════════════════════════════════════════════',
+    'DATA INPUT:',
+    '════════════════════════════════════════════',
+    'Koin: ' + koin,
+    'Leverage: ' + lev,
+    modalTxt ? 'Modal: ' + modal + ' USDT' : '',
+    'Screenshot tersedia: ' + Object.keys(F).length + ' gambar',
+    'Slot: ' + slotList,
+    '',
+    '════════════════════════════════════════════',
+    'OUTPUT — KEMBALIKAN HANYA JSON VALID INI:',
+    '(tanpa teks lain, tanpa markdown, tanpa backtick)',
+    '════════════════════════════════════════════',
     '',
     '{',
     '  "koin": "' + koin + '",',
@@ -1974,48 +2142,60 @@ async function gen(){
     '    "arah": "BEARISH atau BULLISH atau SIDEWAYS",',
     '    "kekuatan": "KUAT atau SEDANG atau LEMAH",',
     '    "detail": [',
-    '      {"tf": "Weekly", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "Daily", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "4H/1H", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "BTC", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "USDT.D", "kondisi": "penjelasan singkat"}',
+    '      {"tf": "Weekly",  "kondisi": "deskripsikan struktur, EMA, dan tren yang terlihat di chart"},',
+    '      {"tf": "Daily",   "kondisi": "deskripsikan struktur, EMA, dan tren yang terlihat di chart"},',
+    '      {"tf": "4H/1H",   "kondisi": "deskripsikan momentum dan posisi EMA saat ini"},',
+    '      {"tf": "BTC",     "kondisi": "deskripsikan kondisi BTC yang mempengaruhi altcoin"},',
+    '      {"tf": "USDT.D",  "kondisi": "naik=risk-off bearish untuk altcoin, turun=risk-on bullish"}',
     '    ]',
     '  },',
     '  "sinyal": [',
-    '    {"nama": "CVD Divergence", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Funding Rate Ekstrem", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "OI Spike di Key Level", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "L/S Ratio Over-Long/Short", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Volume Climax", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Liquidity Sweep + Rejection", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Weekly Zone Test", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "USDT.D / BTC.D Signal", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Liquidation Spike", "on": true atau false, "catatan": "penjelasan singkat"}',
+    '    {"nama": "CVD Divergence",           "on": true/false, "catatan": "jelaskan divergence CVD vs harga yang terlihat, atau tulis tidak ada jika tidak terlihat"},',
+    '    {"nama": "Funding Rate Ekstrem",      "on": true/false, "catatan": "sebutkan angka funding rate yang terlihat di screenshot"},',
+    '    {"nama": "OI Spike di Key Level",     "on": true/false, "catatan": "jelaskan perubahan OI yang terlihat di chart"},',
+    '    {"nama": "L/S Ratio Over-Long/Short", "on": true/false, "catatan": "sebutkan angka ratio yang terlihat di screenshot"},',
+    '    {"nama": "Volume Climax",             "on": true/false, "catatan": "jelaskan volume climax yang terlihat di chart"},',
+    '    {"nama": "Liquidity Sweep + Rejection","on": true/false, "catatan": "jelaskan sweep dan rejection yang terlihat di chart"},',
+    '    {"nama": "Weekly Zone Test",          "on": true/false, "catatan": "jelaskan zona weekly yang sedang ditest"},',
+    '    {"nama": "USDT.D / BTC.D Signal",     "on": true/false, "catatan": "jelaskan sinyal dominance yang terlihat"},',
+    '    {"nama": "Liquidation Spike",         "on": true/false, "catatan": "sebutkan nilai liquidation spike yang terlihat"}',
     '  ],',
+    '  "sinyal_on_count": [HITUNG JUMLAH SINYAL YANG "on": true DI ATAS],',
     '  "setup": [',
     '    {',
     '      "id": 1,',
     '      "arah": "LONG atau SHORT atau SKIP",',
-    '      "keyakinan": angka 0-100,',
-    '      "sinyal_count": angka,',
-    '      "kenapa": ["alasan 1", "alasan 2", "alasan 3"],',
-    '      "entry": "harga atau range harga",',
-    '      "sl": "harga",',
-    '      "tp1": "harga",',
-    '      "tp2": "harga",',
-    '      "tp3": "harga",',
-    '      "rr": "1:X",',
-    '      "sizing": "X% modal",',
-    '      "kondisi_entry": ["kondisi 1", "kondisi 2"],',
-    '      "invalidasi": "kondisi yang membatalkan setup"',
+    '      "keyakinan": [HITUNG DARI RUBRIK SCORING DI ATAS, BUKAN TEBAK],',
+    '      "sinyal_count": [SAMA DENGAN sinyal_on_count],',
+    '      "kenapa": [',
+    '        "alasan 1 berdasarkan sinyal ON yang spesifik",',
+    '        "alasan 2 berdasarkan struktur chart yang terlihat",',
+    '        "alasan 3 berdasarkan kondisi market/dominance"',
+    '      ],',
+    '      "entry": "[HARGA DARI CHART — bukan estimasi]",',
+    '      "sl":  "[HARGA DARI CHART — low/high candle terdekat]",',
+    '      "tp1": "[HARGA DARI CHART — resistance/support terdekat]",',
+    '      "tp2": "[HARGA DARI CHART — level berikutnya]",',
+    '      "tp3": "[HARGA DARI CHART — target makro]",',
+    '      "rr":  "1:X [hitung dari entry-sl vs entry-tp1]",',
+    '      "sizing": "X% modal [sesuai rubrik keyakinan]",',
+    '      "kondisi_entry": [',
+    '        "kondisi spesifik yang harus terpenuhi sebelum entry",',
+    '        "konfirmasi candlestick atau level yang harus ditembus"',
+    '      ],',
+    '      "invalidasi": "kondisi chart spesifik yang membatalkan setup ini"',
     '    }',
     '  ],',
     '  "squeeze": {',
     '    "tipe": "LONG SQUEEZE atau SHORT SQUEEZE atau NONE",',
     '    "probabilitas": "TINGGI atau SEDANG atau RENDAH",',
-    '    "catatan": "penjelasan singkat"',
+    '    "catatan": "jelaskan setup squeeze berdasarkan data liquidation dan funding"',
     '  },',
-    '  "catatan_tambahan": ["poin 1", "poin 2", "poin 3"]',
+    '  "catatan_tambahan": [',
+    '    "insight penting dari chart yang tidak masuk kategori di atas",',
+    '    "risk khusus yang perlu diperhatikan",',
+    '    "konteks makro yang relevan dari BTC/dominance"',
+    '  ]',
     '}'
   ].join('\n');
 
@@ -2271,11 +2451,18 @@ function resetAll(){
 
 // ── HISTORY ──
 function saveHist(){
+  let parsedData = null;
+  try {
+    const clean = outTxt.replace(/```json|```/g,'').trim();
+    parsedData = JSON.parse(clean);
+  } catch(e) { parsedData = null; }
+
   const e = {
     id: Date.now(),
     lev: document.getElementById('ip-lev').value,
     modal: document.getElementById('ip-modal').value,
     summary: outTxt,
+    parsedData: parsedData,
     date: new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}),
     time: new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}),
     shots: {...F}
@@ -2297,27 +2484,73 @@ function updHC(){
 
 function renderHist(){
   const b = document.getElementById('hist-body');
+  const searchEl = document.getElementById('hist-search');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+  // Filter by search query (koin name, date, arah)
+  let filtered = hist;
+  if(q){
+    filtered = hist.filter(h => {
+      const koin = (h.parsedData && h.parsedData.koin ? h.parsedData.koin : h.lev||'').toLowerCase();
+      const arah = (h.parsedData && h.parsedData.setup && h.parsedData.setup[0] ? h.parsedData.setup[0].arah||'' : '').toLowerCase();
+      const bias = (h.parsedData && h.parsedData.bias ? h.parsedData.bias.arah||'' : '').toLowerCase();
+      return koin.includes(q) || arah.includes(q) || bias.includes(q) || h.date.toLowerCase().includes(q);
+    });
+  }
+
+  // Update count
+  const countEl = document.getElementById('hist-count');
+  if(countEl) countEl.textContent = filtered.length + '/' + hist.length + ' analisa';
+
   if(!hist.length){
-    b.innerHTML = `<div class="hist-empty">NO RECORDS FOUND<br><span style="font-size:11px">Belum ada analisa tersimpan</span></div>`;
+    b.innerHTML = '<div class="hist-empty">NO RECORDS FOUND<br><span style="font-size:11px">Belum ada analisa tersimpan</span></div>';
     return;
   }
-  b.innerHTML = `<div class="hist-tbl">
-    <div class="h-head">
-      <div class="h-th">LEVERAGE</div>
-      <div class="h-th">MODAL</div>
-      <div class="h-th">DATE / TIME</div>
-      <div class="h-th">DEL</div>
-    </div>
-    ${hist.map(h=>`
-      <div class="h-row" onclick="om(${h.id})">
-        <div class="h-td"><span class="h-lev">${h.lev||'—'}</span></div>
-        <div class="h-td">${h.modal ? h.modal+' USDT' : '—'}</div>
-        <div class="h-td" style="flex-direction:column;align-items:flex-start;gap:2px;font-size:10px;color:var(--wh2)">
-          <span>${h.date}</span><span>${h.time}</span>
-        </div>
-        <div class="h-td"><button class="h-del" onclick="delH(event,${h.id})">✕</button></div>
-      </div>`).join('')}
-  </div>`;
+  if(!filtered.length){
+    b.innerHTML = '<div class="hist-empty">TIDAK DITEMUKAN<br><span style="font-size:11px">Tidak ada analisa untuk "'+escHtml(q)+'"</span></div>';
+    return;
+  }
+
+  const cards = filtered.map(h => {
+    const d = h.parsedData || null;
+    const mainSetup = d && d.setup && d.setup[0] ? d.setup[0] : null;
+    const arah = mainSetup ? (mainSetup.arah||'SKIP').toUpperCase() : '\u2014';
+    const keyakinan = mainSetup ? (mainSetup.keyakinan||0) : null;
+    const sinyalOn = d && d.sinyal ? d.sinyal.filter(s=>s.on).length : null;
+    const koin = d ? (d.koin||h.lev||'\u2014') : (h.lev||'\u2014');
+    const bias = d && d.bias ? (d.bias.arah||'').toUpperCase() : '';
+
+    const arahBdr   = arah==='LONG'  ? '#4caf7d' : arah==='SHORT' ? '#c94040' : arah==='\u2014' ? '#2a2a2a' : '#d4a843';
+    const arahTxt   = arah==='LONG'  ? '#4caf7d' : arah==='SHORT' ? '#c94040' : arah==='\u2014' ? '#888'    : '#d4a843';
+    const kColor    = keyakinan !== null ? (keyakinan >= 65 ? '#4caf7d' : keyakinan >= 50 ? '#d4a843' : '#c94040') : '#888';
+    const biasCol   = bias === 'BEARISH' ? '#c94040' : bias === 'BULLISH' ? '#4caf7d' : '#d4a843';
+
+    const biasBadge = bias ? '<div style="display:inline-block;background:'+biasCol+'22;border:1px solid '+biasCol+';color:'+biasCol+';font-size:9px;font-weight:700;padding:1px 8px;letter-spacing:.06em;margin-bottom:5px">'+bias+'</div>' : '';
+    const entryRow  = mainSetup && mainSetup.entry ? '<div style="font-size:10px;color:#888;margin-bottom:2px">ENTRY <span style="color:#5ba3c9;font-weight:600">'+mainSetup.entry+'</span></div>' : '';
+    const slRow     = mainSetup && mainSetup.sl    ? '<div style="font-size:10px;color:#888;margin-bottom:2px">SL <span style="color:#c94040;font-weight:600">'+mainSetup.sl+'</span></div>' : '';
+    const tp1Row    = mainSetup && mainSetup.tp1   ? '<div style="font-size:10px;color:#888">TP1 <span style="color:#4caf7d;font-weight:600">'+mainSetup.tp1+'</span></div>' : '';
+    const rrBadge   = mainSetup && mainSetup.rr    ? '<div style="font-size:9px;color:#d4a843;margin-top:4px">R:R '+mainSetup.rr+'</div>' : '';
+    const noData    = !mainSetup ? '<div style="font-size:10px;color:#555">Data tidak tersedia</div>' : '';
+
+    return '<div class="h-card" onclick="om('+h.id+')">'
+      + '<div class="h-card-left" style="border-left:3px solid '+arahBdr+'">'
+      +   '<div class="h-card-koin">'+escHtml(koin)+'</div>'
+      +   '<div class="h-card-meta">'+h.date+' \u00b7 '+h.time+'</div>'
+      +   '<div class="h-card-meta">'+(h.lev||'\u2014')+(h.modal ? ' \u00b7 '+h.modal+' USDT' : '')+'</div>'
+      + '</div>'
+      + '<div class="h-card-center">'
+      +   biasBadge + entryRow + slRow + tp1Row + rrBadge + noData
+      + '</div>'
+      + '<div class="h-card-right">'
+      +   '<div style="font-size:22px;font-weight:700;color:'+arahTxt+';letter-spacing:.03em">'+arah+'</div>'
+      +   (keyakinan !== null ? '<div style="font-size:18px;font-weight:700;color:'+kColor+';margin-top:2px">'+keyakinan+'%</div>' : '')
+      +   (sinyalOn !== null ? '<div style="font-size:10px;color:#555;margin-top:3px">'+sinyalOn+'/9 sinyal</div>' : '')
+      +   '<button class="h-del" onclick="delH(event,'+h.id+')" style="margin-top:8px">\u2715</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  b.innerHTML = cards;
 }
 
 function delH(e,id){
@@ -2335,14 +2568,52 @@ function clearAll(){
 
 function om(id){
   const entry = hist.find(h=>h.id===id); if(!entry) return;
-  document.getElementById('m-ttl').textContent = `${entry.lev} — ${entry.date} ${entry.time}`;
+
+  const koinLabel = (entry.parsedData && entry.parsedData.koin) ? entry.parsedData.koin + '/USDT' : (entry.lev||'');
+  document.getElementById('m-ttl').textContent = koinLabel + ' \u2014 ' + entry.date + ' ' + entry.time;
+
   const shots = Object.values(entry.shots||{});
   const sh = shots.length
-    ? `<div class="m-shots">${shots.slice(0,12).map(s=>`<img class="m-shot" src="${s.data}">`).join('')}</div>`
-    : `<div style="font-size:11px;color:var(--dim);padding:10px;margin-bottom:10px">Screenshots tidak tersimpan</div>`;
-  const sum = entry.summary.replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
-  document.getElementById('m-inner').innerHTML = `${sh}<div class="m-sum">${entry.summary}</div><button class="m-copy" onclick="ct(\`${sum}\`)">⧉ COPY SUMMARY</button>`;
+    ? '<div class="m-shots">' + shots.slice(0,12).map(s=>'<img class="m-shot" src="'+s.data+'">').join('') + '</div>'
+    : '<div style="font-size:11px;color:var(--dim);padding:10px 0;margin-bottom:8px">Screenshots tidak tersimpan</div>';
+
+  // Render inner content
+  const inner = document.getElementById('m-inner');
+  inner.innerHTML = sh + '<div id="m-dashboard-container"></div>'
+    + '<button class="m-copy" onclick="ctSummary(' + id + ')">&#x29C9; COPY SUMMARY</button>';
+
+  // Render full dashboard from parsedData if available
+  if(entry.parsedData){
+    renderDashboardInto(entry.parsedData, document.getElementById('m-dashboard-container'));
+  } else {
+    // fallback: show raw text
+    document.getElementById('m-dashboard-container').innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:#888;white-space:pre-wrap;word-break:break-all;padding:10px;background:#0d0d0d;border:1px solid #1e1e1e;margin-top:8px">'+escHtml(entry.summary)+'</div>';
+  }
+
   document.getElementById('mbg').classList.add('show');
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function ctSummary(id){
+  const entry = hist.find(h=>h.id===id); if(!entry) return;
+  navigator.clipboard.writeText(entry.summary).catch(()=>{});
+  const b = document.querySelector('.m-copy');
+  b.textContent = '\u2713 COPIED!'; setTimeout(()=>b.textContent='\u29C9 COPY SUMMARY', 2000);
+}
+
+// Render dashboard into a specific DOM element (used by history modal)
+function renderDashboardInto(d, container){
+  // Temporarily swap out-dashboard, render, then restore
+  const dash = document.getElementById('out-dashboard');
+  const origDisplay = dash.style.display;
+  const origHTML = dash.innerHTML;
+
+  renderDashboard(d);
+  container.innerHTML = dash.innerHTML;
+
+  dash.innerHTML = origHTML;
+  dash.style.display = origDisplay;
 }
 
 function ct(t){
@@ -2361,7 +2632,7 @@ function switchTab(tab, el){
   el.classList.add('active');
   if(tab==='history') renderHist();
   if(tab==='marketIntel') initMarketIntel();
-  if(tab==='liveMarket') lmInit();
+  if(tab==='liveMarket') { lmInit(); domInit(); }
   if(tab==='dataGuide'){
     // activate first inner tab if none active
     const firstTab = document.querySelector('.dg-tabs .tab');
@@ -2583,10 +2854,22 @@ async function loadCalendar(){
 // ══════════════════════════════
 
 const NEWS_SOURCES = {
-  cointelegraph: { name:'CoinTelegraph', tag:'CT', cls:'news-src-ct', rss:'https://cointelegraph.com/rss' },
-  cryptonews:    { name:'CryptoNews',    tag:'CN', cls:'news-src-cn', rss:'https://cryptonews.com/news/feed' },
-  decrypt:       { name:'Decrypt',       tag:'DC', cls:'news-src-dc', rss:'https://decrypt.co/feed' },
-  bitcoinist:    { name:'Bitcoinist',    tag:'BI', cls:'news-src-td', rss:'https://bitcoinist.com/feed/' }
+  // ── CRYPTO ──
+  cointelegraph: { name:'CoinTelegraph', tag:'CT',  cls:'news-src-ct',  cat:'crypto', rss:'https://cointelegraph.com/rss' },
+  cryptonews:    { name:'CryptoNews',    tag:'CN',  cls:'news-src-cn',  cat:'crypto', rss:'https://cryptonews.com/news/feed' },
+  decrypt:       { name:'Decrypt',       tag:'DC',  cls:'news-src-dc',  cat:'crypto', rss:'https://decrypt.co/feed' },
+  bitcoinist:    { name:'Bitcoinist',    tag:'BI',  cls:'news-src-td',  cat:'crypto', rss:'https://bitcoinist.com/feed/' },
+  theblock:      { name:'The Block',     tag:'TB',  cls:'news-src-tb',  cat:'crypto', rss:'https://www.theblock.co/rss.xml' },
+  // ── MACRO / EKONOMI ──
+  reuters_eco:   { name:'Reuters Econ',  tag:'RT',  cls:'news-src-rt',  cat:'macro',  rss:'https://feeds.reuters.com/reuters/businessNews' },
+  bbc_biz:       { name:'BBC Business',  tag:'BBC', cls:'news-src-bbc', cat:'macro',  rss:'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  cnbc_eco:      { name:'CNBC Economy',  tag:'CNBC',cls:'news-src-cnbc',cat:'macro',  rss:'https://www.cnbc.com/id/20910258/device/rss/rss.html' },
+  ft:            { name:'Financial Times',tag:'FT', cls:'news-src-ft',  cat:'macro',  rss:'https://www.ft.com/?format=rss' },
+  // ── GEOPOLITIK ──
+  reuters_world: { name:'Reuters World', tag:'RW',  cls:'news-src-rw',  cat:'geo',    rss:'https://feeds.reuters.com/Reuters/worldNews' },
+  bbc_world:     { name:'BBC World',     tag:'BW',  cls:'news-src-bbc', cat:'geo',    rss:'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  aljazeera:     { name:'Al Jazeera',    tag:'AJ',  cls:'news-src-aj',  cat:'geo',    rss:'https://www.aljazeera.com/xml/rss/all.xml' },
+  ap:            { name:'AP News',       tag:'AP',  cls:'news-src-ap',  cat:'geo',    rss:'https://rsshub.app/apnews/topics/world-news' },
 };
 
 // CORS proxy chain — try each until one works
@@ -2641,7 +2924,9 @@ async function newsFetchSource(key, src) {
       pubDate: item.pubDate,
       source: key,
       tag: src.tag,
-      cls: src.cls
+      cls: src.cls,
+      cat: src.cat || 'crypto',
+      catName: src.name
     })).filter(i => i.title && i.link);
   } catch(e) { return []; }
 }
@@ -2670,7 +2955,7 @@ async function loadNews(force = false) {
   const body  = document.getElementById('news-body');
 
   if (badge) { badge.textContent='LOADING'; badge.style.cssText='color:#d4a843;border-color:#d4a843;font-size:9px;padding:1px 8px;letter-spacing:.04em;'; }
-  if (body && newsAllItems.length === 0) body.innerHTML = '<div class="mi-loading">Mengambil berita dari 4 sumber...</div>';
+  if (body && newsAllItems.length === 0) body.innerHTML = '<div class="mi-loading">Mengambil berita dari 13 sumber (Crypto · Makro · Geopolitik)...</div>';
 
   const results = await Promise.allSettled(
     Object.entries(NEWS_SOURCES).map(([k,s]) => newsFetchSource(k,s))
@@ -2713,7 +2998,14 @@ function newsFilterRender() {
   if (!body) return;
   const q = (document.getElementById('news-search')?.value || '').toLowerCase();
   let items = newsAllItems;
-  if (newsSource !== 'all') items = items.filter(i => i.source === newsSource);
+
+  // Category filter
+  if (newsSource.startsWith('cat:')) {
+    const cat = newsSource.replace('cat:','');
+    items = items.filter(i => i.cat === cat);
+  } else if (newsSource !== 'all') {
+    items = items.filter(i => i.source === newsSource);
+  }
   if (q) items = items.filter(i => i.title.toLowerCase().includes(q));
 
   if (items.length === 0) {
@@ -2721,19 +3013,170 @@ function newsFilterRender() {
     return;
   }
 
-  body.innerHTML = items.slice(0,50).map(item => {
-    const isNew    = newsIsNew(item.pubDate);
-    const wasSeen  = newsSeenIds.has(item.id);
-    const safeId   = item.id.replace(/'/g,"\'");
-    return `<a class="news-item" href="${item.link}" target="_blank" rel="noopener" onclick="newsMarkSeen('${safeId}')">
+  const catLabel = { crypto:'CRYPTO', macro:'MAKRO', geo:'GEO' };
+  const catCls   = { crypto:'news-cat-crypto', macro:'news-cat-macro', geo:'news-cat-geo' };
+
+  body.innerHTML = items.slice(0,60).map((item, idx) => {
+    const isNew   = newsIsNew(item.pubDate);
+    const wasSeen = newsSeenIds.has(item.id);
+    const idxSafe = idx;
+    return `<div class="news-item" onclick="newsOpenReader(${idxSafe})" style="cursor:pointer;">
       <div class="news-title">${item.title}</div>
       <div class="news-meta">
         <span class="news-source-tag ${item.cls}">${item.tag}</span>
+        ${item.cat ? '<span class="'+catCls[item.cat]+'">'+(catLabel[item.cat]||'')+'</span>' : ''}
         ${isNew && !wasSeen ? '<span class="news-new-badge">NEW</span>' : ''}
         <span class="news-time">${newsTimeAgo(item.pubDate)}</span>
       </div>
-    </a>`;
+    </div>`;
   }).join('');
+
+  // Store currently displayed items for reader reference
+  window._newsDisplayed = items.slice(0,60);
+}
+
+// ── IN-APP NEWS READER ──
+// ── ARTICLE CONTENT SELECTORS per domain ──
+// Urutan dicoba dari atas ke bawah, ambil yang pertama berhasil
+const NM_SELECTORS = [
+  // Semantic
+  'article', '[role="article"]', 'main article', '.article-body',
+  '.article__body', '.article-content', '.entry-content', '.post-content',
+  '.story-body', '.body-text', '.content-body', '.article-text',
+  // Site-specific
+  '.article__content',       // CoinTelegraph
+  '.post-content__body',     // CryptoNews
+  '[data-module="ArticleBody"]', // BBC
+  '.article-body-commercial-selector', // Reuters
+  '.paywall', '.StandardArticleBody', // FT
+  '.deck-container',         // Decrypt
+  // Generic fallbacks
+  '#article-body', '#main-content', '#content', '.content', 'main'
+];
+
+// Strip unwanted elements from parsed article
+const NM_STRIP_SELECTORS = [
+  'script','style','noscript','iframe','svg','canvas',
+  'header','footer','nav','aside','.sidebar','.advertisement',
+  '.ad','.ads','.promo','.newsletter','[class*="cookie"]',
+  '[class*="popup"]','[class*="modal"]','[class*="subscribe"]',
+  '[class*="share"]','[class*="social"]','[class*="related"]',
+  '[class*="recommended"]','[class*="signup"]','[data-ad]',
+  'figure > figcaption + *', '.paywall-container'
+];
+
+function nmExtractContent(htmlStr, url) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlStr, 'text/html');
+
+    // Fix relative URLs for images
+    const base = doc.createElement('base');
+    base.href = url;
+    doc.head.appendChild(base);
+
+    // Strip noise
+    NM_STRIP_SELECTORS.forEach(sel => {
+      try { doc.querySelectorAll(sel).forEach(el => el.remove()); } catch(e){}
+    });
+
+    // Try each selector
+    let content = null;
+    for (const sel of NM_SELECTORS) {
+      const el = doc.querySelector(sel);
+      if (el && el.textContent.trim().length > 200) { content = el; break; }
+    }
+
+    // Ultimate fallback: body
+    if (!content) content = doc.body;
+    if (!content) return null;
+
+    // Extract paragraphs, headings, lists, blockquotes
+    const allowed = ['p','h1','h2','h3','h4','ul','ol','li','blockquote','strong','em','a','img'];
+    let html = '';
+    const nodes = content.querySelectorAll('p, h1, h2, h3, h4, h5, blockquote, ul, ol');
+    nodes.forEach(node => {
+      const tag = node.tagName.toLowerCase();
+      const txt = node.textContent.trim();
+      if (!txt || txt.length < 10) return;
+      if (tag === 'p') html += '<p>' + nmSafeText(txt) + '</p>';
+      else if (['h1','h2','h3','h4','h5'].includes(tag)) html += '<h3>' + nmSafeText(txt) + '</h3>';
+      else if (tag === 'blockquote') html += '<blockquote>' + nmSafeText(txt) + '</blockquote>';
+      else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.from(node.querySelectorAll('li')).map(li => '<li>' + nmSafeText(li.textContent.trim()) + '</li>').join('');
+        if (items) html += '<ul>' + items + '</ul>';
+      }
+    });
+
+    return html.length > 100 ? html : null;
+  } catch(e) { return null; }
+}
+
+function nmSafeText(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function nmFetchArticle(url) {
+  for (const proxyFn of NEWS_PROXIES) {
+    try {
+      const res = await fetch(proxyFn(url), { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.length > 500) return html;
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+function newsOpenReader(idx) {
+  const items = window._newsDisplayed || [];
+  const item = items[idx];
+  if (!item) return;
+
+  newsMarkSeen(item.id);
+
+  const catLabel = { crypto:'CRYPTO', macro:'MAKRO', geo:'GEO' };
+  const catCls   = { crypto:'news-cat-crypto', macro:'news-cat-macro', geo:'news-cat-geo' };
+
+  document.getElementById('nm-title').textContent = item.title;
+  document.getElementById('nm-src-tag').className = 'news-modal-src-tag news-source-tag ' + item.cls;
+  document.getElementById('nm-src-tag').textContent = item.tag + ' — ' + (item.catName || item.source);
+  document.getElementById('nm-time').textContent = newsTimeAgo(item.pubDate);
+  const catEl = document.getElementById('nm-cat');
+  if(item.cat){ catEl.textContent = catLabel[item.cat]||''; catEl.className = catCls[item.cat]; catEl.style.display=''; }
+  else { catEl.style.display='none'; }
+  document.getElementById('nm-url').textContent = item.link;
+  document.getElementById('nm-open-btn').href = item.link;
+
+  const body = document.getElementById('nm-body');
+  body.innerHTML = '<div class="news-modal-loading"><div class="news-modal-spinner"></div><div style="font-size:10px;color:var(--dim);letter-spacing:.06em">MENGAMBIL ARTIKEL...</div></div>';
+
+  document.getElementById('news-reader-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // Fetch & render
+  nmFetchArticle(item.link).then(html => {
+    if (!html) { body.innerHTML = nmNoContent(item); return; }
+    const content = nmExtractContent(html, item.link);
+    if (!content) { body.innerHTML = nmNoContent(item); return; }
+    body.innerHTML = '<div class="nm-article">' + content + '</div>';
+  }).catch(() => { body.innerHTML = nmNoContent(item); });
+}
+
+function nmNoContent(item) {
+  return '<div style="padding:40px 30px;text-align:center;">'
+    + '<div style="font-size:32px;margin-bottom:16px;opacity:.3">📄</div>'
+    + '<div style="font-size:13px;font-weight:600;color:var(--wh);margin-bottom:10px;line-height:1.6;">' + nmSafeText(item.title) + '</div>'
+    + '<div style="font-size:10px;color:var(--dim);margin-bottom:6px;">' + (item.catName||item.source) + ' · ' + newsTimeAgo(item.pubDate) + '</div>'
+    + '<div style="font-size:11px;color:#666;margin:20px 0 24px;line-height:1.8;">Konten artikel tidak dapat dimuat.<br>Sumber memerlukan akses langsung atau berlangganan.</div>'
+    + '<a href="' + item.link + '" target="_blank" rel="noopener" class="news-modal-open-btn" style="display:inline-flex;margin:0 auto;">&#x2197; BUKA DI TAB BARU</a>'
+    + '</div>';
+}
+
+function newsCloseReader() {
+  document.getElementById('news-reader-modal').classList.remove('show');
+  document.body.style.overflow = '';
+  document.getElementById('nm-body').innerHTML = '';
 }
 
 function newsMarkSeen(id) {
@@ -2807,7 +3250,7 @@ let lmData = {};
 let lmHistory = {};
 let lmWs = null;
 let lmFavs = JSON.parse(localStorage.getItem('trv_lm_favs')||'[]');
-let lmFilter = 'all';
+let lmFilter = 'usdt';
 let lmSearch = '';
 let lmSort = 'vol_desc';
 let lmUpdTotal = 0;
@@ -3061,7 +3504,7 @@ function lmSetFilter(f,btn){
   document.querySelectorAll('.lm-ftab').forEach(b=>b.classList.remove('lm-ftab-active'));
   btn.classList.add('lm-ftab-active');
   // If switching between quote filters (not just FAV/search), re-fetch pairs
-  const quoteFilters = ['all','usdt','usdc','btc'];
+  const quoteFilters = ['usdt','btc'];
   if(quoteFilters.includes(f) && f !== prevFilter) {
     lmData = {};
     lmHistory = {};
@@ -3109,9 +3552,8 @@ async function lmFetchAllPairs() {
 
     const quoteFilters = {
       'usdt': ['USDT'],
-      'usdc': ['USDC'],
       'btc':  ['BTC'],
-      'all':  ['USDT','USDC','BTC','ETH']
+      'all':  ['USDT']
     };
     const allowed = quoteFilters[lmFilter] || ['USDT'];
 
@@ -3146,15 +3588,31 @@ function lmInit(){
 function lmOpenChart(sym) {
   const base = lmGetBase(sym);
   const quote = lmGetQuote(sym);
-  const tvSym = 'BINANCE:' + sym;
+
+  const modal = document.getElementById('lm-chart-modal');
+  modal.dataset.sym = sym;
 
   // Update header info
   document.getElementById('lm-chart-sym').textContent = base + '/' + quote;
   document.getElementById('lm-chart-exchange').textContent = 'BINANCE';
 
-  // Update timeframe buttons active state
-  const modal = document.getElementById('lm-chart-modal');
-  modal.dataset.sym = sym;
+  // Inject live price data if available
+  const d = lmData[sym];
+  const priceEl = document.getElementById('lm-chart-price');
+  const chgEl   = document.getElementById('lm-chart-chg');
+  const volEl   = document.getElementById('lm-chart-vol');
+  if(d && priceEl){
+    priceEl.textContent = lmFmtPrice(d.price);
+    const chg = parseFloat(d.change||0);
+    chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    chgEl.style.color = chg >= 0 ? 'var(--gr)' : 'var(--re)';
+    const vol = parseFloat(d.vol||0);
+    volEl.textContent = 'VOL ' + (vol >= 1e9 ? (vol/1e9).toFixed(2)+'B' : vol >= 1e6 ? (vol/1e6).toFixed(2)+'M' : vol >= 1e3 ? (vol/1e3).toFixed(1)+'K' : vol.toFixed(0));
+  } else {
+    if(priceEl) priceEl.textContent = '—';
+    if(chgEl) { chgEl.textContent = '—'; chgEl.style.color = 'var(--dim)'; }
+    if(volEl) volEl.textContent = '';
+  }
 
   // Build widget with current TF
   const tf = modal.dataset.tf || '60';
@@ -3197,13 +3655,197 @@ function lmCloseChart() {
 function lmSetChartTF(tf, btn) {
   const modal = document.getElementById('lm-chart-modal');
   modal.dataset.tf = tf;
-  document.querySelectorAll('.lm-tf-btn').forEach(b => b.classList.remove('lm-tf-active'));
+  // Only affect buttons inside lm-chart-modal
+  document.querySelectorAll('#lm-chart-modal .lm-tf-btn').forEach(b => b.classList.remove('lm-tf-active'));
   btn.classList.add('lm-tf-active');
   lmBuildTVWidget(modal.dataset.sym, tf);
 }
+
+/* ══════════════════════════════
+   DOMINANCE STRIP
+   ══════════════════════════════ */
+let domTF = '240'; // default 4H
+let domHistData = {}; // sparkline history per key
+const DOM_ITEMS = [
+  { key:'usdtd',  sym:'CRYPTOCAP:USDT.D',   label:'USDT.D',  title:'USDT DOMINANCE' },
+  { key:'btcd',   sym:'CRYPTOCAP:BTC.D',     label:'BTC.D',   title:'BTC DOMINANCE'  },
+  { key:'total2', sym:'CRYPTOCAP:TOTAL2',    label:'TOTAL2',  title:'TOTAL2 (ex-BTC)' },
+  { key:'total3', sym:'CRYPTOCAP:TOTAL3',    label:'TOTAL3',  title:'TOTAL3 (ex-BTC/ETH)' },
+];
+
+// Fetch dominance data via Binance (we use TradingView for display; for data we use CoinGecko global)
+async function domFetchData() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/global');
+    const g = await res.json();
+    const d = g.data;
+
+    const btcDom = d.market_cap_percentage.btc || 0;
+    const ethDom = d.market_cap_percentage.eth || 0;
+    const totalMcap = d.total_market_cap.usd || 0;
+    const total2 = totalMcap * (1 - btcDom/100);
+    const total3 = totalMcap * (1 - btcDom/100 - ethDom/100);
+
+    // Estimate USDT.D from stablecoin dominance (approximate)
+    const usdtDom = (d.market_cap_percentage.usdt || 0);
+
+    const vals = {
+      usdtd:  { val: usdtDom,              fmt: usdtDom.toFixed(2)+'%',    chg: null },
+      btcd:   { val: btcDom,               fmt: btcDom.toFixed(2)+'%',     chg: null },
+      total2: { val: total2/1e9,           fmt: '$'+(total2/1e9).toFixed(0)+'B', chg: null },
+      total3: { val: total3/1e9,           fmt: '$'+(total3/1e9).toFixed(0)+'B', chg: null },
+    };
+
+    // 24h change from market_cap_change_percentage_24h_usd (only total available)
+    const totalChg = d.market_cap_change_percentage_24h_usd || 0;
+
+    DOM_ITEMS.forEach(item => {
+      const v = vals[item.key];
+      if(!v) return;
+
+      // Store history for sparkline
+      if(!domHistData[item.key]) domHistData[item.key] = [];
+      domHistData[item.key].push(v.val);
+      if(domHistData[item.key].length > 40) domHistData[item.key].shift();
+
+      const priceEl = document.getElementById('dom-'+item.key+'-price');
+      const chgEl   = document.getElementById('dom-'+item.key+'-chg');
+      const sparkEl = document.getElementById('dom-'+item.key+'-spark');
+      if(priceEl) priceEl.textContent = v.fmt;
+      if(chgEl) {
+        const c = item.key === 'btcd' ? (btcDom - 50).toFixed(2) : totalChg.toFixed(2); // rough
+        chgEl.textContent = (totalChg >= 0 ? '+' : '') + totalChg.toFixed(2) + '%';
+        chgEl.style.color = totalChg >= 0 ? 'var(--gr)' : 'var(--re)';
+      }
+      if(sparkEl) sparkEl.innerHTML = domDrawSpark(domHistData[item.key]);
+    });
+  } catch(e) {
+    // silently fail — dominance is supplementary
+  }
+}
+
+function domDrawSpark(hist) {
+  if(!hist || hist.length < 2) return '';
+  const min = Math.min(...hist), max = Math.max(...hist);
+  const range = max - min || 1;
+  const w = 100, h = 28;
+  const pts = hist.map((v,i) => {
+    const x = (i / (hist.length-1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return x+','+y;
+  }).join(' ');
+  const last = hist[hist.length-1];
+  const first = hist[0];
+  const col = last >= first ? '#4caf7d' : '#c94040';
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="display:block"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+
+function domSetTF(tf, btn) {
+  domTF = tf;
+  document.querySelectorAll('#dom-strip .lm-tf-btn').forEach(b => b.classList.remove('dom-tf-active'));
+  btn.classList.add('dom-tf-active');
+}
+
+function domOpenChart(sym, title, exchange) {
+  const modal = document.getElementById('dom-chart-modal');
+  document.getElementById('dom-chart-title').textContent = title;
+  modal.dataset.sym = sym;
+  modal.dataset.exchange = exchange || 'CRYPTOCAP';
+
+  domBuildChart(sym, domTF, exchange);
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => modal.classList.add('dom-modal-show'));
+}
+
+function domBuildChart(sym, tf, exchange) {
+  const container = document.getElementById('dom-chart-container');
+  container.innerHTML = '';
+  const tfMap = {'15':'15','60':'60','240':'240','D':'1D','W':'1W'};
+  const interval = tfMap[tf] || '240';
+  const exch = exchange || 'CRYPTOCAP';
+  const src = `https://s.tradingview.com/widgetembed/?frameElementId=dom_chart&symbol=${exch}%3A${sym}&interval=${interval}&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=0&toolbarbg=0a0a0a&studies=[]&theme=dark&style=1&timezone=Asia%2FJakarta&withdateranges=1&locale=id`;
+  const iframe = document.createElement('iframe');
+  iframe.src = src;
+  iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+  iframe.allowFullscreen = true;
+  container.style.cssText = 'flex:1;min-height:0;overflow:hidden;height:100%;';
+  container.appendChild(iframe);
+}
+
+function domSetChartTF(tf, btn) {
+  const modal = document.getElementById('dom-chart-modal');
+  document.querySelectorAll('#dom-tf-row .lm-tf-btn').forEach(b => b.classList.remove('lm-tf-active'));
+  btn.classList.add('lm-tf-active');
+  domBuildChart(modal.dataset.sym, tf, modal.dataset.exchange);
+}
+
+function domCloseChart() {
+  const modal = document.getElementById('dom-chart-modal');
+  modal.classList.remove('dom-modal-show');
+  document.body.style.overflow = '';
+  setTimeout(() => { modal.style.display = 'none'; }, 260);
+}
+
+// Fetch dominance on init and every 60s
+let domInitDone = false;
+function domInit() {
+  if(domInitDone) return;
+  domInitDone = true;
+  domFetchData();
+  setInterval(domFetchData, 60000);
+}
 </script>
 
-<!-- ── CHART MODAL HTML ── -->
+<!-- ── NEWS READER MODAL ── -->
+<div id="news-reader-modal" class="news-modal-bg" onclick="if(event.target===this)newsCloseReader()">
+  <div class="news-modal-box">
+    <div class="news-modal-hdr">
+      <div class="news-modal-hdr-left">
+        <span id="nm-src-tag" class="news-modal-src-tag news-source-tag news-src-other">—</span>
+        <span id="nm-title" class="news-modal-title">—</span>
+      </div>
+      <button class="news-modal-close" onclick="newsCloseReader()">&#x2715; TUTUP</button>
+    </div>
+    <div class="news-modal-meta">
+      <span id="nm-cat" class="news-cat-crypto" style="display:none"></span>
+      <span id="nm-time" style="font-size:10px;color:var(--dim)"></span>
+    </div>
+    <div class="news-modal-body" id="nm-body"></div>
+    <div class="news-modal-footer">
+      <span class="news-modal-url" id="nm-url"></span>
+      <a id="nm-open-btn" href="#" target="_blank" rel="noopener" class="news-modal-open-btn">&#x2197; BUKA DI TAB BARU</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── DOMINANCE CHART MODAL ── -->
+<div id="dom-chart-modal" style="display:none;position:fixed;inset:0;z-index:5001;align-items:center;justify-content:center;background:rgba(0,0,0,0.80);backdrop-filter:blur(4px);opacity:0;transition:opacity .25s;" onclick="if(event.target===this)domCloseChart()">
+  <div style="width:min(95vw,1100px);height:min(88vh,700px);background:var(--bg2);border:1px solid var(--brd2);border-top:2px solid var(--cy);display:flex;flex-direction:column;transform:translateY(12px);transition:transform .26s;position:relative;" id="dom-chart-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--brd2);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div>
+          <span style="font-size:15px;font-weight:700;color:var(--cy);letter-spacing:.04em;" id="dom-chart-title">—</span>
+          <span style="font-size:10px;color:var(--dim);margin-left:8px;">CRYPTOCAP / TRADINGVIEW</span>
+        </div>
+        <div style="display:flex;gap:3px;" id="dom-tf-row">
+          <button class="lm-tf-btn" onclick="domSetChartTF('15',this)">15m</button>
+          <button class="lm-tf-btn" onclick="domSetChartTF('60',this)">1H</button>
+          <button class="lm-tf-btn lm-tf-active" onclick="domSetChartTF('240',this)">4H</button>
+          <button class="lm-tf-btn" onclick="domSetChartTF('D',this)">1D</button>
+          <button class="lm-tf-btn" onclick="domSetChartTF('W',this)">1W</button>
+        </div>
+      </div>
+      <button onclick="domCloseChart()" style="background:transparent;border:1px solid var(--brd2);color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;letter-spacing:.06em;transition:all .12s;" onmouseover="this.style.borderColor='var(--re)';this.style.color='var(--re)'" onmouseout="this.style.borderColor='var(--brd2)';this.style.color='var(--dim)'">✕ TUTUP</button>
+    </div>
+    <div id="dom-chart-container" style="flex:1;min-height:0;overflow:hidden;"></div>
+  </div>
+</div>
+
+<style>
+.dom-modal-show { opacity: 1 !important; }
+.dom-modal-show #dom-chart-inner { transform: translateY(0) !important; }
+</style>
 <div id="lm-chart-modal" style="display:none;position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);opacity:0;transition:opacity .25s;" onclick="if(event.target===this)lmCloseChart()">
   <div style="width:min(95vw,1100px);height:min(88vh,700px);background:var(--bg2);border:1px solid var(--brd2);border-top:2px solid var(--acc2);display:flex;flex-direction:column;transform:translateY(12px);transition:transform .26s;position:relative;" id="lm-chart-inner">
 
@@ -3213,6 +3855,12 @@ function lmSetChartTF(tf, btn) {
         <div>
           <span style="font-size:15px;font-weight:700;color:var(--acc3);letter-spacing:.04em;" id="lm-chart-sym">—</span>
           <span style="font-size:10px;color:var(--dim);margin-left:8px;letter-spacing:.06em;" id="lm-chart-exchange">—</span>
+        </div>
+        <!-- Live price strip -->
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 12px;background:var(--bg);border:1px solid var(--brd2);">
+          <span id="lm-chart-price" style="font-size:14px;font-weight:700;color:var(--wh);font-variant-numeric:tabular-nums;letter-spacing:.02em">—</span>
+          <span id="lm-chart-chg" style="font-size:11px;font-weight:600;color:var(--dim)">—</span>
+          <span id="lm-chart-vol" style="font-size:10px;color:var(--dim);letter-spacing:.04em"></span>
         </div>
         <!-- Timeframe buttons -->
         <div style="display:flex;gap:3px;">
@@ -3239,6 +3887,20 @@ function lmSetChartTF(tf, btn) {
 <style>
 .lm-modal-show { opacity: 1 !important; }
 .lm-modal-show #lm-chart-inner { transform: translateY(0) !important; }
+
+/* ── DOMINANCE STRIP ── */
+.dom-card {
+  padding: 8px 14px 6px;
+  cursor: pointer;
+  transition: background .12s;
+  position: relative;
+}
+.dom-card:hover { background: var(--acc-d); }
+.dom-label { font-size: 9px; font-weight: 700; color: var(--acc); letter-spacing: .1em; margin-bottom: 3px; }
+.dom-price { font-size: 13px; font-weight: 700; color: var(--wh); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.dom-chg { font-size: 10px; font-weight: 600; margin-top: 1px; }
+.dom-spark { height: 28px; margin-top: 4px; }
+.dom-tf-active { background: var(--acc) !important; border-color: var(--acc) !important; color: #000 !important; font-weight: 700 !important; }
 
 .lm-tf-btn {
   background: transparent;

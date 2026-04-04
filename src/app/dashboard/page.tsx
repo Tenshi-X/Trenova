@@ -1,7 +1,7 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe, AppWindow } from 'lucide-react';
+import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe, AppWindow, Radio, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
@@ -12,6 +12,8 @@ import TradingViewWidget from '@/components/TradingViewWidget';
 import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisVisualizer from '@/components/AnalysisVisualizer';
+import LiveMarketTable from '@/components/LiveMarketTable';
+import AIInputSlots from '@/components/AIInputSlots';
 import { useLanguage } from '@/context/LanguageContext';
 
 
@@ -219,7 +221,7 @@ export default function DashboardPage() {
   const { language, setLanguage, t } = useLanguage();
   
   // Tab State
-  const [activeTab, setActiveTab] = useState<'chart' | 'analysis'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'analysis' | 'market'>('chart');
   
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
@@ -242,6 +244,11 @@ export default function DashboardPage() {
   const [chatLoading, setChatLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing AI...");
   const [chatResult, setChatResult] = useState<{ analysis: string } | null>(null);
+  
+  // Multi-Slot AI Input State (v3 Style)
+  const [aiSlots, setAiSlots] = useState<any[]>([]);
+  const [aiLeverage, setAiLeverage] = useState('');
+  const [aiModal, setAiModal] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ignoreSearchRef = useRef(false);
@@ -408,13 +415,29 @@ export default function DashboardPage() {
     });
   };
   
+  // Build images array for AI: slots first (primary), then fallback to single selectedImage
+  const buildImagesForAI = async (): Promise<string[]> => {
+    // If AI slots contain images, use those (v3 multi-slot system)
+    if (aiSlots.length > 0) {
+        return aiSlots.map(s => s.base64);
+    }
+    // Fallback: single image upload (legacy)
+    if (selectedImage) {
+        try {
+            return [await fileToBase64(selectedImage)];
+        } catch {
+            return [];
+        }
+    }
+    return [];
+  };
+
   const runAnalysis = async () => {
     if (!selectedCoin) return;
     setChatLoading(true);
-    setChatResult(null); // Clear previous
+    setChatResult(null);
 
     try {
-        // 1. Check Usage Limit (Read Only)
         const usageCheck = await checkUsageLimit();
         if (!usageCheck.allowed) {
             toast.error(usageCheck.error || "Usage limit reached");
@@ -422,70 +445,55 @@ export default function DashboardPage() {
             return;
         }
 
-        // 2. Fetch Market Data
+        // Fetch Market Data
         let marketDataRaw = await fetchCoinGeckoData(selectedCoin.id);
-        
         let marketData = { usd: 0, usd_24h_change: 0, usd_24h_vol: 0, usd_market_cap: 0 };
         let ohlcData: any[] = [];
-        
         if (marketDataRaw && marketDataRaw.price) {
            marketData = marketDataRaw.price;
            ohlcData = marketDataRaw.ohlc || [];
-        } else {
-             console.warn("Market data fetch failed, using fallback/zeros");
         }
 
-        // 3. Prepare Image
-        let imageBase64: string | undefined = undefined;
-        if (selectedImage) {
-            try {
-                imageBase64 = await fileToBase64(selectedImage);
-            } catch (err) {
-                console.error("Failed to convert image", err);
-            }
+        // Prepare Images (multi-slot or single)
+        const images = await buildImagesForAI();
+        const hasImages = images.length > 0;
+        const primaryImage = hasImages ? images[0] : undefined;
+
+        // Construct Prompt
+        let promptText = constructPrompt(PROMPT_TEMPLATE_ID, PROMPT_TEMPLATE_EN, selectedCoin, marketData, ohlcData, hasImages, language, tradingStyle, timeframe);
+
+        // Inject slot metadata into prompt if multi-slot
+        if (aiSlots.length > 0) {
+            const slotSummary = aiSlots.map((s: any) => s.id).join(', ');
+            promptText = `[PRIORITY: USER PROVIDED ${aiSlots.length} CHART IMAGES via Multi-Slot Analysis System. Slots: ${slotSummary}. Analyze ALL images comprehensively for ${selectedCoin.name} (${tradingStyle.toUpperCase()}).${aiLeverage ? ` Leverage: ${aiLeverage}.` : ''}${aiModal ? ` Capital: $${aiModal} USDT.` : ''}]\n\n` + promptText;
+        } else if (selectedImage) {
+            promptText = `[PRIORITY: ANALYZE THE UPLOADED CHART IMAGE FOR ${selectedCoin.name}. Focus on ${tradingStyle.toUpperCase()} setup.]\n\n` + promptText;
         }
 
-        // 4. Construct Prompt
-        let promptText = constructPrompt(PROMPT_TEMPLATE_ID, PROMPT_TEMPLATE_EN, selectedCoin, marketData, ohlcData, !!selectedImage, language, tradingStyle, timeframe);
-
-        // Specific adjustments for logic requirements
-        if (selectedImage) {
-            promptText = `[PRIORITY INSTRUCTION: ANALYZE THE UPLOADED CHART IMAGE FOR ${selectedCoin.name}. Focus on ${tradingStyle.toUpperCase()} setup. Use the text data as context, but the IMAGE is the primary source for Technical Analysis.]\n\n` + promptText;
-        }
-
-        // Add additional user prompt if present
         if (userPrompt.trim()) {
             promptText += `\n\n**ADDITIONAL USER INSTRUCTION:**\n${userPrompt}`;
         }
+
         let aiOutput = "";
         try {
-            console.log("Sending prompt to AI:", promptText.length, "chars", imageBase64 ? "+ Image" : "");
-            const apiRes = await askChatbot(promptText, imageBase64);
-            
+            const apiRes = await askChatbot(promptText, primaryImage);
             if (apiRes && apiRes.analysis) {
                 aiOutput = apiRes.analysis;
             } else {
-                console.error("AI returned malformed response:", apiRes);
                 throw new Error("AI response missing analysis field");
             }
         } catch(e) { 
             console.error("AI Execution Error:", e);
-            aiOutput = `### ⚠️ Analysis Failed`; // Keeping text just in case, but toast handles error
+            aiOutput = `### ⚠️ Analysis Failed`;
             toast.error("Failed to connect to AI. Please try again.");
         }
 
         const result = { analysis: aiOutput };
         setChatResult(result);
         
-        // 6. Save & Increment Quota ONLY on Success
         if (aiOutput && !aiOutput.includes("Analysis Failed")) {
-             // Increment Quota
              await incrementUsage();
-             
-             // Save Result
              await saveAnalysis(result, selectedCoin?.symbol, selectedCoin?.name);
-             
-             // Refresh Stats on UI
              await fetchUsage();
              toast.success("Analysis Complete!");
              router.refresh();
@@ -518,33 +526,59 @@ export default function DashboardPage() {
       {/* Market Intelligence Widgets */}
       <MarketIntelligence />
 
-      {/* Tabs Layout */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 mb-6">
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
         <button
             onClick={() => setActiveTab('chart')}
             className={clsx(
-                "px-6 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2",
+                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
                 activeTab === 'chart' 
                     ? "border-neon text-neon" 
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <BarChart3 size={18} /> {t('tab_chart')}
+            <BarChart3 size={16} /> {t('tab_chart')}
+        </button>
+        <button
+            onClick={() => setActiveTab('market')}
+            className={clsx(
+                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
+                activeTab === 'market' 
+                    ? "border-neon text-neon" 
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            )}
+        >
+            <Radio size={16} /> Live Market
+            <span className="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
             onClick={() => setActiveTab('analysis')}
             className={clsx(
-                "px-6 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2",
+                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
                 activeTab === 'analysis' 
                     ? "border-neon text-neon" 
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <Database size={18} /> {t('tab_analysis')}
+            <Database size={16} /> {t('tab_analysis')}
         </button>
       </div>
 
       <div>
+
+        {/* --- LIVE MARKET TAB --- */}
+        {activeTab === 'market' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+                <LiveMarketTable
+                    onSelectSymbol={(sym) => {
+                        setChartSymbol(sym);
+                        setChartSearchInput(sym);
+                        setActiveTab('chart');
+                    }}
+                />
+            </div>
+        )}
+
         {/* --- CHART TAB --- */}
         <div className={clsx(
             "space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
@@ -703,46 +737,52 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Analysis Controls */}
+                    {/* V3 Multi-Slot AI Input System */}
+                    <AIInputSlots
+                        coinName={selectedCoin.name}
+                        leverage={aiLeverage}
+                        modal={aiModal}
+                        onLeverageChange={setAiLeverage}
+                        onModalChange={setAiModal}
+                        onSlotsChange={setAiSlots}
+                        onReset={() => {
+                            setAiSlots([]);
+                            cleanAnalysis();
+                        }}
+                    />
+
+                    {/* Analysis Controls Panel */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
-                        <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
-                            
-                            {/* Image Upload Section */}
-                            <div className="flex-1 lg:max-w-md">
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">{t('upload_label')}</label>
-                                {!imagePreview ? (
-                                    <div 
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32 relative overflow-hidden"
-                                    >
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-10 transition-opacity bg-neon"></div>
-                                        <div className="flex items-center gap-4">
-                                            <Upload size={24} className="group-hover:scale-110 transition-transform" />
+                        <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+
+                            {/* Optional: Single image upload (if slots are empty) */}
+                            {aiSlots.length === 0 && (
+                                <div className="flex-1 lg:max-w-xs">
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
+                                        {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional — gunakan slot di atas)</span>
+                                    </label>
+                                    {!imagePreview ? (
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-24"
+                                        >
+                                            <Upload size={20} className="group-hover:scale-110 transition-transform" />
                                             <div>
                                                 <p className="font-bold text-sm">{t('upload_text')}</p>
                                                 <p className="text-[10px] opacity-70">or Paste Screenshot (Ctrl+V)</p>
                                             </div>
+                                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                                         </div>
-                                        <input 
-                                            type="file" 
-                                            ref={fileInputRef} 
-                                            onChange={handleImageUpload} 
-                                            accept="image/*" 
-                                            className="hidden" 
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 group h-32">
-                                        <img src={imagePreview} alt="Chart" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                        <button 
-                                            onClick={cleanAnalysis}
-                                            className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                    ) : (
+                                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 group h-24">
+                                            <img src={imagePreview} alt="Chart" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                            <button onClick={cleanAnalysis} className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Custom Instruction */}
                             <div className="flex-1">
