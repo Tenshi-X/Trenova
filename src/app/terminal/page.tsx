@@ -742,7 +742,7 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
        return { s: m.symbol, sc: finalScore, g: grade, desc };
     });
 
-    const activeChartSymbol = coinName || 'BINANCE:BTCUSDT';
+    const activeChartSymbol = coinName || 'BTC';
 
     return (
     <div className="p-4 space-y-6 bg-[#050505] min-h-full overflow-y-auto custom-scrollbar">
@@ -787,7 +787,7 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
                 </div>
              </div>
              <div className="p-0 flex-1 relative min-h-[500px] [&>div]:my-0 [&>div]:rounded-none [&>div]:border-0 [&>div]:h-full">
-                <TradingViewWidget symbol={activeChartSymbol.includes(':') ? activeChartSymbol : `BINANCE:${activeChartSymbol}USDT`} />
+                <TradingViewWidget symbol={activeChartSymbol} />
              </div>
              <div className="p-3 bg-neon/5 border-t border-neon/20">
                 <p className="text-[10px] text-neon/80 font-mono italic leading-relaxed">
@@ -1250,7 +1250,7 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
         {activeTab !== 'chart' && renderContent()}
         <div className={`h-full w-full bg-[#050505] p-2 ${activeTab === 'chart' ? 'block' : 'hidden'}`}>
            <div className="h-full w-full rounded overflow-hidden border border-[#2a2a2a] [&>div]:my-0 [&>div]:border-0 [&>div]:rounded-none">
-              <TradingViewWidget symbol={coinName ? (coinName.includes(':') ? coinName : `BINANCE:${coinName}USDT`) : 'BINANCE:BTCUSDT'} />
+              <TradingViewWidget symbol={coinName || 'BTC'} />
            </div>
         </div>
       </div>
