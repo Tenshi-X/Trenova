@@ -5,25 +5,20 @@ export async function POST(req: Request) {
         const payload = await req.json();
         const { prompt, images } = payload;
         
-        const anthropicKey = process.env.ANTHROPIC_API_KEY;
-        if (!anthropicKey) {
-            return NextResponse.json({ error: "Missing ANTHROPIC_API_KEY environment variable. Please add it to your .env.local file." }, { status: 500 });
-        }
-
-        const messageContent: any[] = [];
+        // Provided API key specifically for Terminal processing testing
+        const geminiApiKey = "AIzaSyBfkG9lgSBPvcf9-w7OEK8CUXSN9EDxheo";
         
-        // Add images to the prompt
+        const parts: any[] = [];
+        
+        // Add images to the prompt using Gemini's inlineData format
         if (images && images.length > 0) {
             images.forEach((img: any) => {
-                messageContent.push({
-                    type: "text",
+                parts.push({
                     text: img.label
                 });
-                messageContent.push({
-                    type: "image",
-                    source: {
-                        type: "base64",
-                        media_type: img.media_type,
+                parts.push({
+                    inlineData: {
+                        mimeType: img.media_type,
                         data: img.data
                     }
                 });
@@ -31,38 +26,36 @@ export async function POST(req: Request) {
         }
         
         // Add text prompt
-        messageContent.push({
-            type: "text",
+        parts.push({
             text: prompt
         });
 
-        const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
             method: "POST",
             headers: {
-                "x-api-key": anthropicKey,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "claude-3-5-sonnet-20241022",
-                max_tokens: 2000,
-                messages: [
+                contents: [
                     {
-                        role: "user",
-                        content: messageContent
+                        parts: parts
                     }
-                ]
+                ],
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 2000
+                }
             })
         });
 
-        const claudeData = await claudeRes.json();
+        const geminiData = await geminiRes.json();
         
-        if (!claudeRes.ok) {
-            console.error("Claude Error Response:", claudeData);
-            return NextResponse.json({ error: claudeData.error?.message || "Claude API Error" }, { status: 500 });
+        if (!geminiRes.ok) {
+            console.error("Gemini Error Response:", geminiData);
+            return NextResponse.json({ error: geminiData.error?.message || "Gemini API Error" }, { status: 500 });
         }
 
-        const textRes = claudeData.content?.[0]?.text || "{}";
+        const textRes = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
         
         return NextResponse.json({ result: textRes });
 
