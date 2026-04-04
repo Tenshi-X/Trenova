@@ -15,7 +15,7 @@ import TradingViewWidget from '@/components/TradingViewWidget';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 // ── TYPES ──
-type TabId = 'input' | 'market' | 'intel' | 'research' | 'derivatives' | 'onchain' | 'tools' | 'history' | 'guide';
+type TabId = 'input' | 'market' | 'intel' | 'research' | 'derivatives' | 'onchain' | 'tools' | 'history' | 'guide' | 'chart';
 
 // ── CONFIG ──
 const SLOT_SECTIONS = [
@@ -369,6 +369,7 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
     const tabs: {id: TabId, label: string, shortcut?: string, icon?: any}[] = [
       { id: 'input', label: 'INPUT DATA', shortcut: 'F8', icon: <Upload size={14} /> },
       { id: 'market', label: 'LIVE MARKET', shortcut: 'F5', icon: <Clock size={14} /> },
+      { id: 'chart', label: 'CHART WINDOW', shortcut: 'F10', icon: <BarChart2 size={14} /> },
       { id: 'intel', label: 'MARKET INTEL', shortcut: 'F7', icon: <Globe size={14} /> },
       { id: 'research', label: 'RESEARCH', shortcut: 'F6', icon: <Search size={14} /> },
       { id: 'derivatives', label: 'DERIVATIVES', shortcut: 'F4', icon: <Zap size={14} /> },
@@ -554,9 +555,7 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
             />
           </div>
           <div className="flex gap-2">
-             <button className="px-3 py-1.5 bg-neon/10 border border-neon/20 text-neon text-[10px] font-bold">USDT</button>
-             <button className="px-3 py-1.5 bg-[#050505] border border-[#2a2a2a] text-slate-500 text-[10px] font-bold">BTC</button>
-             <button className="px-3 py-1.5 bg-[#050505] border border-[#2a2a2a] text-slate-500 text-[10px] font-bold">ETH</button>
+             {/* Filter buttons removed by user request */}
           </div>
         </div>
         
@@ -599,12 +598,20 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
                   <td className="px-4 py-3 text-right text-slate-400">${coin.low > 100 ? coin.low.toLocaleString() : coin.low.toFixed(4)}</td>
                   <td className="px-4 py-3 text-right text-slate-500">${(coin.volume / 1e6).toFixed(1)}M</td>
                   <td className="px-4 py-3 text-center">
-                    <button 
-                      onClick={() => { setCoinName(coin.symbol); setActiveTab('input'); }}
-                      className="px-2 py-1 bg-[#1e1e1e] border border-[#2a2a2a] text-[9px] font-bold text-slate-400 hover:border-neon hover:text-neon"
-                    >
-                      ANALYZE
-                    </button>
+                    <div className="flex gap-1 justify-center">
+                      <button 
+                        onClick={() => { setCoinName(coin.symbol); setActiveTab('chart'); }}
+                        className="px-2 py-1 bg-[#1e1e1e] border border-[#2a2a2a] text-[9px] font-bold text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors"
+                      >
+                        CHART
+                      </button>
+                      <button 
+                        onClick={() => { setCoinName(coin.symbol); setActiveTab('input'); }}
+                        className="px-2 py-1 bg-[#1e1e1e] border border-[#2a2a2a] text-[9px] font-bold text-slate-400 hover:border-neon hover:text-neon transition-colors"
+                      >
+                        ANALYZE
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -626,20 +633,20 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
              </div>
              <div className="p-0 max-h-[600px] overflow-auto scrollbar-thin">
                 {[
-                  {t:'2m', src:'CoinDesk', hl:'Bitcoin enters price discovery as $100K barrier looms', cat:'bull'},
-                  {t:'15m', src:'Reuters', hl:'US CPI data comes in cooler than expected at 2.9%', cat:'bull'},
-                  {t:'42m', src:'TheBlock', hl:'Ethereum spot ETF inflows hit record $420M in single day', cat:'bull'},
-                  {t:'1h', src:'Bloomberg', hl:'SEC signals potential pivot on altcoin classification framework', cat:'neu'},
-                  {t:'2h', src:'WSJ', hl:'Federal Reserve maintains rates but adjusts outlook for Q3', cat:'bear'},
-                  {t:'3h', src:'Decrypt', hl:'Solana ecosystem TVL crosses $10B as DEX volume surges', cat:'bull'},
+                  {t:'2m', src:'CoinDesk', hl:'Bitcoin enters price discovery as $100K barrier looms', cat:'bull', url:'https://www.coindesk.com/'},
+                  {t:'15m', src:'Reuters', hl:'US CPI data comes in cooler than expected at 2.9%', cat:'bull', url:'https://www.reuters.com/'},
+                  {t:'42m', src:'TheBlock', hl:'Ethereum spot ETF inflows hit record $420M in single day', cat:'bull', url:'https://www.theblock.co/'},
+                  {t:'1h', src:'Bloomberg', hl:'SEC signals potential pivot on altcoin classification framework', cat:'neu', url:'https://www.bloomberg.com/crypto'},
+                  {t:'2h', src:'WSJ', hl:'Federal Reserve maintains rates but adjusts outlook for Q3', cat:'bear', url:'https://www.wsj.com/'},
+                  {t:'3h', src:'Decrypt', hl:'Solana ecosystem TVL crosses $10B as DEX volume surges', cat:'bull', url:'https://decrypt.co/'},
                 ].map((n, i) => (
-                  <div key={i} className="p-4 border-b border-[#1a1a1a] hover:bg-white/5 cursor-pointer group">
+                  <a key={i} href={n.url} target="_blank" rel="noopener noreferrer" className="p-4 border-b border-[#1a1a1a] hover:bg-white/5 cursor-pointer group block">
                     <div className="flex gap-2 mb-1">
                       <span className="text-[10px] text-neon font-mono">{n.t} ago</span>
                       <span className="text-[10px] text-slate-600 font-mono uppercase tracking-tighter">{n.src}</span>
                     </div>
                     <div className="text-xs text-slate-200 group-hover:text-neon transition-colors leading-relaxed">{n.hl}</div>
-                  </div>
+                  </a>
                 ))}
              </div>
           </div>
@@ -767,8 +774,16 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
           <div className="lg:col-span-2 bg-[#0f0f0f] border border-[#2a2a2a] flex flex-col">
              <div className="bg-[#141414] px-4 py-2 border-b border-[#1e1e1e] text-[10px] font-bold text-neon flex items-center justify-between">
                 <div className="flex items-center gap-2"><LayoutDashboard size={14} /> INTERACTIVE CHART // TRADINGVIEW</div>
-                <div className="flex gap-2">
-                   <span className="text-[9px] text-slate-500">{activeChartSymbol.replace('BINANCE:', '')}</span>
+                <div className="flex gap-2 items-center">
+                   <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500" size={10} />
+                      <input 
+                        className="bg-[#050505] border border-[#2a2a2a] pl-6 pr-2 py-1 text-[9px] font-mono text-neon focus:outline-none focus:border-neon/40 uppercase w-32"
+                        placeholder="SEARCH PAIR..."
+                        value={coinName}
+                        onChange={e => setCoinName(e.target.value.toUpperCase())}
+                      />
+                   </div>
                 </div>
              </div>
              <div className="p-0 flex-1 relative min-h-[500px] [&>div]:my-0 [&>div]:rounded-none [&>div]:border-0 [&>div]:h-full">
@@ -1232,7 +1247,12 @@ Analisa secara holistik dan kembalikan HANYA respons berformat JSON valid tanpa 
 
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex-1 overflow-auto bg-[#0a0a0a] relative custom-scrollbar">
-        {renderContent()}
+        {activeTab !== 'chart' && renderContent()}
+        <div className={`h-full w-full bg-[#050505] p-2 ${activeTab === 'chart' ? 'block' : 'hidden'}`}>
+           <div className="h-full w-full rounded overflow-hidden border border-[#2a2a2a] [&>div]:my-0 [&>div]:border-0 [&>div]:rounded-none">
+              <TradingViewWidget symbol={coinName ? (coinName.includes(':') ? coinName : `BINANCE:${coinName}USDT`) : 'BINANCE:BTCUSDT'} />
+           </div>
+        </div>
       </div>
 
       <style jsx global>{`
