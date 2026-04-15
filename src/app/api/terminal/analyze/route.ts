@@ -6,7 +6,7 @@ export async function POST(req: Request) {
         const { prompt, images } = payload;
         
         // Provided API key specifically for Terminal processing testing
-        const geminiApiKey = "AIzaSyBfkG9lgSBPvcf9-w7OEK8CUXSN9EDxheo";
+        const geminiApiKey_Premium = process.env.GEMINI_API_KEY_PREMIUM;
         
         const parts: any[] = [];
         
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
             text: prompt
         });
 
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey_Premium}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
