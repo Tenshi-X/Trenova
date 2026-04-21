@@ -1,11 +1,11 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Zap, Activity, Database, Sparkles, TrendingUp, BarChart3, AlertTriangle, Upload, X, MousePointerClick, Loader2, Search, FileText, Globe, AppWindow, Radio, Layers } from 'lucide-react';
+import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchCoinGeckoData, fetchMarketSentiment } from './actions';
+import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchCoinGeckoData } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
@@ -13,7 +13,6 @@ import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisVisualizer from '@/components/AnalysisVisualizer';
 import LiveMarketTable from '@/components/LiveMarketTable';
-import AIInputSlots from '@/components/AIInputSlots';
 import { useLanguage } from '@/context/LanguageContext';
 
 
@@ -245,10 +244,6 @@ export default function DashboardPage() {
   const [loadingMessage, setLoadingMessage] = useState("Initializing AI...");
   const [chatResult, setChatResult] = useState<{ analysis: string } | null>(null);
   
-  // Multi-Slot AI Input State (v3 Style)
-  const [aiSlots, setAiSlots] = useState<any[]>([]);
-  const [aiLeverage, setAiLeverage] = useState('');
-  const [aiModal, setAiModal] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ignoreSearchRef = useRef(false);
@@ -415,13 +410,8 @@ export default function DashboardPage() {
     });
   };
   
-  // Build images array for AI: slots first (primary), then fallback to single selectedImage
+  // Build images array for AI
   const buildImagesForAI = async (): Promise<string[]> => {
-    // If AI slots contain images, use those (v3 multi-slot system)
-    if (aiSlots.length > 0) {
-        return aiSlots.map(s => s.base64);
-    }
-    // Fallback: single image upload (legacy)
     if (selectedImage) {
         try {
             return [await fileToBase64(selectedImage)];
@@ -454,7 +444,7 @@ export default function DashboardPage() {
            ohlcData = marketDataRaw.ohlc || [];
         }
 
-        // Prepare Images (multi-slot or single)
+        // Prepare Images
         const images = await buildImagesForAI();
         const hasImages = images.length > 0;
         const primaryImage = hasImages ? images[0] : undefined;
@@ -462,11 +452,7 @@ export default function DashboardPage() {
         // Construct Prompt
         let promptText = constructPrompt(PROMPT_TEMPLATE_ID, PROMPT_TEMPLATE_EN, selectedCoin, marketData, ohlcData, hasImages, language, tradingStyle, timeframe);
 
-        // Inject slot metadata into prompt if multi-slot
-        if (aiSlots.length > 0) {
-            const slotSummary = aiSlots.map((s: any) => s.id).join(', ');
-            promptText = `[PRIORITY: USER PROVIDED ${aiSlots.length} CHART IMAGES via Multi-Slot Analysis System. Slots: ${slotSummary}. Analyze ALL images comprehensively for ${selectedCoin.name} (${tradingStyle.toUpperCase()}).${aiLeverage ? ` Leverage: ${aiLeverage}.` : ''}${aiModal ? ` Capital: $${aiModal} USDT.` : ''}]\n\n` + promptText;
-        } else if (selectedImage) {
+        if (selectedImage) {
             promptText = `[PRIORITY: ANALYZE THE UPLOADED CHART IMAGE FOR ${selectedCoin.name}. Focus on ${tradingStyle.toUpperCase()} setup.]\n\n` + promptText;
         }
 
@@ -737,29 +723,16 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* V3 Multi-Slot AI Input System */}
-                    <AIInputSlots
-                        coinName={selectedCoin.name}
-                        leverage={aiLeverage}
-                        modal={aiModal}
-                        onLeverageChange={setAiLeverage}
-                        onModalChange={setAiModal}
-                        onSlotsChange={setAiSlots}
-                        onReset={() => {
-                            setAiSlots([]);
-                            cleanAnalysis();
-                        }}
-                    />
 
                     {/* Analysis Controls Panel */}
                     <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
                         <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
 
-                            {/* Optional: Single image upload (if slots are empty) */}
-                            {aiSlots.length === 0 && (
+                            {/* Single image upload */}
+                            {true && (
                                 <div className="flex-1 lg:max-w-xs">
                                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
-                                        {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional — gunakan slot di atas)</span>
+                                        {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional)</span>
                                     </label>
                                     {!imagePreview ? (
                                         <div
