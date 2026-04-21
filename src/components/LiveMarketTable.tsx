@@ -1,19 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, Star, TrendingUp, TrendingDown, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react';
+import { Search, Star, TrendingUp, TrendingDown, RefreshCw, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
 interface CoinData {
   symbol: string;
   price: number;
-  prevPrice: number;
   chg24h: number;
   high24h: number;
   low24h: number;
   vol24h: number;
-  priceDir: 'up' | 'dn' | '';
-  history: number[];
 }
 
 interface LiveMarketTableProps {
@@ -21,6 +18,8 @@ interface LiveMarketTableProps {
 }
 
 const QUOTE_ASSETS = ['USDT', 'USDC', 'FDUSD', 'TUSD', 'BTC', 'ETH', 'BNB'];
+const POLL_INTERVAL = 30_000; // 30 seconds
+const MAX_PAIRS = 50;
 
 function getBase(sym: string) {
   for (const q of QUOTE_ASSETS) {
@@ -49,38 +48,16 @@ function fmtVol(v: number): string {
   return '$' + v.toFixed(0);
 }
 
-// Simple sparkline SVG
-function Sparkline({ data, isUp }: { data: number[]; isUp: boolean }) {
-  if (data.length < 2) return <div className="w-16 h-6" />;
-  const mn = Math.min(...data);
-  const mx = Math.max(...data);
-  const rng = mx - mn || 1;
-  const W = 64, H = 24, pd = 2;
-  const pts = data
-    .map((v, i) => {
-      const x = pd + (i / (data.length - 1)) * (W - pd * 2);
-      const y = H - pd - ((v - mn) / rng) * (H - pd * 2);
-      return `${x},${y}`;
-    })
-    .join(' ');
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={isUp ? '#22c55e' : '#ef4444'}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+function formatCountdown(ms: number): string {
+  const s = Math.ceil(ms / 1000);
+  return s > 0 ? `${s}s` : 'now';
 }
 
 export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps) {
-  const [coins, setCoins] = useState<Map<string, CoinData>>(new Map());
-  const [isConnected, setIsConnected] = useState(false);
+  const [coins, setCoins] = useState<CoinData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(POLL_INTERVAL);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [quoteFilter, setQuoteFilter] = useState<'USDT' | 'BTC'>('USDT');
@@ -92,152 +69,91 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
     } catch { return new Set(); }
   });
   const [showFavsOnly, setShowFavsOnly] = useState(false);
-  const [flashMap, setFlashMap] = useState<Map<string, 'up' | 'dn'>>(new Map());
-  const [pairCount, setPairCount] = useState(0);
-  const [updatesPerSec, setUpdatesPerSec] = useState(0);
 
-  const wsPoolRef = useRef<WebSocket[]>([]);
-  const pendingRef = useRef<Map<string, 'up' | 'dn'>>(new Map());
-  const updSecRef = useRef(0);
-  const pairsRef = useRef<string[]>([]);
+  const nextPollRef = useRef<number>(Date.now() + POLL_INTERVAL);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
 
-  // Fetch all pairs from Binance
-  const fetchPairs = useCallback(async (quote: string) => {
+  // Fetch top 50 pairs from Binance 24hr ticker (single REST call, no WebSocket)
+  const fetchMarket = useCallback(async (quote: string) => {
     setIsLoading(true);
     setError('');
     try {
-      const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
-      if (!res.ok) throw new Error('Failed to fetch exchange info');
-      const json = await res.json();
-      const pairs: string[] = json.symbols
-        .filter((s: any) => s.status === 'TRADING' && s.quoteAsset === quote)
-        .map((s: any) => s.symbol as string);
-      pairsRef.current = pairs;
-      setPairCount(pairs.length);
-      return pairs;
-    } catch (e) {
-      console.error('Exchange info fetch failed:', e);
-      // Fallback top 20 USDT pairs
-      const fallback = ['BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','ADAUSDT','AVAXUSDT','TRXUSDT','BCHUSDT','DOTUSDT','LINKUSDT','LTCUSDT','ATOMUSDT','UNIUSDT','XLMUSDT','NEARUSDT','AAVEUSDT','FTMUSDT','INJUSDT'];
-      pairsRef.current = fallback;
-      setPairCount(fallback.length);
-      return fallback;
+      const res = await fetch(
+        `https://api.binance.com/api/v3/ticker/24hr?type=MINI`,
+        { signal: AbortSignal.timeout(10_000) }
+      );
+      if (!res.ok) throw new Error('Gagal memuat data market');
+      const raw: any[] = await res.json();
+
+      // Filter by quote, sort by quoteVolume desc, take top MAX_PAIRS
+      const filtered = raw
+        .filter((t) => t.symbol.endsWith(quote))
+        .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+        .slice(0, MAX_PAIRS)
+        .map((t): CoinData => ({
+          symbol: t.symbol,
+          price: parseFloat(t.lastPrice),
+          chg24h: parseFloat(t.priceChangePercent),
+          high24h: parseFloat(t.highPrice),
+          low24h: parseFloat(t.lowPrice),
+          vol24h: parseFloat(t.quoteVolume),
+        }));
+
+      if (mountedRef.current) {
+        setCoins(filtered);
+        setLastUpdated(new Date());
+        setError('');
+      }
+    } catch (e: any) {
+      if (mountedRef.current) setError('Gagal memuat data. Coba lagi nanti.');
+    } finally {
+      if (mountedRef.current) setIsLoading(false);
     }
   }, []);
 
-  // Connect WebSocket pool
-  const connect = useCallback((pairs: string[]) => {
-    // Close existing
-    wsPoolRef.current.forEach(ws => { try { ws.close(); } catch (e) {} });
-    wsPoolRef.current = [];
+  const scheduleNext = useCallback((quote: string) => {
+    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    nextPollRef.current = Date.now() + POLL_INTERVAL;
+    pollTimerRef.current = setTimeout(async () => {
+      await fetchMarket(quote);
+      scheduleNext(quote);
+    }, POLL_INTERVAL);
+  }, [fetchMarket]);
 
-    const CHUNK = 180;
-    const chunks: string[][] = [];
-    for (let i = 0; i < pairs.length; i += CHUNK) {
-      chunks.push(pairs.slice(i, i + CHUNK));
-    }
-
-    let connectedCount = 0;
-
-    chunks.forEach(chunk => {
-      const streams = chunk.map(p => p.toLowerCase() + '@ticker').join('/');
-      const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-      const ws = new WebSocket(url);
-
-      ws.onopen = () => {
-        connectedCount++;
-        if (connectedCount === chunks.length) {
-          setIsConnected(true);
-          setIsLoading(false);
-        }
-      };
-
-      ws.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          const d = msg.data;
-          if (!d || !d.s) return;
-
-          const sym = d.s;
-          const np = parseFloat(d.c);
-          const prevCoin = setCoins(prev => {
-            const pp = prev.get(sym)?.price || np;
-            const history = [...(prev.get(sym)?.history || [])];
-            history.push(np);
-            if (history.length > 24) history.shift();
-
-            const next = new Map(prev);
-            next.set(sym, {
-              symbol: sym,
-              price: np,
-              prevPrice: pp,
-              chg24h: parseFloat(d.P),
-              high24h: parseFloat(d.h),
-              low24h: parseFloat(d.l),
-              vol24h: parseFloat(d.v) * np,
-              priceDir: np > pp ? 'up' : np < pp ? 'dn' : '',
-              history,
-            });
-            return next;
-          });
-
-          // Track flash
-          const pp = 0; // we handle via state above
-          if (np !== pp) {
-            pendingRef.current.set(sym, np > pp ? 'up' : 'dn');
-          }
-          updSecRef.current++;
-        } catch (e) {}
-      };
-
-      ws.onerror = () => {
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        connectedCount = Math.max(0, connectedCount - 1);
-        if (connectedCount === 0) {
-          setIsConnected(false);
-          // Reconnect after 3s
-          setTimeout(() => {
-            if (pairsRef.current.length > 0) connect(pairsRef.current);
-          }, 3000);
-        }
-      };
-
-      wsPoolRef.current.push(ws);
-    });
-  }, []);
-
-  // Init
+  // On quote filter change: fetch immediately + schedule polling
   useEffect(() => {
-    let mounted = true;
-    fetchPairs(quoteFilter).then(pairs => {
-      if (mounted) connect(pairs);
+    mountedRef.current = true;
+    setCoins([]);
+    setIsLoading(true);
+
+    fetchMarket(quoteFilter).then(() => {
+      if (mountedRef.current) scheduleNext(quoteFilter);
     });
 
-    // UPS counter
-    const upsTimer = setInterval(() => {
-      setUpdatesPerSec(updSecRef.current);
-      updSecRef.current = 0;
+    // Countdown tick
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      if (!mountedRef.current) return;
+      const remaining = nextPollRef.current - Date.now();
+      setCountdown(Math.max(0, remaining));
     }, 1000);
 
-    // Flash apply loop
-    const flashTimer = setInterval(() => {
-      if (pendingRef.current.size > 0) {
-        setFlashMap(new Map(pendingRef.current));
-        pendingRef.current.clear();
-        setTimeout(() => setFlashMap(new Map()), 400);
-      }
-    }, 100);
-
     return () => {
-      mounted = false;
-      clearInterval(upsTimer);
-      clearInterval(flashTimer);
-      wsPoolRef.current.forEach(ws => { try { ws.close(); } catch (e) {} });
+      mountedRef.current = false;
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
     };
-  }, [quoteFilter, fetchPairs, connect]);
+  }, [quoteFilter, fetchMarket, scheduleNext]);
+
+  const handleManualRefresh = () => {
+    if (isLoading) return;
+    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    fetchMarket(quoteFilter).then(() => {
+      if (mountedRef.current) scheduleNext(quoteFilter);
+    });
+  };
 
   const handleSort = (col: typeof sortBy) => {
     if (sortBy === col) {
@@ -259,7 +175,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   };
 
   // Filter + sort
-  const filtered = [...coins.values()]
+  const filtered = [...coins]
     .filter(c => {
       if (showFavsOnly && !favorites.has(c.symbol)) return false;
       if (search) return c.symbol.includes(search.toUpperCase());
@@ -294,34 +210,30 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-              Live Market
+              Top {MAX_PAIRS} Market
             </span>
-            {/* Connection Status */}
+            {/* Status badge */}
             <span className={clsx(
               'flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full',
-              isConnected
-                ? 'bg-emerald-500/10 text-emerald-500'
-                : isLoading
+              isLoading
                 ? 'bg-amber-500/10 text-amber-500'
-                : 'bg-rose-500/10 text-rose-500'
+                : 'bg-emerald-500/10 text-emerald-500'
             )}>
-              {isConnected ? (
-                <><Wifi size={10} /> LIVE</>
-              ) : isLoading ? (
-                <><Loader2 size={10} className="animate-spin" /> CONNECTING</>
+              {isLoading ? (
+                <><RefreshCw size={9} className="animate-spin" /> Memuat</>
               ) : (
-                <><WifiOff size={10} /> OFFLINE</>
+                <><Clock size={9} /> Refresh {formatCountdown(countdown)}</>
               )}
             </span>
-            {isConnected && (
-              <span className="text-[10px] text-slate-400 font-mono">
-                {pairCount} pairs · {updatesPerSec}/s
+            {lastUpdated && !isLoading && (
+              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                {lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             )}
           </div>
 
-          {/* Quote Filter */}
           <div className="flex items-center gap-1">
+            {/* Quote Filter */}
             {(['USDT', 'BTC'] as const).map(q => (
               <button
                 key={q}
@@ -344,9 +256,17 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                   ? 'bg-amber-400/20 text-amber-500'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-amber-500'
               )}
-              title="Show Favorites"
+              title="Tampilkan Favorit"
             >
               ★
+            </button>
+            <button
+              onClick={handleManualRefresh}
+              disabled={isLoading}
+              className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-neon transition-all disabled:opacity-40"
+              title="Refresh sekarang"
+            >
+              <RefreshCw size={10} className={isLoading ? 'animate-spin' : ''} />
             </button>
           </div>
         </div>
@@ -358,35 +278,37 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search coin... BTC, ETH, SOL"
+            placeholder="Cari koin... BTC, ETH, SOL"
             className="w-full pl-7 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-neon/50 text-slate-700 dark:text-slate-300"
           />
         </div>
       </div>
 
       {/* Table Header */}
-      <div className="flex-none grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-2 px-3 py-2 bg-slate-50/80 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex-none grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2 bg-slate-50/80 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
         <div className="w-5" />
         <SortHeader col="sym" label="Pair" />
-        <div className="hidden sm:block"><SortHeader col="price" label="Price" /></div>
+        <div className="hidden sm:block"><SortHeader col="price" label="Harga" /></div>
         <SortHeader col="chg" label="24h%" />
-        <div className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-slate-400">High</div>
-        <div className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-slate-400">Low</div>
-        <SortHeader col="vol" label="Volume" />
+        <div className="hidden md:block text-[10px] font-bold uppercase tracking-wider text-slate-400">Vol</div>
+        <div className="w-4" />
       </div>
 
       {/* Table Body */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading && filtered.length === 0 ? (
+        {isLoading && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-400">
-            <Loader2 className="animate-spin text-neon" size={24} />
-            <span className="text-xs">Connecting to Binance WebSocket...</span>
+            <RefreshCw className="animate-spin text-neon" size={24} />
+            <span className="text-xs">Memuat Top {MAX_PAIRS} market...</span>
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-40 text-xs text-rose-400">{error}</div>
+          <div className="flex flex-col items-center justify-center h-40 gap-3">
+            <span className="text-xs text-rose-400">{error}</span>
+            <button onClick={handleManualRefresh} className="text-xs text-neon underline">Coba lagi</button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-xs text-slate-400">
-            {search ? `No results for "${search}"` : 'No data yet'}
+            {search ? `Tidak ada hasil untuk "${search}"` : 'Belum ada data'}
           </div>
         ) : (
           filtered.map(coin => {
@@ -394,17 +316,14 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
             const quote = getQuote(coin.symbol);
             const isUp = coin.chg24h >= 0;
             const isFav = favorites.has(coin.symbol);
-            const flash = flashMap.get(coin.symbol);
 
             return (
               <div
                 key={coin.symbol}
                 onClick={() => onSelectSymbol?.(coin.symbol)}
                 className={clsx(
-                  'grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-x-2 px-3 py-2 border-b border-slate-50 dark:border-slate-800/50',
+                  'grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2.5 border-b border-slate-50 dark:border-slate-800/50',
                   'hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group',
-                  flash === 'up' && 'bg-emerald-50 dark:bg-emerald-950/20',
-                  flash === 'dn' && 'bg-rose-50 dark:bg-rose-950/20',
                 )}
               >
                 {/* Fav */}
@@ -424,42 +343,29 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{base}</div>
                     <div className="text-[9px] text-slate-400 leading-none mt-0.5">{quote}</div>
                   </div>
-                  {/* Sparkline — hidden on mobile */}
-                  <div className="hidden sm:block opacity-70">
-                    <Sparkline data={coin.history} isUp={isUp} />
-                  </div>
                 </div>
 
                 {/* Price */}
-                <div className={clsx(
-                  'hidden sm:block text-xs font-mono font-semibold tabular-nums text-right',
-                  flash === 'up' ? 'text-emerald-500' : flash === 'dn' ? 'text-rose-500' : 'text-slate-700 dark:text-slate-300'
-                )}>
+                <div className="hidden sm:block text-xs font-mono font-semibold tabular-nums text-right text-slate-700 dark:text-slate-300">
                   {fmtPrice(coin.price)}
                 </div>
 
                 {/* 24h Change */}
                 <div className={clsx(
-                  'text-xs font-bold text-right tabular-nums',
+                  'text-xs font-bold text-right tabular-nums flex items-center gap-0.5',
                   isUp ? 'text-emerald-500' : 'text-rose-500'
                 )}>
+                  {isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                   {isUp ? '+' : ''}{coin.chg24h.toFixed(2)}%
                 </div>
 
-                {/* High */}
-                <div className="hidden md:block text-[10px] font-mono text-emerald-500 text-right tabular-nums">
-                  {fmtPrice(coin.high24h)}
-                </div>
-
-                {/* Low */}
-                <div className="hidden md:block text-[10px] font-mono text-rose-500 text-right tabular-nums">
-                  {fmtPrice(coin.low24h)}
-                </div>
-
                 {/* Volume */}
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 text-right tabular-nums font-mono">
+                <div className="hidden md:block text-[10px] text-slate-500 dark:text-slate-400 text-right tabular-nums font-mono">
                   {fmtVol(coin.vol24h)}
                 </div>
+
+                {/* Arrow */}
+                <div className="text-slate-300 dark:text-slate-700 group-hover:text-neon transition-colors text-xs">›</div>
               </div>
             );
           })
@@ -469,11 +375,11 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       {/* Footer */}
       <div className="flex-none px-3 py-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <span className="text-[10px] text-slate-400">
-          Showing {filtered.length} / {coins.size} pairs
+          Menampilkan {filtered.length} dari {coins.length} pair teratas
         </span>
         <span className="text-[10px] text-slate-400 flex items-center gap-1">
-          <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500')} />
-          Binance Real-time Feed
+          <Clock size={9} />
+          Auto-refresh setiap 30 detik · Binance REST
         </span>
       </div>
     </div>
