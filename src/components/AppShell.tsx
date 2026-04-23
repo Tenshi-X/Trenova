@@ -6,15 +6,19 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Don't show sidebar on certain pages
-  const hideSidebar = pathname === '/login' || pathname === '/sign-in' || pathname === '/' || pathname === '/feedback' || pathname === '/terminal';
+
+  // Sidebar ONLY appears on /admin pages
+  // - /dashboard → has its own MobileDashboardSidebar in layout
+  // - /terminal  → premium, no sidebar needed
+  // - Other pages (login, home, feedback) → no sidebar
+  const showSidebar = pathname?.startsWith('/admin');
   
   return (
     <ThemeProvider>
-      {!hideSidebar && <Sidebar />}
+      {showSidebar && <Sidebar />}
       <main 
         className={`flex-1 h-screen overflow-y-auto relative transition-all duration-300 ${
-          hideSidebar ? 'w-full' : 'ml-0 md:ml-20' /* ml-0 on mobile, ml-20 on desktop */
+          showSidebar ? 'ml-0 md:ml-20' : 'w-full'
         }`}
       >
         {/* Background Gradient/Glow effects */}

@@ -494,59 +494,56 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-24 space-y-4 px-3 md:space-y-8 md:px-8">
+    <div className="max-w-7xl mx-auto pb-24 space-y-3 md:space-y-8">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 pt-1 md:pt-2">
         <div>
-            <h1 className="text-xl md:text-3xl lg:text-4xl font-black text-foreground mb-1 md:mb-2 flex items-center gap-2 md:gap-3">
-                <Sparkles className="text-neon w-5 h-5 md:w-8 md:h-8" fill="currentColor" /> {t('header_title')}
+            <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black text-foreground mb-0.5 md:mb-2 flex items-center gap-2 md:gap-3">
+                <Sparkles className="text-neon w-5 h-5 md:w-8 md:h-8 shrink-0" fill="currentColor" /> {t('header_title')}
             </h1>
-            <p className="text-slate-500 text-xs md:text-lg">{t('header_subtitle')}</p>
+            <p className="text-slate-500 text-[11px] sm:text-xs md:text-lg leading-relaxed">{t('header_subtitle')}</p>
         </div>
-        
-        {/* Language Toggler Moved to Layout */}
-        <div />
       </div>
       
       {/* Market Intelligence Widgets */}
       <MarketIntelligence />
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 mb-6 overflow-x-auto">
+      <div className="flex gap-0.5 sm:gap-1 border-b border-slate-200 dark:border-slate-800 mb-4 md:mb-6 overflow-x-auto no-scrollbar -mx-1 px-1">
         <button
             onClick={() => setActiveTab('chart')}
             className={clsx(
-                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
                 activeTab === 'chart' 
                     ? "border-neon text-neon" 
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <BarChart3 size={16} /> {t('tab_chart')}
+            <BarChart3 size={15} /> {t('tab_chart')}
         </button>
         <button
             onClick={() => setActiveTab('market')}
             className={clsx(
-                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
                 activeTab === 'market' 
                     ? "border-neon text-neon" 
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <Radio size={16} /> Live Market
-            <span className="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
+            <Radio size={15} /> Live Market
+            <span className="text-[8px] sm:text-[9px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
             onClick={() => setActiveTab('analysis')}
             className={clsx(
-                "px-4 py-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap",
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
                 activeTab === 'analysis' 
                     ? "border-neon text-neon" 
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <Database size={16} /> {t('tab_analysis')}
+            <Database size={15} /> {t('tab_analysis')}
         </button>
       </div>
 
@@ -554,7 +551,7 @@ export default function DashboardPage() {
 
         {/* --- LIVE MARKET TAB --- */}
         {activeTab === 'market' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 280px)', minHeight: '500px' }}>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
                 <LiveMarketTable
                     onSelectSymbol={(sym) => {
                         setChartSymbol(sym);
@@ -572,7 +569,7 @@ export default function DashboardPage() {
             isChartFullscreen && "fixed inset-0 z-[200] bg-white dark:bg-slate-950 p-4 md:p-6 overflow-y-auto flex flex-col"
         )}>
             {/* Custom Search Bar for Chart */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3 relative z-10">
+            <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex gap-2 sm:gap-3 relative z-10">
                 <div className="flex-1 relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                         {isChartSearching ? (
@@ -709,7 +706,7 @@ export default function DashboardPage() {
                     <SentimentChart symbol={selectedCoin.symbol} />
                     
                     {/* INSTRUCTIONS BLOCK */}
-                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-2xl p-4 md:p-6 flex gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 flex gap-3 sm:gap-4">
                         <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg h-fit text-blue-600 dark:text-blue-400">
                             <FileText size={24} />
                         </div>
@@ -725,8 +722,8 @@ export default function DashboardPage() {
 
 
                     {/* Analysis Controls Panel */}
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
-                        <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
+                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:items-end">
 
                             {/* Single image upload */}
                             {true && (
@@ -771,7 +768,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Options Column */}
-                            <div className="flex-none flex flex-col justify-start gap-4 h-32 w-full lg:w-48">
+                            <div className="flex-none flex flex-col justify-start gap-3 sm:gap-4 h-auto lg:h-32 w-full lg:w-48">
                                 {/* Trading Style Dropdown */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">{t('style_label')}</label>
@@ -819,7 +816,7 @@ export default function DashboardPage() {
                                 <button 
                                     onClick={runAnalysis}
                                     disabled={chatLoading}
-                                    className="w-full h-32 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-2xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
+                                    className="w-full h-20 sm:h-32 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl sm:rounded-2xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1.5 sm:gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
                                 >
                                     {chatLoading ? (
                                         <>

@@ -3,40 +3,39 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, MessageSquare, Shield, Activity, LogOut, Menu, History } from 'lucide-react';
+import { Shield, LogOut, Menu, X, Users } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import clsx from 'clsx';
 
 import { useLanguage } from '@/context/LanguageContext';
 
+/**
+ * Sidebar component — ONLY used on /admin pages.
+ * Shows "Manajemen User" menu + logout.
+ * 
+ * Regular users have MobileDashboardSidebar in dashboard layout.
+ * Premium users have no sidebar (everything is in terminal dashboard).
+ */
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { t } = useLanguage();
-
-  const shouldShow = pathname !== '/login' && pathname !== '/' && pathname !== '/feedback';
-
-  useEffect(() => {
-    async function checkRole() {
-      if (!shouldShow) return; 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.role === 'admin') {
-        setIsAdmin(true);
-      }
-      setLoading(false);
-    }
-    checkRole();
-  }, [supabase, shouldShow]);
 
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  if (!shouldShow) return null;
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileOpen]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -44,22 +43,23 @@ export default function Sidebar() {
     router.refresh();
   };
 
-  const navItems = pathname?.startsWith('/admin') 
-    ? [
-        { name: t('nav_admin'), href: '/admin', icon: Shield },
-      ]
-    : [
-        { name: t('nav_dashboard'), href: '/dashboard', icon: LayoutDashboard },
-        { name: t('nav_history'), href: '/dashboard/history', icon: History },
-        ...(isAdmin ? [{ name: t('nav_admin'), href: '/admin', icon: Shield }] : []),
-      ];
+  // Admin-only nav items
+  const navItems = [
+    { name: 'Manajemen User', href: '/admin', icon: Users },
+  ];
 
   return (
     <>
       {/* Mobile Menu Toggle */}
       <button 
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="md:hidden fixed top-3 left-3 z-[110] p-2 bg-white dark:bg-slate-900 rounded-lg shadow-md border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+        className={clsx(
+          "md:hidden fixed top-3 left-3 z-[110] p-2.5 rounded-xl shadow-lg border transition-all duration-300",
+          isMobileOpen 
+            ? "scale-0 opacity-0"
+            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 scale-100 opacity-100"
+        )}
+        aria-label="Open menu"
       >
         <Menu size={20} />
       </button>
@@ -68,44 +68,58 @@ export default function Sidebar() {
       {isMobileOpen && (
         <div 
           onClick={() => setIsMobileOpen(false)}
-          className="fixed inset-0 bg-black/50 z-[90] md:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/60 z-[90] md:hidden backdrop-blur-sm animate-in fade-in duration-200"
         />
       )}
 
       <aside className={clsx(
         "fixed left-0 top-0 h-screen flex flex-col py-8 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) group z-[100] border-r border-border dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl shadow-2xl overflow-hidden",
-        // Mobile: Slide in/out. When open, full width 72. When closed, hidden off-screen.
+        // Mobile: Slide in/out
         isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full w-72",
-        // Desktop: Always visible. Default collapsed (w-20), hover to expand (w-72).
+        // Desktop: Always visible. Collapsed → expand on hover.
         "md:translate-x-0 md:w-20 md:hover:w-72"
       )}>
+        {/* Mobile Close Button */}
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="md:hidden absolute top-4 right-4 z-10 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
+
         {/* Header/Logo */}
         <div className="flex items-center px-4 mb-10 h-12 overflow-hidden shrink-0">
           <div className={clsx(
               "w-12 h-12 flex items-center justify-center shrink-0 bg-white dark:bg-slate-900 rounded-xl shadow-md transition-all duration-500 border border-slate-100 dark:border-slate-800",
-              // Mobile: Always allow expanding to show logo
-              // Desktop: Move margin on hover to center or left align
               "mx-0 md:mx-auto md:group-hover:mx-0"
           )}>
               <img src="/app-logo.png" alt="Trenova" className="w-8 h-8 object-contain" />
           </div>
           <div className={clsx(
               "ml-4 transition-all duration-500 ease-in-out whitespace-nowrap transform",
-              // Mobile: Always visible if sidebar is open
               isMobileOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10",
-              // Desktop: Only visible on hover
               "md:opacity-0 md:group-hover:opacity-100 md:translate-x-10 md:group-hover:translate-x-0"
           )}>
              <h1 className="text-xl font-bold tracking-wider text-foreground">{t('app_title')}</h1>
-             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">{t('app_subtitle')}</p>
+             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">Admin Panel</p>
           </div>
         </div>
 
-        <nav className="flex-1 px-3 space-y-3 overflow-y-auto overflow-x-hidden">
-          {!loading && navItems.map((item) => {
-            const isActive = item.href === '/dashboard' 
-                ? pathname === '/dashboard' 
-                : pathname?.startsWith(item.href);
+        {/* Admin badge - shown on mobile and on desktop hover */}
+        <div className={clsx(
+          "px-3 pb-4 transition-all duration-500 overflow-hidden",
+          "md:max-h-0 md:opacity-0 md:group-hover:max-h-20 md:group-hover:opacity-100"
+        )}>
+          <div className="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 flex items-center gap-2">
+            <Shield size={14} className="text-amber-600 dark:text-amber-400" />
+            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Administrator</span>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 space-y-2 overflow-y-auto overflow-x-hidden">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
@@ -119,8 +133,6 @@ export default function Sidebar() {
               >
                 <div className={clsx(
                     "w-6 h-6 flex items-center justify-center shrink-0 transition-all duration-300",
-                    // Mobile: Always aligned left
-                    // Desktop: Center then left on hover
                     "mx-0 md:mx-auto md:group-hover:mx-0"
                 )}>
                     <item.icon
@@ -132,9 +144,7 @@ export default function Sidebar() {
                 </div>
                 <span className={clsx(
                     "ml-4 font-medium whitespace-nowrap transition-all duration-500 transform text-sm",
-                    // Mobile: Always visible
                     isMobileOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4",
-                    // Desktop: Fade in on hover
                     "md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0"
                 )}>
                   {item.name}
@@ -149,7 +159,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Footer / User Profile */}
+        {/* Footer / Logout */}
         <div className="px-3 shrink-0">
             <div className="pt-6 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-2">
               <button 
@@ -158,8 +168,6 @@ export default function Sidebar() {
               >
                   <div className={clsx(
                       "w-6 h-6 flex items-center justify-center shrink-0 transition-all duration-500",
-                      // Mobile: Align left
-                      // Desktop: Center then left
                       "mx-0 md:mx-auto md:group-hover:mx-0"
                   )}>
                       <LogOut className="w-5 h-5 group-hover/btn:rotate-180 transition-transform duration-500" />
@@ -169,14 +177,12 @@ export default function Sidebar() {
                       isMobileOpen ? "opacity-100" : "opacity-0",
                       "md:opacity-0 md:group-hover:opacity-100"
                   )}>
-                    {t('nav_signout')}
+                    Logout
                   </span>
               </button>
 
               <div className={clsx(
                   "flex items-center px-3 py-3 h-10 text-xs text-slate-400 whitespace-nowrap overflow-hidden transition-all",
-                  // Mobile: Always start aligned
-                  // Desktop: Center then start aligned
                   "justify-start md:justify-center md:group-hover:justify-start"
               )}>
                 <div className="w-2 h-2 shrink-0 rounded-full bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20" />
@@ -185,7 +191,7 @@ export default function Sidebar() {
                     isMobileOpen ? "opacity-100" : "opacity-0",
                     "md:opacity-0 md:group-hover:opacity-100"
                 )}>
-                  v2.4.0 • {t('version_status')}
+                  v2.4.0 • Admin
                 </span>
               </div>
             </div>

@@ -7,13 +7,14 @@ import Link from 'next/link';
 import { 
   Database, Shield, Edit, Trash2, Save, 
   UserPlus, RefreshCw, Trash, Activity,
-  Search, ChevronLeft, ChevronRight, ChevronDown
+  Search, ChevronLeft, ChevronRight, ChevronDown, LogOut
 } from 'lucide-react';
 import clsx from 'clsx';
 import { getUserProfiles, provisionUser, deleteUserProfile, UserProfile } from './actions';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/context/LanguageContext';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function AdminPage() {
   const { t } = useLanguage();
@@ -132,24 +133,36 @@ export default function AdminPage() {
           </h1>
           <p className="text-slate-500">{t('admin_subtitle')}</p>
         </div>
-        <div className="flex gap-4 items-center">
-             <div className="flex items-center gap-2 mr-2 border-r border-slate-200 dark:border-slate-800 pr-4">
+        <div className="flex gap-2 sm:gap-4 items-center flex-wrap">
+             <div className="flex items-center gap-2 mr-0 sm:mr-2 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-4">
                 <LanguageSwitcher />
                 <ThemeToggle />
              </div>
              <Link 
                 href="/admin/users/create"
-                className="bg-neon hover:bg-neon-dim text-white px-4 py-2 rounded-lg flex items-center gap-2 font-semibold shadow-md transition-all hover:-translate-y-0.5"
+                className="bg-neon hover:bg-neon-dim text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 font-semibold shadow-md transition-all hover:-translate-y-0.5 text-sm"
              >
                 <UserPlus size={18} />
-                {t('btn_create_auth')}
+                <span className="hidden sm:inline">{t('btn_create_auth')}</span>
+                <span className="sm:hidden">Create</span>
              </Link>
              <button 
                 onClick={fetchData}
-                className="glass px-4 py-2 rounded-lg flex items-center gap-2 border border-slate-200 text-slate-600 hover:text-foreground"
+                className="glass px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-foreground text-sm"
              >
                 <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-                {t('btn_refresh')}
+                <span className="hidden sm:inline">{t('btn_refresh')}</span>
+             </button>
+             <button 
+                onClick={async () => {
+                  const supabase = getSupabaseBrowserClient();
+                  await supabase.auth.signOut();
+                  window.location.href = '/login';
+                }}
+                className="px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 font-semibold transition-all text-sm"
+             >
+                <LogOut size={16} />
+                <span className="hidden sm:inline">Logout</span>
              </button>
         </div>
       </div>
