@@ -61,48 +61,6 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   // ── Fetch top coins ───────────────────────────────────────────────────────
   const fetchMarketData = useCallback(async () => {
     try {
-      // 1. Try Binance Proxy first (bypasses ISP blocks)
-      const binanceRes = await fetch('/api/binance-tickers', { signal: AbortSignal.timeout(10_000) });
-      if (binanceRes.ok) {
-        const raw = await binanceRes.json();
-        if (!raw.error && Array.isArray(raw)) {
-          const top = raw
-            .filter((t: any) => t.symbol.endsWith('USDT'))
-            .sort((a: any, b: any) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-            .slice(0, MAX_PAIRS);
-
-          if (!mounted.current) return;
-          
-          setCoins(prev => {
-            const prevMap = new Map(prev.map(c => [c.symbol, c.price]));
-            return top.map((t: any) => ({
-              id: t.symbol,
-              symbol: t.symbol.replace('USDT', ''),
-              name: t.symbol, // Binance doesn't provide coin names easily
-              price: parseFloat(t.lastPrice) || 0,
-              prevPrice: prevMap.get(t.symbol.replace('USDT', '')) ?? (parseFloat(t.lastPrice) || 0),
-              chg24h: parseFloat(t.priceChangePercent) || 0,
-              high24h: parseFloat(t.highPrice) || 0,
-              low24h: parseFloat(t.lowPrice) || 0,
-              vol24h: parseFloat(t.quoteVolume) || 0,
-              marketCap: 0,
-              image: '', // No images from Binance
-            }));
-          });
-          
-          setIsConnected(true);
-          setIsLoading(false);
-          setError('');
-          setLastUpdated(new Date());
-          return; // Success, exit here
-        }
-      }
-    } catch (err) {
-      console.warn('Binance proxy failed, trying CoinGecko fallback...', err);
-    }
-
-    // 2. Fallback to CoinGecko
-    try {
       const res = await fetch(
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=${MAX_PAIRS}&page=1&sparkline=false&price_change_percentage=24h`,
         { signal: AbortSignal.timeout(15_000) }
