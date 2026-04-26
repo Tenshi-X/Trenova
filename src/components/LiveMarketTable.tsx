@@ -1,18 +1,22 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Search, Star, TrendingUp, TrendingDown, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Search, Star, TrendingUp, TrendingDown, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CoinData {
+  id: string;
   symbol: string;
+  name: string;
   price: number;
   prevPrice: number;
   chg24h: number;
   high24h: number;
   low24h: number;
-  vol24h: number; // quoteVolume in USDT
+  vol24h: number;
+  marketCap: number;
+  image: string;
 }
 
 interface LiveMarketTableProps {
@@ -20,17 +24,8 @@ interface LiveMarketTableProps {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const QUOTE_ASSETS = ['USDT', 'USDC', 'FDUSD', 'TUSD', 'BTC', 'ETH', 'BNB'];
 const MAX_PAIRS = 50;
 
-function getBase(sym: string) {
-  for (const q of QUOTE_ASSETS) if (sym.endsWith(q)) return sym.slice(0, -q.length);
-  return sym;
-}
-function getQuote(sym: string) {
-  for (const q of QUOTE_ASSETS) if (sym.endsWith(q)) return q;
-  return '';
-}
 function fmtPrice(p: number): string {
   if (p >= 1000) return '$' + p.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (p >= 1)    return '$' + p.toFixed(4);
@@ -46,185 +41,123 @@ function fmtVol(v: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps) {
-  // Use a plain object map for O(1) updates without growing history arrays
-  const [coins, setCoins]           = useState<Map<string, CoinData>>(new Map());
+  const [coins, setCoins]             = useState<CoinData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading]   = useState(true);
-  const [error, setError]           = useState('');
-  const [search, setSearch]         = useState('');
-  const [quoteFilter, setQuoteFilter] = useState<'USDT' | 'BTC'>('USDT');
-  const [sortBy, setSortBy]         = useState<'vol' | 'chg' | 'price' | 'sym'>('vol');
-  const [sortDir, setSortDir]       = useState<'desc' | 'asc'>('desc');
-  const [favorites, setFavorites]   = useState<Set<string>>(() => {
+  const [isLoading, setIsLoading]     = useState(true);
+  const [error, setError]             = useState('');
+  const [search, setSearch]           = useState('');
+  const [sortBy, setSortBy]           = useState<'vol' | 'chg' | 'price' | 'sym'>('vol');
+  const [sortDir, setSortDir]         = useState<'desc' | 'asc'>('desc');
+  const [favorites, setFavorites]     = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage?.getItem('trv_lm_favs') || '[]')); }
     catch { return new Set(); }
   });
   const [showFavsOnly, setShowFavsOnly] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Flash colours — kept as a ref so we don't cause re-renders from within WS handler
-  const [flashMap, setFlashMap] = useState<Map<string, 'up' | 'dn'>>(new Map());
-  const pendingFlash = useRef<Map<string, 'up' | 'dn'>>(new Map());
-
-  const wsRef    = useRef<WebSocket | null>(null);
-  const pairsRef = useRef<string[]>([]);
   const mounted  = useRef(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ── Step 1: Fetch top-N pairs by quoteVolume (ONE REST call) ─────────────
-  const fetchTopPairs = useCallback(async (quote: string): Promise<string[]> => {
+  // ── Fetch top coins ───────────────────────────────────────────────────────
+  const fetchMarketData = useCallback(async () => {
     try {
-      // Full ticker includes priceChangePercent — no MINI here
-      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr', {
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!res.ok) throw new Error('REST failed');
-      const raw: any[] = await res.json();
+      // 1. Try Binance Proxy first (bypasses ISP blocks)
+      const binanceRes = await fetch('/api/binance-tickers', { signal: AbortSignal.timeout(10_000) });
+      if (binanceRes.ok) {
+        const raw = await binanceRes.json();
+        if (!raw.error && Array.isArray(raw)) {
+          const top = raw
+            .filter((t: any) => t.symbol.endsWith('USDT'))
+            .sort((a: any, b: any) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+            .slice(0, MAX_PAIRS);
 
-      // Filter by quote asset, sort by quoteVolume desc, take top N
-      const top = raw
-        .filter(t => t.symbol.endsWith(quote))
-        .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-        .slice(0, MAX_PAIRS);
-
-      // Seed initial state so table shows immediately
-      const initial = new Map<string, CoinData>();
-      for (const t of top) {
-        initial.set(t.symbol, {
-          symbol:    t.symbol,
-          price:     parseFloat(t.lastPrice),
-          prevPrice: parseFloat(t.lastPrice),
-          chg24h:    parseFloat(t.priceChangePercent),  // ← no more NaN
-          high24h:   parseFloat(t.highPrice),
-          low24h:    parseFloat(t.lowPrice),
-          vol24h:    parseFloat(t.quoteVolume),
-        });
-      }
-      if (mounted.current) {
-        setCoins(initial);
-        setIsLoading(false);
-      }
-
-      return top.map(t => t.symbol as string);
-    } catch {
-      // Hardcoded fallback so the UI is never empty
-      const fallback = [
-        'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT',
-        'DOGEUSDT','ADAUSDT','AVAXUSDT','TRXUSDT','BCHUSDT',
-        'DOTUSDT','LINKUSDT','LTCUSDT','ATOMUSDT','UNIUSDT',
-        'XLMUSDT','NEARUSDT','AAVEUSDT','FTMUSDT','INJUSDT',
-      ];
-      if (mounted.current) setIsLoading(false);
-      return fallback;
-    }
-  }, []);
-
-  // ── Step 2: Open a single WebSocket for those N pairs ────────────────────
-  //   Each message OVERWRITES the coin entry — NO history array growing
-  const openWS = useCallback((pairs: string[]) => {
-    // Close any existing socket first
-    if (wsRef.current) {
-      wsRef.current.onclose = null; // prevent auto-reconnect race
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-
-    const streams = pairs
-      .map(p => p.toLowerCase() + '@ticker')
-      .join('/');
-    const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      if (mounted.current) setIsConnected(true);
-    };
-
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        const d   = msg.data;
-        if (!d?.s) return;
-
-        const np = parseFloat(d.c);          // current price
-        const chg = parseFloat(d.P);         // 24h % — full ticker always has this
-        const high = parseFloat(d.h);
-        const low  = parseFloat(d.l);
-        const vol  = parseFloat(d.q);        // quoteVolume in USDT
-
-        // OVERWRITE: create a new Map with all previous entries, replacing just this one
-        setCoins(prev => {
-          const pp = prev.get(d.s)?.price ?? np;
-          const next = new Map(prev);         // shallow copy — O(N) but only 50 entries
-          next.set(d.s, {
-            symbol:    d.s,
-            price:     np,
-            prevPrice: pp,
-            chg24h:    chg,
-            high24h:   high,
-            low24h:    low,
-            vol24h:    vol,
+          if (!mounted.current) return;
+          
+          setCoins(prev => {
+            const prevMap = new Map(prev.map(c => [c.symbol, c.price]));
+            return top.map((t: any) => ({
+              id: t.symbol,
+              symbol: t.symbol.replace('USDT', ''),
+              name: t.symbol, // Binance doesn't provide coin names easily
+              price: parseFloat(t.lastPrice) || 0,
+              prevPrice: prevMap.get(t.symbol.replace('USDT', '')) ?? (parseFloat(t.lastPrice) || 0),
+              chg24h: parseFloat(t.priceChangePercent) || 0,
+              high24h: parseFloat(t.highPrice) || 0,
+              low24h: parseFloat(t.lowPrice) || 0,
+              vol24h: parseFloat(t.quoteVolume) || 0,
+              marketCap: 0,
+              image: '', // No images from Binance
+            }));
           });
-          return next;
-        });
-
-        // Queue flash without causing an extra re-render inside WS handler
-        const pp0 = 0; // handled in setCoins above; just use direction from ws data
-        if (np !== 0) {
-          pendingFlash.current.set(d.s, parseFloat(d.p) >= 0 ? 'up' : 'dn');
+          
+          setIsConnected(true);
+          setIsLoading(false);
+          setError('');
+          setLastUpdated(new Date());
+          return; // Success, exit here
         }
-      } catch { /* ignore malformed frames */ }
-    };
+      }
+    } catch (err) {
+      console.warn('Binance proxy failed, trying CoinGecko fallback...', err);
+    }
 
-    ws.onerror = () => {
-      if (mounted.current) setIsConnected(false);
-    };
+    // 2. Fallback to CoinGecko
+    try {
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=${MAX_PAIRS}&page=1&sparkline=false&price_change_percentage=24h`,
+        { signal: AbortSignal.timeout(15_000) }
+      );
+      if (!res.ok) throw new Error(`CoinGecko responded ${res.status}`);
+      const data: any[] = await res.json();
 
-    ws.onclose = () => {
       if (!mounted.current) return;
-      setIsConnected(false);
-      // Reconnect after 3 s
-      setTimeout(() => {
-        if (mounted.current && pairsRef.current.length > 0) {
-          openWS(pairsRef.current);
-        }
-      }, 3000);
-    };
-  }, []);
 
-  // ── Initialise / reinitialise on quote filter change ─────────────────────
+      setCoins(prev => {
+        const prevMap = new Map(prev.map(c => [c.id, c.price]));
+        return data.map(coin => ({
+          id: coin.id,
+          symbol: (coin.symbol as string).toUpperCase(),
+          name: coin.name,
+          price: coin.current_price ?? 0,
+          prevPrice: prevMap.get(coin.id) ?? coin.current_price ?? 0,
+          chg24h: coin.price_change_percentage_24h ?? 0,
+          high24h: coin.high_24h ?? 0,
+          low24h: coin.low_24h ?? 0,
+          vol24h: coin.total_volume ?? 0,
+          marketCap: coin.market_cap ?? 0,
+          image: coin.image ?? '',
+        }));
+      });
+
+      setIsConnected(true);
+      setIsLoading(false);
+      setError('');
+      setLastUpdated(new Date());
+    } catch (err: any) {
+      if (!mounted.current) return;
+      console.error('Market data fetch error:', err);
+      setIsConnected(false);
+      if (coins.length === 0) {
+        setError('Gagal memuat data. Coba lagi...');
+      }
+      setIsLoading(false);
+    }
+  }, [coins.length]);
+
+  // ── Auto-refresh every 30s ────────────────────────────────────────────────
   useEffect(() => {
     mounted.current = true;
-    setIsLoading(true);
-    setError('');
-    setCoins(new Map());
-    setIsConnected(false);
+    fetchMarketData();
 
-    fetchTopPairs(quoteFilter).then(pairs => {
-      if (!mounted.current) return;
-      pairsRef.current = pairs;
-      openWS(pairs);
-    });
-
-    // Flush pending flash colours every 120 ms (independent of WS frequency)
-    const flashInterval = setInterval(() => {
-      if (!mounted.current || pendingFlash.current.size === 0) return;
-      setFlashMap(new Map(pendingFlash.current));
-      pendingFlash.current.clear();
-      setTimeout(() => { if (mounted.current) setFlashMap(new Map()); }, 350);
-    }, 120);
+    timerRef.current = setInterval(fetchMarketData, 30_000);
 
     return () => {
       mounted.current = false;
-      clearInterval(flashInterval);
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [quoteFilter, fetchTopPairs, openWS]);
+  }, [fetchMarketData]);
 
-  // ── Sort / filter (derived — no extra state) ──────────────────────────────
+  // ── Sort / filter ─────────────────────────────────────────────────────────
   const handleSort = (col: typeof sortBy) => {
     if (sortBy === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
     else { setSortBy(col); setSortDir('desc'); }
@@ -239,10 +172,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
     });
   };
 
-  const filtered = [...coins.values()]
+  const filtered = [...coins]
     .filter(c => {
       if (showFavsOnly && !favorites.has(c.symbol)) return false;
-      if (search) return c.symbol.includes(search.toUpperCase());
+      if (search) {
+        const q = search.toUpperCase();
+        return c.symbol.includes(q) || c.name.toUpperCase().includes(q);
+      }
       return true;
     })
     .sort((a, b) => {
@@ -291,7 +227,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
               {isConnected ? (
                 <><Wifi size={9} /> LIVE</>
               ) : isLoading ? (
-                <><Loader2 size={9} className="animate-spin" /> Connecting</>
+                <><Loader2 size={9} className="animate-spin" /> Loading</>
               ) : (
                 <><WifiOff size={9} /> Offline</>
               )}
@@ -300,18 +236,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
           {/* Filters */}
           <div className="flex items-center gap-1">
-            {(['USDT', 'BTC'] as const).map(q => (
-              <button
-                key={q}
-                onClick={() => setQuoteFilter(q)}
-                className={clsx(
-                  'text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all',
-                  quoteFilter === q
-                    ? 'bg-neon text-white dark:text-black'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300',
-                )}
-              >{q}</button>
-            ))}
+            <button
+              onClick={() => fetchMarketData()}
+              title="Refresh data"
+              className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-neon"
+            >
+              <RefreshCw size={11} />
+            </button>
             <button
               onClick={() => setShowFavsOnly(f => !f)}
               title="Tampilkan Favorit"
@@ -350,35 +281,39 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
       {/* ── Rows ── */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading && coins.size === 0 ? (
+        {isLoading && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-400">
             <Loader2 className="animate-spin text-neon" size={24} />
             <span className="text-xs">Memuat Top {MAX_PAIRS} market…</span>
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-40 text-xs text-rose-400">{error}</div>
+          <div className="flex flex-col items-center justify-center h-40 gap-2">
+            <span className="text-xs text-rose-400">{error}</span>
+            <button
+              onClick={() => { setIsLoading(true); setError(''); fetchMarketData(); }}
+              className="text-xs text-neon hover:underline"
+            >
+              Coba lagi
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-xs text-slate-400">
             {search ? `Tidak ada hasil untuk "${search}"` : 'Belum ada data'}
           </div>
         ) : (
           filtered.map(coin => {
-            const base  = getBase(coin.symbol);
-            const quote = getQuote(coin.symbol);
             const isUp  = coin.chg24h >= 0;
             const isFav = favorites.has(coin.symbol);
-            const flash = flashMap.get(coin.symbol);
+            const priceFlash = coin.price > coin.prevPrice ? 'up' : coin.price < coin.prevPrice ? 'dn' : null;
 
             return (
               <div
-                key={coin.symbol}
-                onClick={() => onSelectSymbol?.(coin.symbol)}
+                key={coin.id}
+                onClick={() => onSelectSymbol?.(coin.symbol + 'USDT')}
                 className={clsx(
                   'grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2.5',
                   'border-b border-slate-50 dark:border-slate-800/50',
                   'hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group',
-                  flash === 'up' && 'bg-emerald-50 dark:bg-emerald-950/20',
-                  flash === 'dn' && 'bg-rose-50 dark:bg-rose-950/20',
                 )}
               >
                 {/* ★ Fav */}
@@ -392,18 +327,19 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
                 {/* Pair name */}
                 <div className="flex items-center gap-2 min-w-0">
+                  {coin.image && (
+                    <img src={coin.image} alt={coin.symbol} className="w-5 h-5 rounded-full" loading="lazy" />
+                  )}
                   <div>
-                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{base}</div>
-                    <div className="text-[9px] text-slate-400 leading-none mt-0.5">{quote}</div>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none">{coin.symbol}</div>
+                    <div className="text-[9px] text-slate-400 leading-none mt-0.5 truncate max-w-[80px]">{coin.name}</div>
                   </div>
                 </div>
 
                 {/* Price */}
                 <div className={clsx(
                   'hidden sm:block text-xs font-mono font-semibold tabular-nums text-right transition-colors',
-                  flash === 'up' ? 'text-emerald-500'
-                    : flash === 'dn' ? 'text-rose-500'
-                      : 'text-slate-700 dark:text-slate-300',
+                  'text-slate-700 dark:text-slate-300',
                 )}>
                   {fmtPrice(coin.price)}
                 </div>
@@ -433,11 +369,14 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       {/* ── Footer ── */}
       <div className="flex-none px-3 py-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <span className="text-[10px] text-slate-400">
-          Menampilkan {filtered.length} dari {coins.size} pair teratas
+          Menampilkan {filtered.length} dari {coins.length} pair teratas
         </span>
         <span className="text-[10px] text-slate-400 flex items-center gap-1.5">
           <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500')} />
-          {isConnected ? 'Binance WebSocket · Real-time' : 'Reconnecting…'}
+          {isConnected
+            ? `Live Data · Updated ${lastUpdated?.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit' }) ?? ''}`
+            : 'Reconnecting…'
+          }
         </span>
       </div>
     </div>

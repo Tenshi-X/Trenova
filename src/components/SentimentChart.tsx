@@ -19,9 +19,10 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
         let clean = sym.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         if (clean.endsWith('USD') && !clean.endsWith('USDT')) clean = clean.replace(/USD$/, 'USDT');
         if (!clean.endsWith('USDT') && !clean.endsWith('BTC') && !clean.endsWith('ETH')) clean = `${clean}USDT`;
-        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${clean}&interval=1h&limit=100`);
+        const res = await fetch(`/api/binance-klines?symbol=${clean}&interval=1h&limit=100`);
         if (!res.ok) throw new Error("Binance symbol not found");
         const raw = await res.json();
+        if (raw.error) throw new Error("Proxy error");
         return raw.map((d: any[]) => ({
             close: parseFloat(d[4]),
             high: parseFloat(d[2]),

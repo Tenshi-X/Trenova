@@ -109,7 +109,7 @@ function TickerItem({ coin }: { coin: Coin }) {
                 {coin.symbol}
             </span>
             <span className="font-mono text-sm text-slate-600 dark:text-slate-400">
-                ${coin.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                ${(coin.current_price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
             </span>
             <div className={`flex items-center text-xs font-bold ${isBullish ? 'text-emerald-500' : 'text-rose-500'}`}>
                 {isBullish ? <TrendingUp size={12} className="mr-0.5" /> : <TrendingDown size={12} className="mr-0.5" />}
