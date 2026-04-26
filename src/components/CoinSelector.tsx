@@ -30,12 +30,33 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
     
     // 1. Initial Load: Fetch Top 100 Coins
     useEffect(() => {
-        async function fetchTopCoins() {
+        async function fetchTopCoins(force = false) {
             setLoading(true);
             try {
+                const CACHE_KEY = 'trv_cg_top100_coins';
+                const CACHE_TTL = 300000; // 5 menit untuk daftar koin
+                
+                if (!force && typeof window !== 'undefined') {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        try {
+                            const { timestamp, data } = JSON.parse(cached);
+                            if (Date.now() - timestamp < CACHE_TTL) {
+                                setCoins(data);
+                                setDisplayedCoins(data);
+                                setLoading(false);
+                                return;
+                            }
+                        } catch(e) {}
+                    }
+                }
+
                 const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false`);
                 if (res.ok) {
                     const data = await res.json();
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+                    }
                     setCoins(data);
                     setDisplayedCoins(data);
                 }

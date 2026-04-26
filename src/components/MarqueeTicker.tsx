@@ -34,8 +34,25 @@ export default function MarqueeTicker() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        async function fetchCoins() {
+        async function fetchCoins(force = false) {
             try {
+                const CACHE_KEY = 'trv_cg_marquee_data';
+                const CACHE_TTL = 115000;
+                
+                if (!force && typeof window !== 'undefined') {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        try {
+                            const { timestamp, data } = JSON.parse(cached);
+                            if (Date.now() - timestamp < CACHE_TTL) {
+                                setCoins(data);
+                                setLoading(false);
+                                return;
+                            }
+                        } catch(e) {}
+                    }
+                }
+
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
 
@@ -48,6 +65,9 @@ export default function MarqueeTicker() {
                 if (res.ok) {
                     const data = await res.json();
                     if (data && data.length > 0) {
+                        if (typeof window !== 'undefined') {
+                            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+                        }
                         setCoins(data);
                     }
                 }
@@ -61,7 +81,7 @@ export default function MarqueeTicker() {
         fetchCoins();
         
         // Refresh every 120 seconds (reduced frequency to avoid rate limits)
-        const interval = setInterval(fetchCoins, 120000);
+        const interval = setInterval(() => fetchCoins(true), 120000);
         return () => clearInterval(interval);
     }, []);
 

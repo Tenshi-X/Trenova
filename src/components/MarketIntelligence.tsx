@@ -14,10 +14,29 @@ export default function MarketIntelligence() {
     const [ethChange, setEthChange] = useState<number>(0);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-    const fetchGlobalData = useCallback(async () => {
+    const fetchGlobalData = useCallback(async (force = false) => {
         try {
+            const CACHE_KEY = 'trv_cg_global_data';
+            const CACHE_TTL = 55000;
+            if (!force && typeof window !== 'undefined') {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    try {
+                        const { timestamp, data } = JSON.parse(cached);
+                        if (Date.now() - timestamp < CACHE_TTL) {
+                            setMarketData(data.data);
+                            setLastUpdated(new Date(timestamp));
+                            return;
+                        }
+                    } catch (e) {}
+                }
+            }
+
             const res = await fetch('https://api.coingecko.com/api/v3/global');
             const data = await res.json();
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+            }
             setMarketData(data.data);
             setLastUpdated(new Date());
         } catch (err) {
@@ -25,13 +44,39 @@ export default function MarketIntelligence() {
         }
     }, []);
 
-    const fetchLivePrices = useCallback(async () => {
+    const fetchLivePrices = useCallback(async (force = false) => {
         try {
+            const CACHE_KEY = 'trv_cg_live_prices';
+            const CACHE_TTL = 14000;
+            if (!force && typeof window !== 'undefined') {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    try {
+                        const { timestamp, data } = JSON.parse(cached);
+                        if (Date.now() - timestamp < CACHE_TTL) {
+                            if (data.bitcoin) {
+                                setBtcPrice(data.bitcoin.usd);
+                                setBtcChange(data.bitcoin.usd_24h_change ?? 0);
+                            }
+                            if (data.ethereum) {
+                                setEthPrice(data.ethereum.usd);
+                                setEthChange(data.ethereum.usd_24h_change ?? 0);
+                            }
+                            return;
+                        }
+                    } catch(e) {}
+                }
+            }
+
             const res = await fetch(
                 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'
             );
             if (!res.ok) { console.warn('CoinGecko price fetch:', res.status); return; }
             const data = await res.json();
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+            }
 
             if (data.bitcoin) {
                 setBtcPrice(data.bitcoin.usd);
@@ -56,8 +101,8 @@ export default function MarketIntelligence() {
         fetchLivePrices();
         fetchSentiment();
 
-        const globalTimer = setInterval(fetchGlobalData, 60000);
-        const priceTimer  = setInterval(fetchLivePrices, 15000);
+        const globalTimer = setInterval(() => fetchGlobalData(true), 60000);
+        const priceTimer  = setInterval(() => fetchLivePrices(true), 15000);
         const sentTimer   = setInterval(fetchSentiment, 300000);
 
         return () => {

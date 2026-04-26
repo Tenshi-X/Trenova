@@ -59,14 +59,58 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Fetch top coins ───────────────────────────────────────────────────────
-  const fetchMarketData = useCallback(async () => {
+  const fetchMarketData = useCallback(async (force = false) => {
     try {
+      const CACHE_KEY = 'trv_cg_market_data';
+      const CACHE_TTL = 25000; // 25 seconds to be safe before 30s interval
+
+      if (!force && typeof window !== 'undefined') {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          try {
+            const { timestamp, data } = JSON.parse(cached);
+            if (Date.now() - timestamp < CACHE_TTL) {
+              if (!mounted.current) return;
+              
+              setCoins(prev => {
+                const prevMap = new Map(prev.map(c => [c.id, c.price]));
+                return data.map((coin: any) => ({
+                  id: coin.id,
+                  symbol: (coin.symbol as string).toUpperCase(),
+                  name: coin.name,
+                  price: coin.current_price ?? 0,
+                  prevPrice: prevMap.get(coin.id) ?? coin.current_price ?? 0,
+                  chg24h: coin.price_change_percentage_24h ?? 0,
+                  high24h: coin.high_24h ?? 0,
+                  low24h: coin.low_24h ?? 0,
+                  vol24h: coin.total_volume ?? 0,
+                  marketCap: coin.market_cap ?? 0,
+                  image: coin.image ?? '',
+                }));
+              });
+
+              setIsConnected(true);
+              setIsLoading(false);
+              setError('');
+              setLastUpdated(new Date(timestamp));
+              return; // Skip API call
+            }
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+      }
+
       const res = await fetch(
         `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=${MAX_PAIRS}&page=1&sparkline=false&price_change_percentage=24h`,
         { signal: AbortSignal.timeout(15_000) }
       );
       if (!res.ok) throw new Error(`CoinGecko responded ${res.status}`);
       const data: any[] = await res.json();
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+      }
 
       if (!mounted.current) return;
 
@@ -107,7 +151,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
     mounted.current = true;
     fetchMarketData();
 
-    timerRef.current = setInterval(fetchMarketData, 30_000);
+    timerRef.current = setInterval(() => fetchMarketData(true), 30_000);
 
     return () => {
       mounted.current = false;
@@ -195,7 +239,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           {/* Filters */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => fetchMarketData()}
+              onClick={() => fetchMarketData(true)}
               title="Refresh data"
               className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-neon"
             >
