@@ -29,7 +29,7 @@ export default function DashboardSidebar({
   const { t } = useLanguage();
 
   const tokenRemaining = tokenLimit - tokenUsed;
-  const tokenPercent = tokenLimit > 0 ? Math.round((tokenUsed / tokenLimit) * 100) : 0;
+  const tokenRemainingPercent = tokenLimit > 0 ? Math.round((tokenRemaining / tokenLimit) * 100) : 0;
 
   useEffect(() => {
     async function checkRole() {
@@ -186,9 +186,9 @@ export default function DashboardSidebar({
               <div 
                 className={clsx(
                   "h-full rounded-full transition-all duration-700",
-                  tokenPercent > 80 ? "bg-red-500" : tokenPercent > 50 ? "bg-amber-500" : "bg-blue-500"
+                  tokenRemainingPercent < 20 ? "bg-red-500" : tokenRemainingPercent < 50 ? "bg-amber-500" : "bg-blue-500"
                 )} 
-                style={{ width: `${tokenPercent}%` }} 
+                style={{ width: `${tokenRemainingPercent}%` }} 
               />
             </div>
           </div>

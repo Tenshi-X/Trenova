@@ -27,19 +27,19 @@ export default function MarketIntelligence() {
 
     const fetchLivePrices = useCallback(async () => {
         try {
-            const [btcRes, ethRes] = await Promise.all([
-                fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
-                fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT'),
-            ]);
-            if (btcRes.ok) {
-                const d = await btcRes.json();
-                setBtcPrice(parseFloat(d.lastPrice));
-                setBtcChange(parseFloat(d.priceChangePercent));
+            const res = await fetch(
+                'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true'
+            );
+            if (!res.ok) { console.warn('CoinGecko price fetch:', res.status); return; }
+            const data = await res.json();
+
+            if (data.bitcoin) {
+                setBtcPrice(data.bitcoin.usd);
+                setBtcChange(data.bitcoin.usd_24h_change ?? 0);
             }
-            if (ethRes.ok) {
-                const d = await ethRes.json();
-                setEthPrice(parseFloat(d.lastPrice));
-                setEthChange(parseFloat(d.priceChangePercent));
+            if (data.ethereum) {
+                setEthPrice(data.ethereum.usd);
+                setEthChange(data.ethereum.usd_24h_change ?? 0);
             }
         } catch (err) {
             console.error("Live price fetch error", err);

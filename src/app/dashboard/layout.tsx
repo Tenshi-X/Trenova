@@ -124,18 +124,17 @@ export default async function DashboardLayout({
               <LanguageSwitcher />
               <ThemeToggle />
               
-              {/* Token Badge - visible on ALL screen sizes */}
+              {/* Token Badge - hidden on mobile, visible on md+ */}
               {usageStats && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 shadow-sm">
+                  <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 shadow-sm">
                       <Zap size={13} className="fill-blue-700 dark:fill-blue-400" />
-                      <span className="hidden sm:inline">{tokenRemaining} / {tokenLimit} Runs</span>
-                      <span className="sm:hidden">{tokenRemaining}</span>
+                      <span>{tokenRemaining} / {tokenLimit} Runs</span>
                   </div>
               )}
 
-              {/* Subscription Days Badge - visible on ALL screen sizes */}
+              {/* Subscription Days Badge - hidden on mobile, visible on md+ */}
               {user && (
-                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                <div className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
                   !isExpired 
                     ? daysLeft > 7 
                       ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 shadow-sm" 
@@ -145,8 +144,7 @@ export default async function DashboardLayout({
                   {!isExpired ? (
                     <>
                       <Clock size={13} className={daysLeft > 7 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"} />
-                      <span className="hidden sm:inline">{daysLeft} Days Left</span>
-                      <span className="sm:hidden">{daysLeft}d</span>
+                      <span>{daysLeft} Days Left</span>
                     </>
                   ) : (
                     <>
