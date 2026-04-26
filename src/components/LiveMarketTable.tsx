@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Search, Star, TrendingUp, TrendingDown, Wifi, WifiOff, Loader2, RefreshCw } from 'lucide-react';
+import { getLiveMarketData } from '@/app/dashboard/actions';
 import clsx from 'clsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -101,12 +102,8 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         }
       }
 
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=${MAX_PAIRS}&page=1&sparkline=false&price_change_percentage=24h`,
-        { signal: AbortSignal.timeout(15_000) }
-      );
-      if (!res.ok) throw new Error(`CoinGecko responded ${res.status}`);
-      const data: any[] = await res.json();
+      const data = await getLiveMarketData(MAX_PAIRS, 'volume_desc');
+      if (!data) throw new Error("Gagal memuat data dari API");
 
       if (typeof window !== 'undefined') {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
