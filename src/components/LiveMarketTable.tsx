@@ -113,7 +113,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
       setCoins(prev => {
         const prevMap = new Map(prev.map(c => [c.id, c.price]));
-        return data.map(coin => ({
+        return data.map((coin: any) => ({
           id: coin.id,
           symbol: (coin.symbol as string).toUpperCase(),
           name: coin.name,
