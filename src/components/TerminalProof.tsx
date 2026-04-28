@@ -3,21 +3,21 @@
 import { useLanguage } from '@/context/LanguageContext';
 
 const tradeResults = [
-  { roi: '+327.94%', pair: 'FOGOUSDT', type: 'Short 50×', exchange: 'Bybit' },
-  { roi: '+280.44%', pair: 'RIVERUSDT', type: 'Short 25×', exchange: 'Bybit' },
-  { roi: '+244.55%', pair: 'PIPPINUSDT', type: 'Long 20×', exchange: 'Bybit' },
+  { roi: '+327.94%', pair: 'FOGOUSDT', type: 'Short 50×', exchange: 'Bybit', image: '/FOGOUSDT.jpg' },
+  { roi: '+280.44%', pair: 'RIVERUSDT', type: 'Short 25×', exchange: 'Bybit', image: '/RIVERUSDT.jpg.jpeg' },
+  { roi: '+244.55%', pair: 'PIPPINUSDT', type: 'Long 20×', exchange: 'Bybit', image: '/PIPPINUSDT.jpg.jpeg' },
 ];
 
 const tickerResults = [
-  { roi: '+240.12%', pair: 'KITEUSDT' },
-  { roi: '+217.06%', pair: 'BTCUSDT' },
-  { roi: '+218.40%', pair: 'SOLUSDT' },
-  { roi: '+193.87%', pair: 'ETHUSDT' },
-  { roi: '+164.37%', pair: 'BTCUSDT' },
-  { roi: '+128.07%', pair: 'HYPEUSDT' },
-  { roi: '+127.5%', pair: 'AAVEUSDT' },
-  { roi: '+112.33%', pair: 'LINKUSDT' },
-  { roi: '+98.76%', pair: 'DOGEUSDT' },
+  { roi: '+240.12%', pair: 'KITEUSDT', type: 'Long 50×', exchange: 'Bybit', image: '/KITEUSDT.jpg.jpeg' },
+  { roi: '+217.06%', pair: 'BTCUSDT', type: 'Long 100×', exchange: 'Bybit', image: '/BTCUSDT.jpg' },
+  { roi: '+218.40%', pair: 'SOLUSDT', type: 'Long 100×', exchange: 'Bybit', image: '/SOLUSDT.jpg.jpeg' },
+  { roi: '+193.87%', pair: 'ETHUSDT', type: 'Long 100×', exchange: 'Bybit', image: '/ETHUSDT.jpg' },
+  { roi: '+164.37%', pair: 'BTCUSDT', type: 'Short 100×', exchange: 'Bybit', image: '/BTCUSDT.jpg' },
+  { roi: '+128.07%', pair: 'HYPEUSDT', type: 'Buy 20×', exchange: 'OKX', image: '/HYPEUSDT.jpeg' },
+  { roi: '+127.5%', pair: 'LITUSDT', type: 'Buy 14×', exchange: 'OKX', image: '/LITUSDT.jpg' },
+  { roi: '+112.33%', pair: 'TIAUSDT', type: 'Buy 10×', exchange: 'OKX', image: '/TIAUSDT.jpeg' },
+  { roi: '+98.76%', pair: 'GIGGLEUSDT', type: 'Buy 10×', exchange: 'OKX', image: '/GIGGLEUSDT.jpeg' },
 ];
 
 export default function TerminalProof() {
@@ -44,29 +44,18 @@ export default function TerminalProof() {
           {tradeResults.map((trade, i) => (
             <div key={i} className="bg-slate-950 p-6 relative group hover:bg-slate-900/50 transition-colors">
               {/* ROI Header */}
-              <div className="flex items-center justify-between mb-5">
+              <div className="mb-4 text-left">
                 <div className="text-2xl md:text-3xl font-bold text-emerald-400 tracking-tight">{trade.roi}</div>
-                <div className="text-[9px] text-slate-600 uppercase">{trade.pair} · {trade.type} · {trade.exchange}</div>
+                <div className="text-[10px] text-slate-500 uppercase mt-1">{trade.pair} · {trade.type} · {trade.exchange}</div>
               </div>
 
-              {/* Trade Details */}
-              <div className="space-y-3">
-                <div className="text-lg md:text-xl font-bold text-white tracking-wide">{trade.pair}</div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold tracking-wider ${
-                    trade.type.startsWith('Short') 
-                      ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                      : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                  }`}>
-                    {trade.type}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-400 rounded">
-                    {trade.exchange}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-600 leading-relaxed">
-                  ROI <span className="text-emerald-400 font-bold">{trade.roi}</span>
-                </div>
+              {/* Trade Image */}
+              <div className="rounded overflow-hidden border border-slate-800/50 bg-slate-900">
+                <img 
+                  src={trade.image} 
+                  alt={trade.pair} 
+                  className="w-full h-auto object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
+                />
               </div>
 
               {/* Bottom accent line */}
@@ -76,15 +65,18 @@ export default function TerminalProof() {
         </div>
 
         {/* Ticker Row - More Results */}
-        <div className="border border-slate-800 bg-slate-950 p-3 mb-6">
-          <div className="text-[9px] text-slate-600 uppercase tracking-[0.12em] text-center mb-3">
+        <div className="border border-slate-800 bg-slate-950 p-4 mb-6">
+          <div className="text-[9px] text-slate-600 uppercase tracking-[0.12em] text-center mb-4">
             LEBIH BANYAK HASIL → GESER →
           </div>
-          <div className="flex gap-px overflow-x-auto scrollbar-hide">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {tickerResults.map((t, i) => (
-              <div key={i} className="flex-shrink-0 bg-slate-900/50 border border-slate-800/50 px-4 py-3 text-center min-w-[120px]">
-                <div className="text-emerald-400 font-bold text-sm tracking-tight">{t.roi}</div>
-                <div className="text-[9px] text-slate-600 mt-0.5 uppercase">{t.pair}</div>
+              <div key={i} className="flex-shrink-0 bg-slate-900/30 border border-slate-800/50 p-3 text-left w-[180px] rounded hover:bg-slate-900/80 transition-colors">
+                <div className="text-emerald-400 font-bold text-base tracking-tight">{t.roi}</div>
+                <div className="text-[9px] text-slate-500 mt-0.5 uppercase mb-3">{t.pair} · {t.type} · {t.exchange}</div>
+                <div className="rounded overflow-hidden border border-slate-800/30">
+                  <img src={t.image} alt={t.pair} className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" />
+                </div>
               </div>
             ))}
           </div>
