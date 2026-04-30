@@ -18,11 +18,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://trenova-intelligence.vercel.app"),
   title: "Trenova - Trading Intelligence",
   description: "AI-powered trading trends and analysis. Discover the next big crypto moves before they happen with our advanced terminal.",
   keywords: [
     "trading", "AI analysis", "crypto", "trading trends", "Trenova", 
-    "terminal", "trading intelligence", "crypto signals"
+    "terminal", "trading intelligence", "crypto signals",
+    "trading crypto", "trading AI", "analisa crypto", "sinyal trading", 
+    "investasi crypto", "bot trading", "bitcoin", "ethereum", "altcoin",
+    "trading harian", "day trading", "scalping crypto", "analisis teknikal crypto",
+    "pasar crypto", "platform trading", "aplikasi trading", "prediksi crypto",
+    "live market data", "indikator trading", "belajar trading", "profit crypto"
   ],
   authors: [{ name: "Trenova Intelligence" }],
   openGraph: {
