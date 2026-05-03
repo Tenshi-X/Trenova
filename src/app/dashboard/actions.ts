@@ -239,34 +239,3 @@ export async function fetchCoinGeckoData(coinId: string) {
     }
 }
 
-export async function fetchMarketSentiment() {
-    try {
-        const res = await fetch("https://api.alternative.me/fng/?limit=1", { next: { revalidate: 3600 } });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.data?.[0] || null;
-    } catch (e) {
-        console.error("Failed to fetch sentiment:", e);
-        return null;
-    }
-}
-
-export async function getLiveMarketData(perPage = 50, order = 'volume_desc') {
-    try {
-        const apiKey = process.env.COINGECKO_API_KEY || "CG-yPmFTeENj4pGkQmCnXgT1Rmk";
-        const res = await fetch(
-            `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=${order}&per_page=${perPage}&page=1&sparkline=false&price_change_percentage=24h`,
-            {
-                headers: {
-                    'x-cg-demo-api-key': apiKey
-                },
-                next: { revalidate: 30 }
-            }
-        );
-        if (!res.ok) throw new Error(`API Error: ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error("getLiveMarketData error:", e);
-        return null;
-    }
-}

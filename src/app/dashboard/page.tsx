@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio } from 'lucide-react';
+import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { askChatbot } from '@/lib/api';
@@ -13,6 +13,7 @@ import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisVisualizer from '@/components/AnalysisVisualizer';
 import LiveMarketTable from '@/components/LiveMarketTable';
+import CryptoNews from '@/components/CryptoNews';
 import { useLanguage } from '@/context/LanguageContext';
 
 
@@ -220,7 +221,7 @@ export default function DashboardPage() {
   const { language, setLanguage, t } = useLanguage();
   
   // Tab State
-  const [activeTab, setActiveTab] = useState<'chart' | 'analysis' | 'market'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('chart');
   
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
@@ -535,6 +536,17 @@ export default function DashboardPage() {
             <span className="text-[8px] sm:text-[9px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
+            onClick={() => setActiveTab('news')}
+            className={clsx(
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
+                activeTab === 'news' 
+                    ? "border-neon text-neon" 
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            )}
+        >
+            <Newspaper size={15} /> News
+        </button>
+        <button
             onClick={() => setActiveTab('analysis')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
@@ -559,6 +571,13 @@ export default function DashboardPage() {
                         setActiveTab('chart');
                     }}
                 />
+            </div>
+        )}
+
+        {/* --- NEWS TAB --- */}
+        {activeTab === 'news' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <CryptoNews />
             </div>
         )}
 
