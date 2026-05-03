@@ -1,10 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Edge Runtime to avoid Binance blocking AWS Lambda IPs
+export const runtime = 'edge';
+export const preferredRegion = ['sin1', 'hkg1', 'iad1'];
+
+const BINANCE_URLS = [
+  'https://api.binance.com',
+  'https://api1.binance.com',
+  'https://api2.binance.com',
+  'https://api3.binance.com',
+  'https://api4.binance.com',
+];
+
+async function fetchWithFallback(path: string, timeout = 8000): Promise<Response> {
+  for (const baseUrl of BINANCE_URLS) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      const res = await fetch(`${baseUrl}${path}`, {
+        signal: controller.signal,
+        cache: 'no-store',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TrenovaBot/1.0)' },
+      });
+      clearTimeout(timer);
+      if (res.ok) return res;
+    } catch (err: any) {
+      console.warn(`${baseUrl}${path} failed: ${err.message}`);
+    }
+  }
+  throw new Error('All Binance API domains unreachable');
+}
+
 /**
  * Server-side proxy for Binance 24hr ticker API.
- * Avoids CORS issues when fetching from the browser.
  * Usage: GET /api/binance-ticker?symbol=BTCUSDT
- *        GET /api/binance-ticker?symbols=BTCUSDT,ETHUSDT (multiple)
+ *        GET /api/binance-ticker?symbols=BTCUSDT,ETHUSDT
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -13,16 +43,11 @@ export async function GET(req: NextRequest) {
 
   try {
     if (symbols) {
-      // Multiple symbols: fetch in parallel
       const symbolList = symbols.split(',').map(s => s.trim().toUpperCase());
       const results = await Promise.all(
         symbolList.map(async (sym) => {
           try {
-            const res = await fetch(
-              `https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`,
-              { cache: 'no-store' }
-            );
-            if (!res.ok) return { symbol: sym, error: true };
+            const res = await fetchWithFallback(`/api/v3/ticker/24hr?symbol=${sym}`);
             return res.json();
           } catch {
             return { symbol: sym, error: true };
@@ -33,16 +58,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (symbol) {
-      const res = await fetch(
-        `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol.toUpperCase()}`,
-        { cache: 'no-store' }
-      );
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: 'Binance API error', status: res.status },
-          { status: res.status }
-        );
-      }
+      const res = await fetchWithFallback(`/api/v3/ticker/24hr?symbol=${symbol.toUpperCase()}`);
       const data = await res.json();
       return NextResponse.json(data);
     }
@@ -54,11 +70,8 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error('Binance proxy error:', err);
     return NextResponse.json(
-      { error: 'Failed to fetch from Binance' },
+      { error: 'Failed to fetch from Binance', detail: String(err) },
       { status: 502 }
     );
   }
 }
-
-// Force dynamic — never statically cache this route
-export const dynamic = 'force-dynamic';

@@ -1,41 +1,91 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
+// Use Edge Runtime — runs on Cloudflare's edge network, not AWS Lambda.
+// Binance blocks many cloud provider IPs (AWS, GCP) but Edge IPs are typically not blocked.
+export const runtime = 'edge';
+export const preferredRegion = ['sin1', 'hkg1', 'iad1']; // Singapore, Hong Kong, US East
 
 /**
  * Combined Binance market data proxy.
  * Returns top 50 USDT pairs + global stats.
  * All server-side → bypasses Indonesian ISP blocks.
- * 
- * Stats derived purely from official Binance API ticker data:
- * - 24h Volume, BTC Vol. Dominance, Top Gainer/Loser
- * - Funding Rates from futures API
  */
+
+// Binance has multiple API domains — fallback if one is blocked
+const BINANCE_SPOT_URLS = [
+  'https://api.binance.com',
+  'https://api1.binance.com',
+  'https://api2.binance.com',
+  'https://api3.binance.com',
+  'https://api4.binance.com',
+];
+
+const BINANCE_FUTURES_URLS = [
+  'https://fapi.binance.com',
+];
+
+async function fetchWithFallback(urls: string[], path: string, timeout = 10000): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (const baseUrl of urls) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+
+      const res = await fetch(`${baseUrl}${path}`, {
+        signal: controller.signal,
+        cache: 'no-store',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; TrenovaBot/1.0)',
+        },
+      });
+      clearTimeout(timer);
+
+      if (res.ok) return res;
+
+      // If we get a non-ok response, try next domain
+      console.warn(`Binance ${baseUrl}${path} returned ${res.status}`);
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`Binance ${baseUrl}${path} failed: ${err.message}`);
+    }
+  }
+
+  throw lastError || new Error('All Binance API domains unreachable');
+}
 
 export async function GET() {
   try {
-    // Fetch ticker + funding in parallel (removed unreliable get-products)
+    // Fetch ticker + funding in parallel with fallback domains
     const [tickerRes, fundingRes] = await Promise.allSettled([
-      fetch('https://api.binance.com/api/v3/ticker/24hr', { cache: 'no-store' }),
-      fetch('https://fapi.binance.com/fapi/v1/premiumIndex', { cache: 'no-store' }),
+      fetchWithFallback(BINANCE_SPOT_URLS, '/api/v3/ticker/24hr'),
+      fetchWithFallback(BINANCE_FUTURES_URLS, '/fapi/v1/premiumIndex'),
     ]);
 
     // Parse ticker data
     let tickers: any[] = [];
-    if (tickerRes.status === 'fulfilled' && tickerRes.value.ok) {
+    if (tickerRes.status === 'fulfilled') {
       tickers = await tickerRes.value.json();
     } else {
-      return NextResponse.json({ error: 'Binance ticker API unreachable' }, { status: 502 });
+      console.error('All Binance ticker endpoints failed:', tickerRes.reason);
+      return NextResponse.json(
+        { error: 'Binance ticker API unreachable from all domains', detail: String(tickerRes.reason) },
+        { status: 502 }
+      );
     }
 
-    // Parse funding rates
+    // Parse funding rates (optional — don't fail if unavailable)
     let fundingMap: Record<string, number> = {};
-    if (fundingRes.status === 'fulfilled' && fundingRes.value.ok) {
-      const fundingData = await fundingRes.value.json();
-      for (const f of fundingData) {
-        if (f.symbol && f.lastFundingRate) {
-          fundingMap[f.symbol] = parseFloat(f.lastFundingRate) * 100;
+    if (fundingRes.status === 'fulfilled') {
+      try {
+        const fundingData = await fundingRes.value.json();
+        for (const f of fundingData) {
+          if (f.symbol && f.lastFundingRate) {
+            fundingMap[f.symbol] = parseFloat(f.lastFundingRate) * 100;
+          }
         }
+      } catch (e) {
+        console.warn('Failed to parse funding data:', e);
       }
     }
 
@@ -65,7 +115,6 @@ export async function GET() {
 
       if (t.symbol === 'BTCUSDT') btcVolume = vol;
 
-      // Only consider coins with meaningful volume for top gainer/loser (>$1M)
       if (vol > 1_000_000) {
         if (change > topGainer.change) {
           topGainer = { symbol: t.symbol.replace('USDT', ''), change, price, volume: vol };
@@ -86,10 +135,9 @@ export async function GET() {
       return parseFloat(b.quoteVolume || '0') - parseFloat(a.quoteVolume || '0');
     });
 
-    // Take top 50
     const top50 = usdtTickers.slice(0, 50);
 
-    // Get BTC and ETH specific data
+    // Get BTC, ETH, SOL specific data
     const btcTicker = tickers.find((t: any) => t.symbol === 'BTCUSDT');
     const ethTicker = tickers.find((t: any) => t.symbol === 'ETHUSDT');
     const solTicker = tickers.find((t: any) => t.symbol === 'SOLUSDT');
@@ -140,7 +188,7 @@ export async function GET() {
   } catch (error) {
     console.error('Binance market API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch market data from Binance' },
+      { error: 'Failed to fetch market data from Binance', detail: String(error) },
       { status: 502 }
     );
   }

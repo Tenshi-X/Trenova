@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { parseStringPromise } from 'xml2js';
+import { XMLParser } from 'fast-xml-parser';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 600; // 10 minutes
+// Edge Runtime for better Vercel compatibility and speed
+export const runtime = 'edge';
+export const preferredRegion = ['sin1', 'hkg1', 'iad1'];
 
 interface NewsItem {
   title: string;
@@ -23,6 +24,12 @@ const RSS_SOURCES = [
     name: 'CoinTelegraph',
   },
 ];
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  trimValues: true,
+});
 
 async function fetchAndParseRSS(
   url: string,
@@ -48,10 +55,7 @@ async function fetchAndParseRSS(
     }
 
     const xml = await res.text();
-    const parsed = await parseStringPromise(xml, {
-      explicitArray: false,
-      trim: true,
-    });
+    const parsed = xmlParser.parse(xml);
 
     const channel = parsed?.rss?.channel;
     if (!channel?.item) return [];
@@ -61,16 +65,17 @@ async function fetchAndParseRSS(
     return items.map((item: any) => {
       // Extract thumbnail from media:content, media:thumbnail, or enclosure
       let thumbnail = '';
-      if (item['media:content']?.$?.url) {
-        thumbnail = item['media:content'].$.url;
-      } else if (item['media:thumbnail']?.$?.url) {
-        thumbnail = item['media:thumbnail'].$.url;
-      } else if (item.enclosure?.$?.url) {
-        thumbnail = item.enclosure.$.url;
+      if (item['media:content']?.['@_url']) {
+        thumbnail = item['media:content']['@_url'];
+      } else if (item['media:thumbnail']?.['@_url']) {
+        thumbnail = item['media:thumbnail']['@_url'];
+      } else if (item.enclosure?.['@_url']) {
+        thumbnail = item.enclosure['@_url'];
       }
 
       // Clean description from HTML tags
       let description = item.description || item['content:encoded'] || '';
+      if (typeof description !== 'string') description = String(description);
       description = description
         .replace(/<[^>]+>/g, '')
         .replace(/&amp;/g, '&')
@@ -81,9 +86,9 @@ async function fetchAndParseRSS(
         .slice(0, 200);
 
       return {
-        title: item.title || '',
-        link: item.link || '',
-        pubDate: item.pubDate || '',
+        title: typeof item.title === 'string' ? item.title : String(item.title || ''),
+        link: typeof item.link === 'string' ? item.link : String(item.link || ''),
+        pubDate: typeof item.pubDate === 'string' ? item.pubDate : String(item.pubDate || ''),
         description,
         source: sourceName,
         thumbnail,

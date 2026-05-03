@@ -14,6 +14,7 @@
     "@types/xml2js": "^0.4.14",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "fast-xml-parser": "^5.7.2",
     "ky": "^1.14.2",
     "lucide-react": "^0.556.0",
     "next": "16.0.7",
