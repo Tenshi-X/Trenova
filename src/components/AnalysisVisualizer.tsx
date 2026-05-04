@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2, TrendingUp, TrendingDown, Activity } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import clsx from 'clsx';
 
@@ -94,7 +94,11 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             plans: [] as any[],
             summary: language === 'id' ? "Analisis dimuat." : "Analysis loaded.",
             mainReason: "",
-            marketStructure: null as any
+            marketStructure: null as any,
+            liveSnapshot: null as any,
+            sinyalTeknikal: [] as any[],
+            squeezeAlert: null as any,
+            riskManagement: null as any
         };
 
         if (!markdown) return result;
@@ -110,6 +114,10 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             result.summary = json.summary || "";
             result.mainReason = json.main_reason || "";
             result.marketStructure = json.market_structure || null;
+            result.liveSnapshot = json.live_snapshot || null;
+            result.sinyalTeknikal = Array.isArray(json.sinyal_teknikal) ? json.sinyal_teknikal : [];
+            result.squeezeAlert = json.squeeze_alert || null;
+            result.riskManagement = json.risk_management || null;
             
             // Determine trend for direction logic
             const trend = result.marketStructure?.structure?.toLowerCase() || 'ranging';
@@ -150,7 +158,9 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                         tps,
                         reason: p.technical_reason,
                         conviction: p.conviction || 50,
-                        convictionReason: p.conviction_reason || ''
+                        convictionReason: p.conviction_reason || '',
+                        kondisiEntry: Array.isArray(p.kondisi_entry) ? p.kondisi_entry : [],
+                        invalidasi: p.invalidasi || ''
                     };
                 });
             }
@@ -363,6 +373,30 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                                         <p className="text-xs text-amber-700 dark:text-amber-300">{plan.convictionReason}</p>
                                     </div>
                                 )}
+
+                                {/* Entry Conditions */}
+                                {plan.kondisiEntry && plan.kondisiEntry.length > 0 && (
+                                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
+                                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase flex items-center gap-1.5 mb-1.5">
+                                            <CheckCircle2 size={12} /> {language === 'id' ? 'Kondisi Entry' : 'Entry Conditions'}
+                                        </span>
+                                        <ul className="space-y-1">
+                                            {plan.kondisiEntry.map((k: string, ki: number) => (
+                                                <li key={ki} className="text-xs text-blue-700 dark:text-blue-300 flex items-start gap-1.5">
+                                                    <span className="text-blue-400 mt-0.5">•</span> {k}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Invalidation */}
+                                {plan.invalidasi && (
+                                    <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase">⛔ {language === 'id' ? 'Invalidasi' : 'Invalidation'}</span>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{plan.invalidasi}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );
@@ -400,6 +434,98 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                             <div className="font-bold text-rose-600 dark:text-rose-400 mt-1">{parsedData.marketStructure.key_resistance}</div>
                         </div>
                      </div>
+                </div>
+            )}
+
+            {/* LIVE SNAPSHOT */}
+            {parsedData.liveSnapshot && (
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Activity size={14} /> Live Snapshot
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                        {Object.entries(parsedData.liveSnapshot).map(([key, val]) => (
+                            <div key={key} className="p-2.5 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                <span className="text-[9px] text-slate-400 uppercase font-bold block">{key.replace(/_/g, ' ')}</span>
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-0.5 block">{String(val)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* SINYAL TEKNIKAL */}
+            {parsedData.sinyalTeknikal.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Zap size={14} /> {language === 'id' ? 'Sinyal Teknikal' : 'Technical Signals'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {parsedData.sinyalTeknikal.map((s: any, i: number) => (
+                            <div key={i} className={clsx(
+                                "flex items-start gap-3 p-3 rounded-lg border",
+                                s.aktif 
+                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800" 
+                                    : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60"
+                            )}>
+                                <div className={clsx(
+                                    "w-2 h-2 rounded-full mt-1.5 shrink-0",
+                                    s.aktif ? "bg-emerald-500" : "bg-slate-400"
+                                )} />
+                                <div>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{s.nama}</span>
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{s.detail}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* SQUEEZE ALERT */}
+            {parsedData.squeezeAlert && parsedData.squeezeAlert.tipe !== 'NONE' && (
+                <div className={clsx(
+                    "mt-6 p-4 rounded-xl border-2 flex items-start gap-3",
+                    parsedData.squeezeAlert.probabilitas === 'TINGGI' 
+                        ? "bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700"
+                        : "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-300 dark:border-yellow-700"
+                )}>
+                    <AlertCircle size={20} className="text-orange-500 shrink-0 mt-0.5" />
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-black text-orange-600 dark:text-orange-400">{parsedData.squeezeAlert.tipe}</span>
+                            <span className={clsx(
+                                "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                                parsedData.squeezeAlert.probabilitas === 'TINGGI' ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
+                                parsedData.squeezeAlert.probabilitas === 'SEDANG' ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" :
+                                "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            )}>{parsedData.squeezeAlert.probabilitas}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{parsedData.squeezeAlert.catatan}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* RISK MANAGEMENT */}
+            {parsedData.riskManagement && (
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Shield size={14} /> {language === 'id' ? 'Manajemen Risiko' : 'Risk Management'}
+                    </h3>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl space-y-2">
+                        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                            {language === 'id' ? 'Max Loss:' : 'Max Loss:'} {parsedData.riskManagement.max_loss_rekomendasi}
+                        </div>
+                        {parsedData.riskManagement.peringatan && parsedData.riskManagement.peringatan.length > 0 && (
+                            <ul className="space-y-1">
+                                {parsedData.riskManagement.peringatan.map((w: string, i: number) => (
+                                    <li key={i} className="text-xs text-rose-600 dark:text-rose-400 flex items-start gap-1.5">
+                                        <span className="mt-0.5">⚠️</span> {w}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

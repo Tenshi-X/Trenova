@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { askChatbot } from '@/lib/api';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchCoinGeckoData } from './actions';
+import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchEnrichedMarketData } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
@@ -18,202 +17,162 @@ import { useLanguage } from '@/context/LanguageContext';
 
 
 
-const PROMPT_TEMPLATE_ID = `
-Kamu adalah TRADER CRYPTO PROFESIONAL yang OBJEKTIF dan tidak memiliki bias apapun. Tugasmu adalah memberikan analisa market yang sangat akurat dan berbasis data mentah.
+function buildEnrichedPrompt(
+  coin: Coin,
+  market: any,
+  hasImage: boolean,
+  lang: 'id' | 'en',
+  tradingStyle: string,
+  timeframe: string,
+  userPrompt: string
+): string {
+  const sym = coin.symbol.toUpperCase();
+  const isId = lang === 'id';
+  const dp = market.price > 100 ? 2 : 6;
+  const pFmt = (n: number) => n > 100 ? '$' + n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '$' + n.toFixed(dp);
+  const pctFmt = (n: number) => `${(n * 100).toFixed(4)}%`;
 
-**INSTRUKSI KRITIKAL BAGI AI:**
-1. **BAHASA OUTPUT:** Semua teks penjelasan (\`summary\`, \`main_reason\`, \`technical_reason\`, \`conviction_reason\`) **WAJIB DALAM BAHASA INDONESIA**.
-2. **JANGAN GUNAKAN BAHASA INGGRIS** untuk penjelasan.
-3. Keluaran HARUS dalam format **JSON VALID** (RFC 8259). Jangan tambahkan markdown block seperti \`\`\`json.
-4. Jangan pernah output "N/A" atau "TIDAK ADA". Selalu cari peluang terbaik meskipun itu "Wait & See".
-5. Fokus pada Price Action dan Market Structure.
-6. **ANTI-BIAS (SANGAT PENTING):**
-   - JANGAN selalu mengeluarkan keputusan BUY. Analisa data secara JUJUR.
-   - Jika data 24h menunjukkan penurunan signifikan, harga berada di bawah resistance, dan candle menunjukkan tekanan jual → market_structure WAJIB "Bearish" dan decision WAJIB "SELL".
-   - Jika harga membuat Lower High dan Lower Low → itu BEARISH, bukan Bullish.
-   - Jika perubahan 24h negatif dan harga di bawah open → pertimbangkan SELL atau WAIT, BUKAN BUY.
-   - Hanya keluarkan BUY jika ada konfirmasi teknikal yang kuat (bounce dari support, higher low, candle reversal bullish).
-7. **ATURAN DIRECTION (WAJIB DIPATUHI):**
-   - Tentukan dulu apakah trend saat ini **Bullish** atau **Bearish** dari data OHLC dan perubahan harga.
-   - **Jika Bullish:** Plan Primary (Trend Following) = direction "BUY", Plan Alternative (Counter-Trend) = direction "SHORT"
-   - **Jika Bearish:** Plan Primary (Trend Following) = direction "SHORT", Plan Alternative (Counter-Trend) = direction "BUY"
-   - **Jika Ranging:** Pilih direction yang paling masuk akal secara teknikal untuk masing-masing plan.
-   - Field "direction" WAJIB diisi "BUY" atau "SHORT" di setiap plan. JANGAN KOSONG.
-8. **TAKE PROFIT:** Berikan minimal 2 dan maksimal 5 level Take Profit. Semakin jauh TP, semakin kecil probabilitasnya. Jika hanya ada 2-3 level yang valid, cukup berikan segitu saja. Jangan memaksakan 5 TP jika tidak realistis.
-9. **CONVICTION:** Conviction BUKAN selalu 85%. Sesuaikan antara 40%-95% berdasarkan kekuatan sinyal teknikal. Jelaskan ALASAN teknikal conviction di field "conviction_reason".
-
-**DATA PASAR LIVE:**
-- Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
-- Harga Saat Ini: \${{PRICE}}
-- Perubahan 24h: {{CHANGE_24H}}%
-- Market Cap: \${{MARKET_CAP}}
-- Volume 24h: \${{VOLUME_24H}}
-
-**DATA OHLC:**
-{{MARKET_CTX}}
-
-{{IMAGE_CONTEXT}}
-
-**FORMAT OUTPUT YANG DIMINTA (JSON VALID):**
-{
-  "decision": "BUY" | "SELL" | "WAIT",
-  "risk_level": "Low" | "Medium" | "High" | "Extreme",
-  "main_reason": "Alasan singkat 1 kalimat (Bahasa Indonesia)",
-  "market_structure": {
-      "structure": "Bullish" | "Bearish" | "Ranging",
-      "key_support": "$xxx.xx",
-      "key_resistance": "$xxx.xx"
-  },
-  "plans": [
-    {
-      "type": "Primary Setup",
-      "direction": "BUY" atau "SHORT",
-      "entry_zone": "$xxx.xx - $xxx.xx",
-      "stop_loss": "$xxx.xx",
-      "take_profit_1": "$xxx.xx",
-      "take_profit_2": "$xxx.xx",
-      "take_profit_3": "$xxx.xx (opsional)",
-      "take_profit_4": "$xxx.xx (opsional)",
-      "take_profit_5": "$xxx.xx (opsional)",
-      "technical_reason": "Penjelasan teknikal singkat kenapa entry di zona ini (Bahasa Indonesia)",
-      "conviction": 40-95,
-      "conviction_reason": "Jelaskan secara teknikal kenapa conviction X%, misal: Berdasarkan 3 konfirmasi: bouncing dari support $0.97, RSI oversold di 28, dan volume spike 2x rata-rata (Bahasa Indonesia)"
-    },
-    {
-      "type": "Alternative Scenario",
-      "direction": "SHORT" atau "BUY" (kebalikan dari Primary),
-      "entry_zone": "$xxx.xx - $xxx.xx",
-      "stop_loss": "$xxx.xx",
-      "take_profit_1": "$xxx.xx",
-      "take_profit_2": "$xxx.xx",
-      "take_profit_3": "$xxx.xx (opsional)",
-      "take_profit_4": "$xxx.xx (opsional)",
-      "take_profit_5": "$xxx.xx (opsional)",
-      "technical_reason": "Penjelasan teknikal singkat (Bahasa Indonesia)",
-      "conviction": 30-70,
-      "conviction_reason": "Jelaskan secara teknikal kenapa conviction X% (Bahasa Indonesia)"
-    }
-  ],
-  "summary": "Penjelasan detail mengenai breakdown teknikal, struktur pasar, dan alasan di balik keputusan (2-3 paragraf). WAJIB BAHASA INDONESIA."
-}
-`;
-
-const PROMPT_TEMPLATE_EN = `
-You are a PROFESSIONAL CRYPTO TRADER who is completely OBJECTIVE and FREE FROM BIAS. Your task is to provide a strictly data-driven market analysis.
-
-**CRITICAL INSTRUCTIONS:**
-1. Output MUST be in **VALID JSON** (RFC 8259). Do not add markdown blocks like \`\`\`json.
-2. NEVER output "N/A" or "NO SETUP". Always find the best opportunity even if it is "Wait & See".
-3. Focus on Price Action and Market Structure.
-4. **ANTI-BIAS (CRITICAL):**
-   - DO NOT always output BUY. Analyze data HONESTLY.
-   - If 24h change is negative, price is below open, and candles show sell pressure → market_structure MUST be "Bearish" and decision MUST be "SELL".
-   - If price is making Lower Highs and Lower Lows → that is BEARISH, not Bullish.
-   - If 24h change is negative and price is below open → consider SELL or WAIT, NOT BUY.
-   - Only output BUY if there is strong technical confirmation (bounce from support, higher low, bullish reversal candle).
-5. **DIRECTION RULES (MUST FOLLOW):**
-   - First determine the current trend from OHLC data and price changes.
-   - **If Bullish:** Primary (Trend Following) direction = "BUY", Alternative (Counter-Trend) direction = "SHORT"
-   - **If Bearish:** Primary (Trend Following) direction = "SHORT", Alternative (Counter-Trend) direction = "BUY"
-   - **If Ranging:** Pick the most technically sound direction for each plan.
-   - The "direction" field is MANDATORY in every plan. It must be "BUY" or "SHORT".
-6. **TAKE PROFIT:** Provide a minimum of 2 and maximum of 5 Take Profit levels. Only include as many TP levels as are technically valid.
-7. **CONVICTION:** Conviction is NOT always 85%. Adjust between 40%-95% based on signal strength. Provide technical justification in "conviction_reason".
-
-**LIVE MARKET DATA:**
-- Pair: {{COIN_NAME}} ({{SYMBOL}}/USDT)
-- Current Price: \${{PRICE}}
-- 24h Change: {{CHANGE_24H}}%
-- Market Cap: \${{MARKET_CAP}}
-- 24h Volume: \${{VOLUME_24H}}
-
-**OHLC DATA:**
-{{MARKET_CTX}}
-
-{{IMAGE_CONTEXT}}
-
-**REQUIRED OUTPUT FORMAT (JSON):**
-{
-  "decision": "BUY" | "SELL" | "WAIT",
-  "risk_level": "Low" | "Medium" | "High" | "Extreme",
-  "main_reason": "Short 1 sentence reason",
-  "market_structure": {
-      "structure": "Bullish" | "Bearish" | "Ranging",
-      "key_support": "$xxx.xx",
-      "key_resistance": "$xxx.xx"
-  },
-  "plans": [
-    {
-      "type": "Primary Setup",
-      "direction": "BUY" or "SHORT",
-      "entry_zone": "$xxx.xx - $xxx.xx",
-      "stop_loss": "$xxx.xx",
-      "take_profit_1": "$xxx.xx",
-      "take_profit_2": "$xxx.xx",
-      "take_profit_3": "$xxx.xx (optional)",
-      "take_profit_4": "$xxx.xx (optional)",
-      "take_profit_5": "$xxx.xx (optional)",
-      "technical_reason": "Technical explanation for entry zone",
-      "conviction": 40-95,
-      "conviction_reason": "Technical justification for conviction %, e.g.: Based on 3 confirmations: bounce from $0.97 support, RSI oversold at 28, and 2x avg volume spike"
-    },
-    {
-      "type": "Alternative Scenario",
-      "direction": "SHORT" or "BUY" (opposite of Primary),
-      "entry_zone": "$xxx.xx - $xxx.xx",
-      "stop_loss": "$xxx.xx",
-      "take_profit_1": "$xxx.xx",
-      "take_profit_2": "$xxx.xx",
-      "take_profit_3": "$xxx.xx (optional)",
-      "take_profit_4": "$xxx.xx (optional)",
-      "take_profit_5": "$xxx.xx (optional)",
-      "technical_reason": "Technical explanation",
-      "conviction": 30-70,
-      "conviction_reason": "Technical justification for conviction %"
-    }
-  ],
-  "summary": "Detailed technical breakdown explaining the market structure, price action, and reasoning (1-2 paragraphs)."
-}
-`;
-
-function constructPrompt(templateId: string, templateEn: string, coin: any, market: any, ohlc: any[], hasImage: boolean, lang: 'id' | 'en', tradingStyle: string, timeframe: string) {
-  const imageContext = hasImage ? "Note: User has uploaded a chart image. Please focus on visual pattern recognition from the image." : "";
-  
-  // Select Template
-  const template = lang === 'id' ? templateId : templateEn;
-
-  // Generate Market Context from OHLC
-  let marketCtx = lang === 'id' ? "Data OHLC tidak tersedia." : "OHLC data unavailable.";
-  if (ohlc && ohlc.length > 0) {
-      const highs = ohlc.map((item: any) => item[2]);
-      const lows = ohlc.map((item: any) => item[3]);
-      const maxPrice = Math.max(...highs);
-      const minPrice = Math.min(...lows);
-      const openPrice = ohlc[0][1];
-      const closePrice = ohlc[ohlc.length - 1][4];
-      
-      marketCtx = `
-      - Open (24h ago): $${openPrice}
-      - 24h High: $${maxPrice}
-      - 24h Low: $${minPrice}
-      - Close (Current): $${closePrice}
-      
-      Recent OHLC Data (H/L/C):
-      ${ohlc.slice(-5).map((candle: any) => `- Candle: H:${candle[2]} L:${candle[3]} C:${candle[4]}`).join('\n')}
-      `;
+  // Build OHLC context from recent candles
+  let ohlcCtx = isId ? 'Data OHLC tidak tersedia.' : 'OHLC data unavailable.';
+  if (market.recentCandles && market.recentCandles.length > 0) {
+    const candles = market.recentCandles;
+    ohlcCtx = candles.map((c: any, i: number) =>
+      `Candle ${i + 1}: O:${pFmt(c.open)} H:${pFmt(c.high)} L:${pFmt(c.low)} C:${pFmt(c.close)}`
+    ).join('\n');
   }
 
-  return template
-    .replace(/{{COIN_NAME}}/g, coin.name)
-    .replace(/{{SYMBOL}}/g, coin.symbol.toUpperCase())
-    .replace(/{{PRICE}}/g, market?.usd?.toLocaleString() || '0')
-    .replace(/{{CHANGE_24H}}/g, market?.usd_24h_change?.toFixed(2) || '0')
-    .replace(/{{VOLUME_24H}}/g, market?.usd_24h_vol ? market.usd_24h_vol.toLocaleString() : 'N/A')
-    .replace(/{{MARKET_CAP}}/g, market?.usd_market_cap ? market.usd_market_cap.toLocaleString() : 'N/A')
-    .replace(/{{MARKET_CTX}}/g, marketCtx)
-    .replace(/{{TRADING_STYLE}}/g, tradingStyle.toUpperCase())
-    .replace(/{{TIMEFRAME}}/g, timeframe)
-    .replace(/{{IMAGE_CONTEXT}}/g, imageContext);
+  // Funding rate interpretation
+  let fundingNote = 'N/A';
+  if (market.fundingRate !== null) {
+    const fr = market.fundingRate;
+    fundingNote = fr > 0.0005 ? 'SANGAT TINGGI: market overleveraged LONG, hati-hati long squeeze' :
+                  fr > 0.0001 ? 'Positif moderat: lebih banyak longs' :
+                  fr < -0.0005 ? 'SANGAT NEGATIF: market overleveraged SHORT, potensi short squeeze TINGGI' :
+                  fr < -0.0001 ? 'Negatif moderat: lebih banyak shorts' : 'Netral: posisi seimbang';
+  }
+
+  // Fear & Greed interpretation
+  const fgNum = parseInt(market.fearGreedValue) || 50;
+  const fgNote = fgNum <= 25 ? 'EXTREME FEAR — potensi reversal bullish' :
+                 fgNum <= 45 ? 'FEAR — hati-hati long' :
+                 fgNum <= 55 ? 'NEUTRAL' :
+                 fgNum <= 75 ? 'GREED — momentum naik' : 'EXTREME GREED — potensi distribusi';
+
+  const imageNote = hasImage
+    ? (isId ? 'User mengunggah screenshot chart. Analisa pola visual dari gambar tersebut dan kombinasikan dengan data live.' : 'User uploaded a chart screenshot. Analyze visual patterns and combine with live data.')
+    : '';
+
+  const dataContext = `
+=== DATA LIVE PASAR (REAL-TIME BINANCE) ===
+Pair          : ${sym}/USDT
+Harga Spot    : ${market.price > 0 ? pFmt(market.price) : 'N/A'} | 24h: ${market.change24h > 0 ? '+' : ''}${market.change24h.toFixed(2)}%
+High/Low 24h  : ${pFmt(market.high24h)} / ${pFmt(market.low24h)}
+Open 24h      : ${pFmt(market.openPrice)}
+Volume 24h    : $${(market.volume24h / 1e6).toFixed(2)}M USDT
+${market.markPrice ? `Mark Price    : ${pFmt(market.markPrice)} | Index: ${pFmt(market.indexPrice || 0)}` : ''}
+${market.fundingRate !== null ? `Funding Rate  : ${pctFmt(market.fundingRate)} — ${fundingNote}` : ''}
+${market.nextFundingTime ? `Next Funding  : ${new Date(market.nextFundingTime).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' })} WIB` : ''}
+Open Interest : ${market.openInterestUSD}
+ATR 4H (14p)  : ${market.atr4h}${market.atrPercent ? ` (${market.atrPercent}% — ${market.atrNote})` : ''}
+
+=== KONTEKS BTC & SENTIMEN ===
+BTC Spot      : ${market.btcPrice ? pFmt(market.btcPrice) + ' | 24h: ' + (market.btcChange24h! > 0 ? '+' : '') + market.btcChange24h!.toFixed(2) + '%' : 'N/A'}
+${market.btcFundingRate !== null ? `BTC Funding   : ${pctFmt(market.btcFundingRate)}` : ''}
+Fear & Greed  : ${market.fearGreedValue}/100 — ${market.fearGreedLabel} (${fgNote})
+
+=== DATA OHLC (1H, 8 candle terakhir) ===
+${ohlcCtx}
+
+=== PARAMETER TRADING ===
+Gaya Trading  : ${tradingStyle.toUpperCase()}
+Timeframe     : ${timeframe}
+${imageNote ? `\n=== CHART IMAGE ===\n${imageNote}` : ''}
+${userPrompt.trim() ? `\n=== INSTRUKSI TAMBAHAN USER ===\n${userPrompt.trim()}` : ''}`.trim();
+
+  const langInstruction = isId
+    ? 'Semua output teks penjelasan WAJIB DALAM BAHASA INDONESIA.'
+    : 'All explanatory text must be in ENGLISH.';
+
+  return `
+Kamu adalah analis trading crypto profesional dari Trenova Intelligence.
+Waktu Analisis: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
+
+${dataContext}
+
+INSTRUKSI KRITIS:
+1. ${langInstruction}
+2. SELALU gunakan data live real-time di atas sebagai ANCHOR keputusan.
+3. ANTI-BIAS: Jangan selalu output BUY. Jika data menunjukkan bearish → keputusan WAJIB SELL.
+4. Jika 24h change negatif, harga di bawah open, dan candle bearish → SELL atau WAIT, BUKAN BUY.
+5. Funding Rate positif tinggi (>0.05%) = pasar overleveraged long = hati-hati LONG.
+6. Funding Rate negatif tinggi (<-0.05%) = short squeeze probability tinggi.
+7. ATR 4H adalah ${market.atr4h} — SL harus ditempatkan minimal 1x ATR dari entry.
+8. Open Interest ${market.openInterestUSD}: OI naik + harga naik = trend valid; OI turun + harga naik = fake pump.
+9. KORELASI BTC: evaluasi apakah setup ${sym} konsisten dengan kondisi BTC saat ini.
+10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
+11. JANGAN pernah tolak memberikan hasil.
+12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
+
+KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
+{
+  "decision": "BUY" | "SELL" | "WAIT",
+  "risk_level": "Low" | "Medium" | "High" | "Extreme",
+  "main_reason": "Alasan utama 1-2 kalimat",
+  "live_snapshot": {
+    "harga_spot": "${market.price > 0 ? pFmt(market.price) : 'N/A'}",
+    "funding_rate": "${market.fundingRate !== null ? pctFmt(market.fundingRate) : 'N/A'}",
+    "open_interest": "${market.openInterestUSD}",
+    "atr_4h": "${market.atr4h}",
+    "fear_greed": "${market.fearGreedValue}/100 ${market.fearGreedLabel}",
+    "btc_price": "${market.btcPrice ? pFmt(market.btcPrice) : 'N/A'}"
+  },
+  "market_structure": {
+    "structure": "Bullish" | "Bearish" | "Ranging",
+    "key_support": "$xxx.xx",
+    "key_resistance": "$xxx.xx"
+  },
+  "sinyal_teknikal": [
+    {"nama": "nama sinyal", "aktif": true/false, "detail": "penjelasan konkret"}
+  ],
+  "plans": [
+    {
+      "type": "Primary Setup",
+      "direction": "BUY" | "SHORT",
+      "entry_zone": "$xxx - $yyy",
+      "stop_loss": "$xxx",
+      "take_profit_1": "$xxx",
+      "take_profit_2": "$yyy",
+      "take_profit_3": "$zzz (opsional)",
+      "take_profit_4": "$xxx (opsional)",
+      "take_profit_5": "$xxx (opsional)",
+      "technical_reason": "penjelasan teknikal",
+      "conviction": 40-95,
+      "conviction_reason": "alasan teknikal conviction",
+      "kondisi_entry": ["konfirmasi 1", "konfirmasi 2"],
+      "invalidasi": "kondisi yang membatalkan setup"
+    },
+    {
+      "type": "Alternative Scenario",
+      "direction": "SHORT" | "BUY",
+      "entry_zone": "...", "stop_loss": "...",
+      "take_profit_1": "...", "take_profit_2": "...",
+      "technical_reason": "...",
+      "conviction": 30-70, "conviction_reason": "...",
+      "kondisi_entry": ["..."], "invalidasi": "..."
+    }
+  ],
+  "squeeze_alert": {
+    "tipe": "SHORT SQUEEZE" | "LONG SQUEEZE" | "NONE",
+    "probabilitas": "TINGGI" | "SEDANG" | "RENDAH",
+    "catatan": "penjelasan berdasarkan funding rate dan OI"
+  },
+  "risk_management": {
+    "max_loss_rekomendasi": "1-2% dari total modal per trade",
+    "peringatan": ["peringatan risiko spesifik"]
+  },
+  "summary": "Penjelasan detail 2-3 paragraf breakdown teknikal, struktur pasar, dan reasoning."
+}
+`;
 }
 
 export default function DashboardPage() {
@@ -436,45 +395,42 @@ export default function DashboardPage() {
             return;
         }
 
-        // Fetch Market Data
-        let marketDataRaw = await fetchCoinGeckoData(selectedCoin.id);
-        let marketData = { usd: 0, usd_24h_change: 0, usd_24h_vol: 0, usd_market_cap: 0 };
-        let ohlcData: any[] = [];
-        if (marketDataRaw && marketDataRaw.price) {
-           marketData = marketDataRaw.price;
-           ohlcData = marketDataRaw.ohlc || [];
+        // ── STEP 1: Fetch Enriched Market Data from Binance ──
+        const marketData = await fetchEnrichedMarketData(selectedCoin.symbol);
+        
+        if (!marketData.dataAvailable) {
+            toast.error(`Data Binance untuk ${selectedCoin.symbol.toUpperCase()} tidak tersedia. Pastikan pair USDT ada di Binance.`);
+            setChatLoading(false);
+            return;
         }
 
-        // Prepare Images
+        // ── STEP 2: Prepare Image ──
         const images = await buildImagesForAI();
         const hasImages = images.length > 0;
         const primaryImage = hasImages ? images[0] : undefined;
 
-        // Construct Prompt
-        let promptText = constructPrompt(PROMPT_TEMPLATE_ID, PROMPT_TEMPLATE_EN, selectedCoin, marketData, ohlcData, hasImages, language, tradingStyle, timeframe);
+        // ── STEP 3: Build Enriched Prompt ──
+        const promptText = buildEnrichedPrompt(
+            selectedCoin, marketData, hasImages, language, tradingStyle, timeframe, userPrompt
+        );
 
-        if (selectedImage) {
-            promptText = `[PRIORITY: ANALYZE THE UPLOADED CHART IMAGE FOR ${selectedCoin.name}. Focus on ${tradingStyle.toUpperCase()} setup.]\n\n` + promptText;
-        }
+        // ── STEP 4: Call Direct Gemini API ──
+        const res = await fetch('/api/dashboard/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: promptText, image: primaryImage })
+        });
 
-        if (userPrompt.trim()) {
-            promptText += `\n\n**ADDITIONAL USER INSTRUCTION:**\n${userPrompt}`;
-        }
+        const resJson = await res.json();
 
-        let aiOutput = "";
-        try {
-            const apiRes = await askChatbot(promptText, primaryImage);
-            if (apiRes && apiRes.analysis) {
-                aiOutput = apiRes.analysis;
-            } else {
-                throw new Error("AI response missing analysis field");
+        if (!res.ok) {
+            if (res.status === 503 || resJson.retryable) {
+                throw new Error('⏳ Server AI sedang kelebihan beban. Tunggu 1–2 menit lalu coba lagi.');
             }
-        } catch(e) { 
-            console.error("AI Execution Error:", e);
-            aiOutput = `### ⚠️ Analysis Failed`;
-            toast.error("Failed to connect to AI. Please try again.");
+            throw new Error(resJson.error || `API Error ${res.status}`);
         }
 
+        const aiOutput = resJson.result || '';
         const result = { analysis: aiOutput };
         setChatResult(result);
         
@@ -486,9 +442,9 @@ export default function DashboardPage() {
              router.refresh();
         }
 
-    } catch (e) {
+    } catch (e: any) {
         console.error("Critical Analysis Error:", e);
-        toast.error("An unexpected error occurred while generating analysis.");
+        toast.error(e.message || "An unexpected error occurred while generating analysis.");
     } finally {
         setChatLoading(false);
     }
