@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols, fetchEnrichedMarketData } from './actions';
+import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
@@ -396,7 +396,8 @@ export default function DashboardPage() {
         }
 
         // ── STEP 1: Fetch Enriched Market Data from Binance ──
-        const marketData = await fetchEnrichedMarketData(selectedCoin.symbol);
+        const dataRes = await fetch(`/api/dashboard/enriched-data?symbol=${selectedCoin.symbol}`);
+        const marketData = await dataRes.json();
         
         if (!marketData.dataAvailable) {
             toast.error(`Data Binance untuk ${selectedCoin.symbol.toUpperCase()} tidak tersedia. Pastikan pair USDT ada di Binance.`);
