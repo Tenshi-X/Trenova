@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, LogOut, Menu, X, Users } from 'lucide-react';
+import { Shield, LogOut, Menu, X, Users, Mail } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import clsx from 'clsx';
 
@@ -46,6 +46,7 @@ export default function Sidebar() {
   // Admin-only nav items
   const navItems = [
     { name: 'Manajemen User', href: '/admin', icon: Users },
+    { name: 'Broadcast Email', href: '/admin/broadcast', icon: Mail },
   ];
 
   return (
