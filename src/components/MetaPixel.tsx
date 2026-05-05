@@ -5,7 +5,7 @@ import Script from 'next/script';
 import { useEffect, useState } from 'react';
 
 // You will need to bring this from your env or hardcode
-const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || '1234567890'; // REPLACE THIS WITH YOUR ACTUAL PIXEL ID
+const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
 
 export default function MetaPixel() {
   const pathname = usePathname();
