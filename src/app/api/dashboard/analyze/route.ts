@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+export const maxDuration = 60; // Prevent Vercel serverless function timeout
 // Direct Gemini API — bypasses Supabase Edge Function for lower latency & full control
 const GEMINI_MODEL  = 'gemini-2.5-flash';
 const MAX_RETRIES   = 3;
