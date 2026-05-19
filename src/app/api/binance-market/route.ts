@@ -137,10 +137,24 @@ export async function GET() {
 
     const top50 = usdtTickers.slice(0, 50);
 
-    // Get BTC, ETH, SOL specific data
+    // Get specific coin data
     const btcTicker = tickers.find((t: any) => t.symbol === 'BTCUSDT');
     const ethTicker = tickers.find((t: any) => t.symbol === 'ETHUSDT');
     const solTicker = tickers.find((t: any) => t.symbol === 'SOLUSDT');
+    const bnbTicker = tickers.find((t: any) => t.symbol === 'BNBUSDT');
+    const xrpTicker = tickers.find((t: any) => t.symbol === 'XRPUSDT');
+    const dogeTicker = tickers.find((t: any) => t.symbol === 'DOGEUSDT');
+
+    // Calculate Average Funding Rate (from top 50 usdt pairs, or all)
+    let totalFunding = 0;
+    let fundingCount = 0;
+    for (const symbol in fundingMap) {
+      if (symbol.endsWith('USDT') && !stablecoins.includes(symbol)) {
+        totalFunding += fundingMap[symbol];
+        fundingCount++;
+      }
+    }
+    const avgFundingRate = fundingCount > 0 ? totalFunding / fundingCount : 0;
 
     // Build response for top 50 coins
     const coins = top50.map((t: any, index: number) => {
@@ -170,6 +184,13 @@ export async function GET() {
       ethChange24h: parseFloat(ethTicker?.priceChangePercent || '0'),
       solPrice: parseFloat(solTicker?.lastPrice || '0'),
       solChange24h: parseFloat(solTicker?.priceChangePercent || '0'),
+      bnbPrice: parseFloat(bnbTicker?.lastPrice || '0'),
+      bnbChange24h: parseFloat(bnbTicker?.priceChangePercent || '0'),
+      xrpPrice: parseFloat(xrpTicker?.lastPrice || '0'),
+      xrpChange24h: parseFloat(xrpTicker?.priceChangePercent || '0'),
+      dogePrice: parseFloat(dogeTicker?.lastPrice || '0'),
+      dogeChange24h: parseFloat(dogeTicker?.priceChangePercent || '0'),
+      avgFundingRate: parseFloat(avgFundingRate.toFixed(4)),
       topGainer,
       topLoser,
       gainersCount,

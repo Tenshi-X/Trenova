@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper } from 'lucide-react';
+import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
@@ -24,7 +24,11 @@ function buildEnrichedPrompt(
   lang: 'id' | 'en',
   tradingStyle: string,
   timeframe: string,
-  userPrompt: string
+  userPrompt: string,
+  riskTolerance: string,
+  strategyFocus: string,
+  indicatorPref: string,
+  targetRR: string
 ): string {
   const sym = coin.symbol.toUpperCase();
   const isId = lang === 'id';
@@ -86,6 +90,10 @@ ${ohlcCtx}
 === PARAMETER TRADING ===
 Gaya Trading  : ${tradingStyle.toUpperCase()}
 Timeframe     : ${timeframe}
+Toleransi Risiko : ${riskTolerance} (Sesuaikan agresivitas entry dan SL)
+Fokus Strategi   : ${strategyFocus} (Prioritaskan setup ini)
+Fokus Indikator  : ${indicatorPref} (Gunakan ini sebagai konfirmasi utama)
+Target Min. RR   : ${targetRR} (Abaikan setup jika RR di bawah target)
 ${imageNote ? `\n=== CHART IMAGE ===\n${imageNote}` : ''}
 ${userPrompt.trim() ? `\n=== INSTRUKSI TAMBAHAN USER ===\n${userPrompt.trim()}` : ''}`.trim();
 
@@ -112,7 +120,7 @@ INSTRUKSI KRITIS:
 10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
 11. JANGAN pernah tolak memberikan hasil.
 12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
-13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum 1:2 hingga 1:4. Jika RR kurang dari 1:2, set direction menjadi "WAIT".
+13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum ${targetRR.replace('Min ', '')}. Jika RR kurang dari target, set direction menjadi "WAIT".
 14. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
 
 KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
@@ -206,6 +214,10 @@ export default function DashboardPage() {
   const [userPrompt, setUserPrompt] = useState('');
   const [tradingStyle, setTradingStyle] = useState<'scalping' | 'intraday' | 'swing'>('intraday');
   const [timeframe, setTimeframe] = useState('1h');
+  const [riskTolerance, setRiskTolerance] = useState('Medium Risk');
+  const [strategyFocus, setStrategyFocus] = useState('All-Round');
+  const [indicatorPref, setIndicatorPref] = useState('Default');
+  const [targetRR, setTargetRR] = useState('1:2');
   const [chatLoading, setChatLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing AI...");
   const [chatResult, setChatResult] = useState<{ analysis: string } | null>(null);
@@ -454,7 +466,8 @@ export default function DashboardPage() {
 
         // ── STEP 3: Build Enriched Prompt ──
         const promptText = buildEnrichedPrompt(
-            selectedCoin, marketData, hasImages, language, tradingStyle, timeframe, userPrompt
+            selectedCoin, marketData, hasImages, language, tradingStyle, timeframe, userPrompt,
+            riskTolerance, strategyFocus, indicatorPref, targetRR
         );
 
         // ── STEP 4: Call Direct Gemini API ──
@@ -740,37 +753,36 @@ export default function DashboardPage() {
 
 
                     {/* Analysis Controls Panel */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
-                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:items-end">
-
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors space-y-4 sm:space-y-6">
+                        
+                        {/* Row 1: Image & Context */}
+                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
                             {/* Single image upload */}
-                            {true && (
-                                <div className="flex-1 lg:max-w-xs">
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
-                                        {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional)</span>
-                                    </label>
-                                    {!imagePreview ? (
-                                        <div
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-24"
-                                        >
-                                            <Upload size={20} className="group-hover:scale-110 transition-transform" />
-                                            <div>
-                                                <p className="font-bold text-sm">{t('upload_text')}</p>
-                                                <p className="text-[10px] opacity-70">or Paste Screenshot (Ctrl+V)</p>
-                                            </div>
-                                            <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                            <div className="flex-1 lg:max-w-xs">
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
+                                    {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional)</span>
+                                </label>
+                                {!imagePreview ? (
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32"
+                                    >
+                                        <Upload size={20} className="group-hover:scale-110 transition-transform" />
+                                        <div>
+                                            <p className="font-bold text-sm">{t('upload_text')}</p>
+                                            <p className="text-[10px] opacity-70">or Paste Screenshot (Ctrl+V)</p>
                                         </div>
-                                    ) : (
-                                        <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 group h-24">
-                                            <img src={imagePreview} alt="Chart" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                            <button onClick={cleanAnalysis} className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md">
-                                                <X size={14} />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                                    </div>
+                                ) : (
+                                    <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 group h-32">
+                                        <img src={imagePreview} alt="Chart" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                        <button onClick={cleanAnalysis} className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md">
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Custom Instruction */}
                             <div className="flex-1">
@@ -784,24 +796,25 @@ export default function DashboardPage() {
                                     />
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Options Column */}
-                            <div className="flex-none flex flex-col justify-start gap-3 sm:gap-4 h-auto lg:h-32 w-full lg:w-48">
-                                {/* Trading Style Dropdown */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">{t('style_label')}</label>
-                                    <div className="relative">
-                                        <select
-                                            value={tradingStyle}
-                                            onChange={(e) => setTradingStyle(e.target.value as any)}
-                                            className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                        {/* Row 2: Advanced AI Parameters (Grid) */}
+                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+                            {/* Trading Style Dropdown */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">{t('style_label')}</label>
+                                <div className="relative">
+                                    <select
+                                        value={tradingStyle}
+                                        onChange={(e) => setTradingStyle(e.target.value as any)}
+                                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
                                     >
                                         <option value="scalping">⚡ {t('style_scalping')}</option>
                                         <option value="intraday">📅 {t('style_intraday')}</option>
                                         <option value="swing">🌊 {t('style_swing')}</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <TrendingUp size={14} /> 
+                                        <ChevronDown size={14} /> 
                                     </div>
                                 </div>
                             </div>
@@ -822,34 +835,110 @@ export default function DashboardPage() {
                                         <option value="1d">1 Day</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <Activity size={14} /> 
+                                        <ChevronDown size={14} /> 
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Risk Tolerance */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">Risk Tolerance</label>
+                                <div className="relative">
+                                    <select
+                                        value={riskTolerance}
+                                        onChange={(e) => setRiskTolerance(e.target.value)}
+                                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                                    >
+                                        <option value="Low Risk">🛡️ Low</option>
+                                        <option value="Medium Risk">⚖️ Medium</option>
+                                        <option value="High Risk">🔥 High</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <ChevronDown size={14} /> 
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Strategy Focus */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">Strategy Focus</label>
+                                <div className="relative">
+                                    <select
+                                        value={strategyFocus}
+                                        onChange={(e) => setStrategyFocus(e.target.value)}
+                                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                                    >
+                                        <option value="All-Round">🎯 All-Round</option>
+                                        <option value="Breakout">🚀 Breakout</option>
+                                        <option value="Trend Following">🌊 Trend Foll.</option>
+                                        <option value="Mean Reversion">🔄 Mean Rev.</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <ChevronDown size={14} /> 
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Indicator Preference */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">Indicator Focus</label>
+                                <div className="relative">
+                                    <select
+                                        value={indicatorPref}
+                                        onChange={(e) => setIndicatorPref(e.target.value)}
+                                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                                    >
+                                        <option value="Default">📊 Default</option>
+                                        <option value="Price Action Only">🕯️ Price Act.</option>
+                                        <option value="Momentum">📈 Momentum</option>
+                                        <option value="Moving Averages">➰ M. Averages</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <ChevronDown size={14} /> 
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Target Risk/Reward */}
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">Min Target R:R</label>
+                                <div className="relative">
+                                    <select
+                                        value={targetRR}
+                                        onChange={(e) => setTargetRR(e.target.value)}
+                                        className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                                    >
+                                        <option value="1:2">🏆 Min 1:2</option>
+                                        <option value="1:3">💎 Min 1:3</option>
+                                        <option value="1:4">👑 Min 1:4</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <ChevronDown size={14} /> 
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-
-                            {/* Action Button */}
-                            <div className="flex-none lg:w-48 flex flex-col gap-2">
-                                <button 
-                                    onClick={runAnalysis}
-                                    disabled={chatLoading}
-                                    className="w-full h-20 sm:h-32 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl sm:rounded-2xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center justify-center gap-1.5 sm:gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
-                                >
-                                    {chatLoading ? (
-                                        <>
-                                            <Loader2 className="animate-spin w-8 h-8 text-neon" />
-                                            <span className="animate-pulse">{loadingMessage}</span>
-                                            <div className="absolute bottom-0 left-0 h-1 bg-neon/50 w-full animate-[pulse_2s_ease-in-out_infinite]" /> 
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles className="w-8 h-8 text-neon group-hover:scale-110 transition-transform" />
-                                            <span>{t('generate_btn')}</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
+                        {/* Row 3: Action Button */}
+                        <div className="pt-2">
+                            <button 
+                                onClick={runAnalysis}
+                                disabled={chatLoading}
+                                className="w-full h-14 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
+                            >
+                                {chatLoading ? (
+                                    <>
+                                        <Loader2 className="animate-spin w-5 h-5 text-neon" />
+                                        <span className="animate-pulse">{loadingMessage}</span>
+                                        <div className="absolute bottom-0 left-0 h-1 bg-neon/50 w-full animate-[pulse_2s_ease-in-out_infinite]" /> 
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5 text-neon group-hover:scale-110 transition-transform" />
+                                        <span>{t('generate_btn')}</span>
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
 

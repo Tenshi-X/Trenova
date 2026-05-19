@@ -170,7 +170,7 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
             </div>
 
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
-                <span>Powered by Antigravity Technical Analysis Engine</span>
+                <span>Powered by Technical Analysis Engine</span>
                 <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                     {lastRefresh ? `Updated ${lastRefresh.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit' })} · Auto-refresh /5min` : 'Loading...'}
