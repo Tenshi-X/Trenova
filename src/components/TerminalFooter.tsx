@@ -19,7 +19,7 @@ export default function TerminalFooter() {
               {t('lp_footer_brand_desc')}
             </p>
             <a
-              href="https://instagram.com/trenova.intelligence"
+              href="https://www.instagram.com/tradewithtrenovaterminal.ai?igsh=dDQ5ODM5cDFsdHIw"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[10px] text-neon/70 border border-neon/20 px-3 py-1 tracking-[0.06em] hover:border-neon hover:text-neon transition-colors inline-block"
@@ -40,7 +40,7 @@ export default function TerminalFooter() {
               <div className="text-[10px] text-neon/70 tracking-[0.12em] uppercase mb-4">{t('lp_footer_support')}</div>
               <Link href="#" className="block text-[11px] text-slate-600 hover:text-slate-300 transition-colors mb-2">{t('lp_footer_faq')}</Link>
               <a href="https://discord.gg/gGdkQypYWM" target="_blank" rel="noopener noreferrer" className="block text-[11px] text-slate-600 hover:text-slate-300 transition-colors mb-2">{t('lp_footer_discord')}</a>
-              <a href="https://instagram.com/trenova.intelligence" target="_blank" rel="noopener noreferrer" className="block text-[11px] text-slate-600 hover:text-slate-300 transition-colors">{t('lp_footer_instagram')}</a>
+              <a href="https://www.instagram.com/tradewithtrenovaterminal.ai?igsh=dDQ5ODM5cDFsdHIw" target="_blank" rel="noopener noreferrer" className="block text-[11px] text-slate-600 hover:text-slate-300 transition-colors">{t('lp_footer_instagram')}</a>
             </div>
             <div>
               <div className="text-[10px] text-neon/70 tracking-[0.12em] uppercase mb-4">{t('lp_footer_legal')}</div>

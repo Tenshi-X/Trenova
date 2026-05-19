@@ -98,7 +98,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             liveSnapshot: null as any,
             sinyalTeknikal: [] as any[],
             squeezeAlert: null as any,
-            riskManagement: null as any
+            riskManagement: null as any,
+            tradeManagement: null as any
         };
 
         if (!markdown) return result;
@@ -118,6 +119,7 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             result.sinyalTeknikal = Array.isArray(json.sinyal_teknikal) ? json.sinyal_teknikal : [];
             result.squeezeAlert = json.squeeze_alert || null;
             result.riskManagement = json.risk_management || null;
+            result.tradeManagement = json.trade_management || null;
             
             // Determine trend for direction logic
             const trend = result.marketStructure?.structure?.toLowerCase() || 'ranging';
@@ -525,6 +527,33 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                                 ))}
                             </ul>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* TRADE MANAGEMENT */}
+            {parsedData.tradeManagement && (
+                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Target size={14} /> {language === 'id' ? 'Trade Management' : 'Trade Management'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/20">
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1.5 mb-2">
+                                <ArrowUpCircle size={12} /> {language === 'id' ? 'Setelah TP1 Tercapai' : 'After TP1 Hit'}
+                            </span>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                {parsedData.tradeManagement.tindakan_setelah_tp1}
+                            </p>
+                        </div>
+                        <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-100 dark:border-rose-900/20">
+                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase flex items-center gap-1.5 mb-2">
+                                <ArrowDownCircle size={12} /> {language === 'id' ? 'Jika SL Tersentuh' : 'If SL Hit'}
+                            </span>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                {parsedData.tradeManagement.skenario_jika_sl_hit}
+                            </p>
+                        </div>
                     </div>
                 </div>
             )}

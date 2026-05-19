@@ -29,7 +29,7 @@ export default function TerminalCredibility() {
                 <div className="text-lg font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>{t('lp_cred_brand')}</div>
                 <div className="text-[11px] text-neon/70 tracking-[0.06em] mb-1">{t('lp_cred_brand_sub')}</div>
                 <div className="text-[10px] text-slate-600">
-                  {t('lp_cred_ig_label')} <a href="https://instagram.com/trenova.intelligence" className="text-neon hover:underline" target="_blank" rel="noopener noreferrer">@trenova.intelligence</a>
+                  {t('lp_cred_ig_label')} <a href="https://www.instagram.com/tradewithtrenovaterminal.ai?igsh=dDQ5ODM5cDFsdHIw" className="text-neon hover:underline" target="_blank" rel="noopener noreferrer">@tradewithtrenovaterminal.ai</a>
                 </div>
               </div>
             </div>

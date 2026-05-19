@@ -80,7 +80,7 @@ BTC Spot      : ${market.btcPrice ? pFmt(market.btcPrice) + ' | 24h: ' + (market
 ${market.btcFundingRate !== null ? `BTC Funding   : ${pctFmt(market.btcFundingRate)}` : ''}
 Fear & Greed  : ${market.fearGreedValue}/100 — ${market.fearGreedLabel} (${fgNote})
 
-=== DATA OHLC (1H, 8 candle terakhir) ===
+=== DATA OHLC (${market.klineInterval || '1H'}, 8 candle terakhir) ===
 ${ohlcCtx}
 
 === PARAMETER TRADING ===
@@ -112,6 +112,7 @@ INSTRUKSI KRITIS:
 10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
 11. JANGAN pernah tolak memberikan hasil.
 12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
+13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum 1:2 hingga 1:4. Jika RR kurang dari 1:2, set direction menjadi "WAIT".
 
 KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
 {
@@ -169,6 +170,10 @@ KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar 
   "risk_management": {
     "max_loss_rekomendasi": "1-2% dari total modal per trade",
     "peringatan": ["peringatan risiko spesifik"]
+  },
+  "trade_management": {
+    "tindakan_setelah_tp1": "Contoh: Pindahkan SL ke harga Entry (Breakeven) dan amankan 50% profit.",
+    "skenario_jika_sl_hit": "Contoh: Tunggu konfirmasi di level support terdekat sebelum mencari peluang re-entry."
   },
   "summary": "Penjelasan detail 2-3 paragraf breakdown teknikal, struktur pasar, dan reasoning."
 }
@@ -432,7 +437,7 @@ export default function DashboardPage() {
         }
 
         // ── STEP 1: Fetch Enriched Market Data from Binance ──
-        const dataRes = await fetch(`/api/dashboard/enriched-data?symbol=${selectedCoin.symbol}`);
+        const dataRes = await fetch(`/api/dashboard/enriched-data?symbol=${selectedCoin.symbol}&style=${tradingStyle}`);
         const marketData = await dataRes.json();
         
         if (!marketData.dataAvailable) {

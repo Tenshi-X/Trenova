@@ -32,7 +32,7 @@ export default function TerminalCTA() {
             {t('lp_cta_btn1')} <ArrowRight size={16} />
           </Link>
           <a
-            href="https://instagram.com/trenova.intelligence"
+            href="https://www.instagram.com/tradewithtrenovaterminal.ai?igsh=dDQ5ODM5cDFsdHIw"
             target="_blank"
             rel="noopener noreferrer"
             className="px-7 py-4 bg-transparent border border-slate-700 text-slate-300 font-bold text-[13px] uppercase tracking-[0.1em] hover:border-neon hover:text-neon transition-all"

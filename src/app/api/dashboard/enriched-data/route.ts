@@ -6,6 +6,7 @@ export const preferredRegion = ['sin1', 'hkg1', 'iad1'];
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const symbol = searchParams.get('symbol');
+    const style = searchParams.get('style') || 'intraday';
 
     if (!symbol) {
         return NextResponse.json({ error: 'Missing symbol' }, { status: 400 });
@@ -43,12 +44,23 @@ export async function GET(req: NextRequest) {
         return null;
     };
 
+    let klineInterval = '1h';
+    let klineLimit = 24;
+    
+    if (style === 'scalping') {
+        klineInterval = '15m';
+        klineLimit = 24;
+    } else if (style === 'swing') {
+        klineInterval = '4h';
+        klineLimit = 24;
+    }
+
     // Fetch all data in parallel (non-blocking)
     const [
         tickerData,
         fundingData,
         oiData,
-        klines1h,
+        klinesDynamic,
         klines4h,
         btcTicker,
         btcFunding,
@@ -57,7 +69,7 @@ export async function GET(req: NextRequest) {
         safeFetchSpot(`/api/v3/ticker/24hr?symbol=${pair}`),
         safeFetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${pair}`),
         safeFetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${pair}`),
-        safeFetchSpot(`/api/v3/klines?symbol=${pair}&interval=1h&limit=24`),
+        safeFetchSpot(`/api/v3/klines?symbol=${pair}&interval=${klineInterval}&limit=${klineLimit}`),
         safeFetchSpot(`/api/v3/klines?symbol=${pair}&interval=4h&limit=15`),
         safeFetchSpot(`/api/v3/ticker/24hr?symbol=BTCUSDT`),
         safeFetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT`),
@@ -108,10 +120,10 @@ export async function GET(req: NextRequest) {
                   parseFloat(atrPercent) > 1 ? 'Volatilitas normal' : 'Volatilitas rendah/squeeze';
     }
 
-    // ── Parse Recent 1H Candles for prompt ──
+    // ── Parse Recent Dynamic Candles for prompt ──
     let recentCandles: { open: number; high: number; low: number; close: number; volume: number }[] = [];
-    if (Array.isArray(klines1h)) {
-        recentCandles = klines1h.slice(-8).map((k: any) => ({
+    if (Array.isArray(klinesDynamic)) {
+        recentCandles = klinesDynamic.slice(-8).map((k: any) => ({
             open: parseFloat(k[1]),
             high: parseFloat(k[2]),
             low: parseFloat(k[3]),
@@ -134,7 +146,7 @@ export async function GET(req: NextRequest) {
         markPrice, indexPrice, fundingRate, nextFundingTime,
         openInterestUSD,
         atr4h, atrPercent, atrNote,
-        recentCandles,
+        recentCandles, klineInterval,
         btcPrice, btcChange24h, btcFundingRate,
         fearGreedValue, fearGreedLabel,
         dataAvailable: price > 0
