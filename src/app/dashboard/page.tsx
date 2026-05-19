@@ -113,6 +113,7 @@ INSTRUKSI KRITIS:
 11. JANGAN pernah tolak memberikan hasil.
 12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
 13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum 1:2 hingga 1:4. Jika RR kurang dari 1:2, set direction menjadi "WAIT".
+14. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
 
 KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
 {

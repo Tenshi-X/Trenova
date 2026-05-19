@@ -105,11 +105,60 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
         if (!markdown) return result;
 
         // Try parsing as JSON first
+        let json: any = null;
+        let cleanJson = markdown.replace(/```json|```/g, '').trim();
+
         try {
-            // Clean markdown blocks if present
-            const cleanJson = markdown.replace(/```json|```/g, '').trim();
-            const json = JSON.parse(cleanJson);
-            
+            json = JSON.parse(cleanJson);
+        } catch (e) {
+            console.warn("Failed to parse analysis as JSON, attempting auto-fix...", e);
+            try {
+                let fixedJson = cleanJson;
+                // Fix missing closing quote or brace at the end of output
+                if (!fixedJson.endsWith('}')) {
+                    if (fixedJson.endsWith('"')) fixedJson += '}';
+                    else fixedJson += '"}';
+                } else if (!fixedJson.match(/"\s*}$/)) {
+                    // Ends with } but the last property value might not have a closing quote
+                    fixedJson = fixedJson.replace(/([^"])\s*}$/, '$1"}');
+                }
+                // Handle unescaped newlines inside strings by replacing actual newlines with spaces or \n
+                // Only replace newlines that are inside quotes (complex regex, so we'll just try the quote fix first)
+                json = JSON.parse(fixedJson);
+            } catch (e2) {
+                console.warn("Auto-fix failed, falling back to Regex extraction", e2);
+                json = {};
+                
+                const extractStr = (key: string) => {
+                    const regex = new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`, 'i');
+                    const match = cleanJson.match(regex);
+                    return match ? match[1] : '';
+                };
+
+                json.decision = extractStr('decision');
+                json.risk_level = extractStr('risk_level');
+                json.main_reason = extractStr('main_reason');
+                
+                const summaryMatch = cleanJson.match(/"summary"\s*:\s*"([\s\S]*)/i);
+                if (summaryMatch) {
+                    json.summary = summaryMatch[1].replace(/"?\s*}?\s*$/, '').trim();
+                } else {
+                    json.summary = cleanJson; // Ultimate fallback
+                }
+                
+                const structMatch = cleanJson.match(/"market_structure"\s*:\s*{([^}]+)}/i);
+                if (structMatch) {
+                    json.market_structure = {
+                        structure: structMatch[1].match(/"structure"\s*:\s*"([^"]+)"/)?.[1],
+                        key_support: structMatch[1].match(/"key_support"\s*:\s*"([^"]+)"/)?.[1],
+                        key_resistance: structMatch[1].match(/"key_resistance"\s*:\s*"([^"]+)"/)?.[1],
+                    };
+                }
+            }
+        }
+
+        // Map parsed json to result
+        if (json) {
             result.decision = json.decision || "WAIT";
             result.riskLevel = json.risk_level || "Medium";
             result.summary = json.summary || "";
@@ -166,31 +215,9 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                     };
                 });
             }
-            return result;
-        } catch (e) {
-            console.warn("Failed to parse analysis as JSON, falling back to Regex", e);
-            // FALLBACK TO REGEX (Old logic)
-             // Extract Decision
-            const decisionMatch = markdown.match(/(?:👉 Decision|👉 Keputusan):\s*(?:\[)?([^\n\]]+)/i);
-            if (decisionMatch) {
-                const rawDec = decisionMatch[1].toUpperCase();
-                if (rawDec.includes("LONG") || rawDec.includes("BUY") || rawDec.includes("BELI")) result.decision = "BUY"; 
-                else if (rawDec.includes("SHORT") || rawDec.includes("SELL") || rawDec.includes("JUAL")) result.decision = "SELL"; 
-                else result.decision = "WAIT";
-            }
-
-            // Extract Risk
-            const riskMatch = markdown.match(/(?:👉 Risk Level|👉 Tingkat Risiko):\s*\[?(.*?)\]?/i);
-            if (riskMatch) result.riskLevel = riskMatch[1];
-            
-            // Extract Reason
-            const reasonMatch = markdown.match(/(?:👉\s*Main Reason|👉\s*Alasan Utama)(?:[\*\s]*):?\s*([^\n]+)/i); 
-            if (reasonMatch) result.mainReason = reasonMatch[1].trim().replace(/\*\*/g, '');
-
-            result.summary = markdown;
-            
-            return result;
         }
+        return result;
+
     }, [markdown, language]);
 
     const { decision, riskLevel, plans, summary, mainReason } = parsedData;
