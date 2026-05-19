@@ -108,22 +108,49 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
         let json: any = null;
         let cleanJson = markdown.replace(/```json|```/g, '').trim();
 
+        const repairJson = (str: string) => {
+            let out = str;
+            // 1. Close unclosed strings
+            let quotes = 0;
+            let isEscaped = false;
+            for (let i = 0; i < str.length; i++) {
+                if (str[i] === '\\' && !isEscaped) isEscaped = true;
+                else {
+                    if (str[i] === '"' && !isEscaped) quotes++;
+                    isEscaped = false;
+                }
+            }
+            if (quotes % 2 !== 0) out += '"';
+            
+            // 2. Remove trailing commas
+            out = out.replace(/,\s*$/, '');
+
+            // 3. Balance braces and brackets
+            let stripped = out.replace(/"(?:[^"\\]|\\.)*"/g, '""');
+            let stack: string[] = [];
+            for (let char of stripped) {
+                if (char === '{' || char === '[') stack.push(char);
+                else if (char === '}') { if (stack[stack.length - 1] === '{') stack.pop(); }
+                else if (char === ']') { if (stack[stack.length - 1] === '[') stack.pop(); }
+            }
+            
+            while (stack.length > 0) {
+                let char = stack.pop();
+                if (char === '{') out += '}';
+                else if (char === '[') out += ']';
+            }
+            return out;
+        };
+
         try {
             json = JSON.parse(cleanJson);
         } catch (e) {
             console.warn("Failed to parse analysis as JSON, attempting auto-fix...", e);
             try {
-                let fixedJson = cleanJson;
-                // Fix missing closing quote or brace at the end of output
-                if (!fixedJson.endsWith('}')) {
-                    if (fixedJson.endsWith('"')) fixedJson += '}';
-                    else fixedJson += '"}';
-                } else if (!fixedJson.match(/"\s*}$/)) {
-                    // Ends with } but the last property value might not have a closing quote
-                    fixedJson = fixedJson.replace(/([^"])\s*}$/, '$1"}');
-                }
-                // Handle unescaped newlines inside strings by replacing actual newlines with spaces or \n
-                // Only replace newlines that are inside quotes (complex regex, so we'll just try the quote fix first)
+                // Try aggressive repair for truncated JSON
+                let fixedJson = repairJson(cleanJson);
+                // Also remove unescaped literal newlines inside strings (often breaks parser)
+                fixedJson = fixedJson.replace(/\n/g, ' ').replace(/\r/g, ''); 
                 json = JSON.parse(fixedJson);
             } catch (e2) {
                 console.warn("Auto-fix failed, falling back to Regex extraction", e2);
@@ -139,11 +166,11 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                 json.risk_level = extractStr('risk_level');
                 json.main_reason = extractStr('main_reason');
                 
-                const summaryMatch = cleanJson.match(/"summary"\s*:\s*"([\s\S]*)/i);
+                const summaryMatch = cleanJson.match(/"summary"\s*:\s*"([^"]*)/i);
                 if (summaryMatch) {
-                    json.summary = summaryMatch[1].replace(/"?\s*}?\s*$/, '').trim();
+                    json.summary = summaryMatch[1].trim();
                 } else {
-                    json.summary = cleanJson; // Ultimate fallback
+                    json.summary = "Analisis sebagian terpotong oleh server, tidak dapat menampilkan ringkasan lengkap."; 
                 }
                 
                 const structMatch = cleanJson.match(/"market_structure"\s*:\s*{([^}]+)}/i);
@@ -161,8 +188,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
         if (json) {
             result.decision = json.decision || "WAIT";
             result.riskLevel = json.risk_level || "Medium";
-            result.summary = json.summary || "";
-            result.mainReason = json.main_reason || "";
+            result.summary = json.summary || "Analisis terpotong oleh batas waktu server sebelum selesai di-generate. Berikut adalah poin-poin yang berhasil disimpulkan.";
+            result.mainReason = json.main_reason || "Tidak ada alasan utama yang ditemukan karena respons terpotong.";
             result.marketStructure = json.market_structure || null;
             result.liveSnapshot = json.live_snapshot || null;
             result.sinyalTeknikal = Array.isArray(json.sinyal_teknikal) ? json.sinyal_teknikal : [];
