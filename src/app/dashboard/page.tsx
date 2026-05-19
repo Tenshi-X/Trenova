@@ -478,7 +478,14 @@ export default function DashboardPage() {
             body: JSON.stringify({ prompt: promptText, image: primaryImage })
         });
 
-        const resJson = await res.json();
+        const rawText = await res.text();
+        let resJson;
+        try {
+            resJson = JSON.parse(rawText);
+        } catch (e) {
+            console.error('Server returned non-JSON response:', rawText);
+            throw new Error(`Server Error (${res.status}): Server sibuk atau merespons dengan format yang salah. Harap tunggu sebentar lalu tekan Generate lagi.`);
+        }
 
         if (!res.ok) {
             if (res.status === 503 || resJson.retryable) {

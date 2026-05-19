@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const runtime = 'edge';
-export const maxDuration = 300; // Increase Vercel timeout limit to 5 minutes
+export const maxDuration = 60; // Max allowed for Vercel Hobby is 60s
 // Direct Gemini API — bypasses Supabase Edge Function for lower latency & full control
 const GEMINI_MODEL  = 'gemini-2.5-flash';
 const MAX_RETRIES   = 3;
