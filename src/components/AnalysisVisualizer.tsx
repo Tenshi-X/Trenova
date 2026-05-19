@@ -170,7 +170,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                 if (summaryMatch) {
                     json.summary = summaryMatch[1].trim();
                 } else {
-                    json.summary = "Analisis sebagian terpotong oleh server, tidak dapat menampilkan ringkasan lengkap."; 
+                    // Try to use main reason as summary if summary is missing
+                    json.summary = json.main_reason || "Gagal mengekstrak ringkasan lengkap. Data AI kemungkinan terpotong."; 
                 }
                 
                 const structMatch = cleanJson.match(/"market_structure"\s*:\s*{([^}]+)}/i);
@@ -188,8 +189,8 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
         if (json) {
             result.decision = json.decision || "WAIT";
             result.riskLevel = json.risk_level || "Medium";
-            result.summary = json.summary || "Analisis terpotong oleh batas waktu server sebelum selesai di-generate. Berikut adalah poin-poin yang berhasil disimpulkan.";
-            result.mainReason = json.main_reason || "Tidak ada alasan utama yang ditemukan karena respons terpotong.";
+            result.summary = json.summary || json.main_reason || "Gagal merender ringkasan.";
+            result.mainReason = json.main_reason || "Data analisa tidak lengkap atau terpotong.";
             result.marketStructure = json.market_structure || null;
             result.liveSnapshot = json.live_snapshot || null;
             result.sinyalTeknikal = Array.isArray(json.sinyal_teknikal) ? json.sinyal_teknikal : [];

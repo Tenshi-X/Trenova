@@ -118,7 +118,7 @@ INSTRUKSI KRITIS:
 8. Open Interest ${market.openInterestUSD}: OI naik + harga naik = trend valid; OI turun + harga naik = fake pump.
 9. KORELASI BTC: evaluasi apakah setup ${sym} konsisten dengan kondisi BTC saat ini.
 10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
-11. JANGAN pernah tolak memberikan hasil.
+11. JANGAN pernah tolak memberikan hasil. JAWAB DENGAN RINGKAS DAN PADAT agar tidak terpotong oleh batas token.
 12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
 13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum ${targetRR.replace('Min ', '')}. Jika RR kurang dari target, set direction menjadi "WAIT".
 14. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
@@ -127,7 +127,8 @@ KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar 
 {
   "decision": "BUY" | "SELL" | "WAIT",
   "risk_level": "Low" | "Medium" | "High" | "Extreme",
-  "main_reason": "Alasan utama 1-2 kalimat",
+  "main_reason": "Alasan utama 1-2 kalimat singkat",
+  "summary": "Ringkasan eksekutif menyeluruh kondisi market (2-3 kalimat)",
   "live_snapshot": {
     "harga_spot": "${market.price > 0 ? pFmt(market.price) : 'N/A'}",
     "funding_rate": "${market.fundingRate !== null ? pctFmt(market.fundingRate) : 'N/A'}",
@@ -142,7 +143,7 @@ KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar 
     "key_resistance": "$xxx.xx"
   },
   "sinyal_teknikal": [
-    {"nama": "nama sinyal", "aktif": true/false, "detail": "penjelasan konkret"}
+    {"nama": "nama sinyal", "aktif": true/false, "detail": "penjelasan singkat maks 1 kalimat"}
   ],
   "plans": [
     {
