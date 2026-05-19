@@ -66,6 +66,15 @@ function buildEnrichedPrompt(
     ? (isId ? 'User mengunggah screenshot chart. Analisa pola visual dari gambar tersebut dan kombinasikan dengan data live.' : 'User uploaded a chart screenshot. Analyze visual patterns and combine with live data.')
     : '';
 
+  // Custom instruction handling for parameters
+  const strategyInstruction = strategyFocus === 'All-Round' 
+    ? 'Bebas / All-Round (Pilih setup apa saja yang paling optimal sesuai kondisi market)'
+    : `${strategyFocus} (WAJIB prioritaskan dan cari setup ${strategyFocus})`;
+
+  const indicatorInstruction = indicatorPref === 'Default'
+    ? 'Standar (Gunakan semua indikator Price Action, Momentum, dan Volume secara seimbang)'
+    : `${indicatorPref} (Fokuskan konfirmasi teknikal utama hanya menggunakan ${indicatorPref})`;
+
   const dataContext = `
 === DATA LIVE PASAR (REAL-TIME BINANCE) ===
 Pair          : ${sym}/USDT
@@ -91,8 +100,8 @@ ${ohlcCtx}
 Gaya Trading  : ${tradingStyle.toUpperCase()}
 Timeframe     : ${timeframe}
 Toleransi Risiko : ${riskTolerance} (Sesuaikan agresivitas entry dan SL)
-Fokus Strategi   : ${strategyFocus} (Prioritaskan setup ini)
-Fokus Indikator  : ${indicatorPref} (Gunakan ini sebagai konfirmasi utama)
+Fokus Strategi   : ${strategyInstruction}
+Fokus Indikator  : ${indicatorInstruction}
 Target Min. RR   : ${targetRR} (Abaikan setup jika RR di bawah target)
 ${imageNote ? `\n=== CHART IMAGE ===\n${imageNote}` : ''}
 ${userPrompt.trim() ? `\n=== INSTRUKSI TAMBAHAN USER ===\n${userPrompt.trim()}` : ''}`.trim();
