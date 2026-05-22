@@ -41,8 +41,7 @@ export async function POST(req: Request) {
         const requestBody = JSON.stringify({
             contents: [{ parts }],
             generationConfig: {
-                temperature: 0.4,
-                maxOutputTokens: 2048
+                temperature: 0.4
             },
             safetySettings: [
                 {
