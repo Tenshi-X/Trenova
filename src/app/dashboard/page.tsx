@@ -127,74 +127,28 @@ INSTRUKSI KRITIS:
 8. Open Interest ${market.openInterestUSD}: OI naik + harga naik = trend valid; OI turun + harga naik = fake pump.
 9. KORELASI BTC: evaluasi apakah setup ${sym} konsisten dengan kondisi BTC saat ini.
 10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
-11. JANGAN pernah tolak memberikan hasil. JAWAB DENGAN RINGKAS DAN PADAT agar tidak terpotong oleh batas token.
-12. Berikan minimal 2 dan maksimal 5 level Take Profit yang realistis.
-13. PASTIKAN setup trading memiliki Risk to Reward (RR) ratio minimum ${targetRR.replace('Min ', '')}. Jika RR kurang dari target, set direction menjadi "WAIT".
-14. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
+11. JANGAN pernah tolak memberikan hasil. JAWAB DENGAN RINGKAS DAN PADAT agar tidak terpotong12. Buat maksimal 3 setup: 1 PRIMARY, dan MAKSIMAL 2 ALTERNATIF.
+13. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
 
-KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
+KEMBALIKAN HANYA JSON valid (tanpa markdown, tanpa teks di luar JSON):
 {
-  "decision": "BUY" | "SELL" | "WAIT",
-  "risk_level": "Low" | "Medium" | "High" | "Extreme",
-  "main_reason": "Alasan utama 1-2 kalimat singkat",
-  "summary": "Ringkasan eksekutif menyeluruh kondisi market (2-3 kalimat)",
-  "live_snapshot": {
-    "harga_spot": "${market.price > 0 ? pFmt(market.price) : 'N/A'}",
-    "funding_rate": "${market.fundingRate !== null ? pctFmt(market.fundingRate) : 'N/A'}",
-    "open_interest": "${market.openInterestUSD}",
-    "atr_4h": "${market.atr4h}",
-    "fear_greed": "${market.fearGreedValue}/100 ${market.fearGreedLabel}",
-    "btc_price": "${market.btcPrice ? pFmt(market.btcPrice) : 'N/A'}"
-  },
-  "market_structure": {
-    "structure": "Bullish" | "Bearish" | "Ranging",
-    "key_support": "$xxx.xx",
-    "key_resistance": "$xxx.xx"
-  },
-  "sinyal_teknikal": [
-    {"nama": "nama sinyal", "aktif": true/false, "detail": "penjelasan singkat maks 1 kalimat"}
-  ],
-  "plans": [
+  "verdict": "LONG" | "SHORT" | "WAIT",
+  "keyakinan": 40-95,
+  "alasan": "Satu kalimat alasan paling krusial.",
+  "setup": [
     {
-      "type": "Primary Setup",
-      "direction": "BUY" | "SHORT",
-      "entry_zone": "$xxx - $yyy",
-      "stop_loss": "$xxx",
-      "take_profit_1": "$xxx",
-      "take_profit_2": "$yyy",
-      "take_profit_3": "$zzz (opsional)",
-      "take_profit_4": "$xxx (opsional)",
-      "take_profit_5": "$xxx (opsional)",
-      "technical_reason": "penjelasan teknikal",
-      "conviction": 40-95,
-      "conviction_reason": "alasan teknikal conviction",
-      "kondisi_entry": ["konfirmasi 1", "konfirmasi 2"],
-      "invalidasi": "kondisi yang membatalkan setup"
-    },
-    {
-      "type": "Alternative Scenario",
-      "direction": "SHORT" | "BUY",
-      "entry_zone": "...", "stop_loss": "...",
-      "take_profit_1": "...", "take_profit_2": "...",
-      "technical_reason": "...",
-      "conviction": 30-70, "conviction_reason": "...",
-      "kondisi_entry": ["..."], "invalidasi": "..."
+      "tipe": "PRIMARY",
+      "arah": "LONG" | "SHORT",
+      "entry": "$xxx - $yyy",
+      "sl": "$xxx",
+      "tp1": "$xxx",
+      "tp2": "$yyy"
     }
   ],
-  "squeeze_alert": {
-    "tipe": "SHORT SQUEEZE" | "LONG SQUEEZE" | "NONE",
-    "probabilitas": "TINGGI" | "SEDANG" | "RENDAH",
-    "catatan": "penjelasan berdasarkan funding rate dan OI"
-  },
-  "risk_management": {
-    "max_loss_rekomendasi": "1-2% dari total modal per trade",
-    "peringatan": ["peringatan risiko spesifik"]
-  },
-  "trade_management": {
-    "tindakan_setelah_tp1": "Contoh: Pindahkan SL ke harga Entry (Breakeven) dan amankan 50% profit.",
-    "skenario_jika_sl_hit": "Contoh: Tunggu konfirmasi di level support terdekat sebelum mencari peluang re-entry."
-  },
-  "summary": "Penjelasan detail 2-3 paragraf breakdown teknikal, struktur pasar, dan reasoning."
+  "manajemen_risiko": {
+    "leverage_maks": "Contoh: 10x",
+    "alokasi_modal": "Contoh: 1-2% modal"
+  }
 }
 `;
 }
@@ -834,6 +788,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Menentukan durasi trading (Cepat/Harian/Berminggu). Mempengaruhi jarak target harga dan agresivitas setup AI.</p>
                             </div>
 
                             {/* Timeframe Dropdown */}
@@ -855,6 +810,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Resolusi data candle (OHLC) yang dianalisis. Mempengaruhi presisi entry point yang diberikan AI.</p>
                             </div>
 
                             {/* Risk Tolerance */}
@@ -874,6 +830,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Menentukan jarak Stop Loss (SL). Low risk memberi SL lebih lebar/aman, High risk memberi SL ketat.</p>
                             </div>
 
                             {/* Strategy Focus */}
@@ -894,6 +851,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Memaksa AI mencari pola spesifik. Misal: Breakout untuk momen harga menembus resistance.</p>
                             </div>
 
                             {/* Indicator Preference */}
@@ -914,6 +872,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Bobot analisa teknikal. Fokus Price Action mengabaikan indikator, Momentum mencari overbought/oversold.</p>
                             </div>
 
                             {/* Target Risk/Reward */}
@@ -933,6 +892,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Filter rekomendasi AI. Hanya setup dengan rasio potensi Profit (Reward) vs Risiko (Risk) di atas batas ini yang diberikan.</p>
                             </div>
                         </div>
 

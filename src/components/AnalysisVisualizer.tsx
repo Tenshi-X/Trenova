@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, AlertCircle, Target, Shield, Zap, Search, Microscope, FileText, CheckCircle2, TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import clsx from 'clsx';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface AnalysisVisualizerProps {
     markdown: string; // Can be JSON string or Markdown
@@ -34,8 +35,6 @@ function useTypewriter(text: string, speed = 10) {
     return text ? text.slice(0, displayedLength) : '';
 } 
 
-import { useLanguage } from '@/context/LanguageContext';
-
 export default function AnalysisVisualizer({ markdown, coinName, instant = false }: AnalysisVisualizerProps) {
     const { language } = useLanguage();
     
@@ -45,224 +44,79 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
             intelligence: "ANALISIS",
             risk: "Risiko",
             conviction: "Keyakinan",
-            detailed_breakdown: "PENJELASAN DETAIL",
+            detailed_breakdown: "ALASAN UTAMA",
             trend_following: "TREND FOLLOWING",
             counter_trend: "COUNTER TREND",
             prob: "Probabilitas",
             entry: "ENTRY",
             sl: "STOP LOSS",
-            market_structure: "Struktur Pasar",
-            structure: "Struktur",
-            key_support: "Support Kunci",
-            key_resistance: "Resistance Kunci",
             open: "Terbuka",
-            bullish: "BULLISH",
-            bearish: "BEARISH",
-            ranging: "RANGING",
             buy: "BUY",
             short: "SHORT",
+            wait: "WAIT"
         },
         en: {
             intelligence: "INTELLIGENCE",
             risk: "Risk",
             conviction: "Conviction",
-            detailed_breakdown: "DETAILED BREAKDOWN",
+            detailed_breakdown: "MAIN REASON",
             trend_following: "TREND FOLLOWING",
             counter_trend: "COUNTER TREND",
             prob: "Prob",
             entry: "ENTRY",
             sl: "STOP LOSS",
-            market_structure: "Market Structure",
-            structure: "Structure",
-            key_support: "Key Support",
-            key_resistance: "Key Resistance",
             open: "Open",
-            bullish: "BULLISH",
-            bearish: "BEARISH",
-            ranging: "RANGING",
             buy: "BUY",
             short: "SHORT",
+            wait: "WAIT"
         }
     };
 
     const text = language === 'id' ? t.id : t.en;
 
     const parsedData = useMemo(() => {
-        let result = {
-            decision: "WAIT",
-            riskLevel: "Medium",
-            plans: [] as any[],
-            summary: language === 'id' ? "Analisis dimuat." : "Analysis loaded.",
-            mainReason: "",
-            marketStructure: null as any,
-            liveSnapshot: null as any,
-            sinyalTeknikal: [] as any[],
-            squeezeAlert: null as any,
-            riskManagement: null as any,
-            tradeManagement: null as any
-        };
-
-        if (!markdown) return result;
-
-        // Try parsing as JSON first
-        let json: any = null;
-        let cleanJson = markdown.replace(/```json|```/g, '').trim();
-
-        const repairJson = (str: string) => {
-            let out = str;
-            // 1. Close unclosed strings
-            let quotes = 0;
-            let isEscaped = false;
-            for (let i = 0; i < str.length; i++) {
-                if (str[i] === '\\' && !isEscaped) isEscaped = true;
-                else {
-                    if (str[i] === '"' && !isEscaped) quotes++;
-                    isEscaped = false;
-                }
-            }
-            if (quotes % 2 !== 0) out += '"';
-            
-            // 2. Remove trailing commas
-            out = out.replace(/,\s*$/, '');
-
-            // 3. Balance braces and brackets
-            let stripped = out.replace(/"(?:[^"\\]|\\.)*"/g, '""');
-            let stack: string[] = [];
-            for (let char of stripped) {
-                if (char === '{' || char === '[') stack.push(char);
-                else if (char === '}') { if (stack[stack.length - 1] === '{') stack.pop(); }
-                else if (char === ']') { if (stack[stack.length - 1] === '[') stack.pop(); }
-            }
-            
-            while (stack.length > 0) {
-                let char = stack.pop();
-                if (char === '{') out += '}';
-                else if (char === '[') out += ']';
-            }
-            return out;
-        };
-
+        if (!markdown) return null;
         try {
-            json = JSON.parse(cleanJson);
+            const jsonMatch = markdown.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) return null;
+            return JSON.parse(jsonMatch[0]);
         } catch (e) {
-            console.warn("Failed to parse analysis as JSON, attempting auto-fix...", e);
-            try {
-                // Try aggressive repair for truncated JSON
-                let fixedJson = repairJson(cleanJson);
-                // Also remove unescaped literal newlines inside strings (often breaks parser)
-                fixedJson = fixedJson.replace(/\n/g, ' ').replace(/\r/g, ''); 
-                json = JSON.parse(fixedJson);
-            } catch (e2) {
-                console.warn("Auto-fix failed, falling back to Regex extraction", e2);
-                json = {};
-                
-                const extractStr = (key: string) => {
-                    const regex = new RegExp(`"${key}"\\s*:\\s*"([^"]*)"`, 'i');
-                    const match = cleanJson.match(regex);
-                    return match ? match[1] : '';
-                };
-
-                json.decision = extractStr('decision');
-                json.risk_level = extractStr('risk_level');
-                json.main_reason = extractStr('main_reason');
-                
-                const summaryMatch = cleanJson.match(/"summary"\s*:\s*"([^"]*)/i);
-                if (summaryMatch) {
-                    json.summary = summaryMatch[1].trim();
-                } else {
-                    // Try to use main reason as summary if summary is missing
-                    json.summary = json.main_reason || "Gagal mengekstrak ringkasan lengkap. Data AI kemungkinan terpotong."; 
-                }
-                
-                const structMatch = cleanJson.match(/"market_structure"\s*:\s*{([^}]+)}/i);
-                if (structMatch) {
-                    json.market_structure = {
-                        structure: structMatch[1].match(/"structure"\s*:\s*"([^"]+)"/)?.[1],
-                        key_support: structMatch[1].match(/"key_support"\s*:\s*"([^"]+)"/)?.[1],
-                        key_resistance: structMatch[1].match(/"key_resistance"\s*:\s*"([^"]+)"/)?.[1],
-                    };
-                }
-            }
+            console.error("Failed to parse analysis JSON:", e);
+            return null;
         }
+    }, [markdown]);
 
-        // Map parsed json to result
-        if (json) {
-            result.decision = json.decision || "WAIT";
-            result.riskLevel = json.risk_level || "Medium";
-            result.summary = json.summary || json.main_reason || "Gagal merender ringkasan.";
-            result.mainReason = json.main_reason || "Data analisa tidak lengkap atau terpotong.";
-            result.marketStructure = json.market_structure || null;
-            result.liveSnapshot = json.live_snapshot || null;
-            result.sinyalTeknikal = Array.isArray(json.sinyal_teknikal) ? json.sinyal_teknikal : [];
-            result.squeezeAlert = json.squeeze_alert || null;
-            result.riskManagement = json.risk_management || null;
-            result.tradeManagement = json.trade_management || null;
-            
-            // Determine trend for direction logic
-            const trend = result.marketStructure?.structure?.toLowerCase() || 'ranging';
-            
-            if (Array.isArray(json.plans)) {
-                result.plans = json.plans.map((p: any, idx: number) => {
-                    // Determine direction from the AI response, or infer from trend
-                    let direction = p.direction?.toUpperCase() || '';
-                    const isPrimary = idx === 0 || (p.type || '').toLowerCase().includes('primary') || (p.type || '').toLowerCase().includes('trend following');
-                    
-                    // Fallback: infer direction if AI didn't provide it
-                    if (!direction || (direction !== 'BUY' && direction !== 'SHORT')) {
-                        if (trend === 'bullish') {
-                            direction = isPrimary ? 'BUY' : 'SHORT';
-                        } else if (trend === 'bearish') {
-                            direction = isPrimary ? 'SHORT' : 'BUY';
-                        } else {
-                            // Ranging: use decision as hint
-                            direction = result.decision === 'BUY' ? (isPrimary ? 'BUY' : 'SHORT') : (isPrimary ? 'SHORT' : 'BUY');
-                        }
-                    }
-                    
-                    // Collect TP levels (up to 5)
-                    const tps: string[] = [];
-                    for (let i = 1; i <= 5; i++) {
-                        const tp = p[`take_profit_${i}`];
-                        if (tp && tp !== 'N/A' && tp !== '-' && tp !== '') {
-                            tps.push(tp);
-                        }
-                    }
-                    
-                    return {
-                        type: p.type,
-                        direction,
-                        isPrimary,
-                        entry: p.entry_zone,
-                        sl: p.stop_loss,
-                        tps,
-                        reason: p.technical_reason,
-                        conviction: p.conviction || 50,
-                        convictionReason: p.conviction_reason || '',
-                        kondisiEntry: Array.isArray(p.kondisi_entry) ? p.kondisi_entry : [],
-                        invalidasi: p.invalidasi || ''
-                    };
-                });
-            }
-        }
-        return result;
+    if (!parsedData) {
+        return (
+            <div className="p-8 text-center text-slate-500 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
+                <AlertCircle className="mx-auto mb-3 text-slate-400" size={32} />
+                <p>Gagal memuat analisis. Format data tidak dikenali atau terpotong.</p>
+            </div>
+        );
+    }
 
-    }, [markdown, language]);
+    // Adapt legacy formats if they still exist
+    const verdict = parsedData.verdict || parsedData.decision || "WAIT";
+    const alasan = parsedData.alasan || parsedData.main_reason || parsedData.summary || "Tidak ada alasan spesifik.";
+    const keyakinan = parsedData.keyakinan || (parsedData.plans && parsedData.plans[0]?.conviction) || 50;
+    const setups = parsedData.setup || (parsedData.plans ? parsedData.plans.map((p: any) => ({
+        tipe: p.type || 'PRIMARY',
+        arah: p.direction || verdict,
+        entry: p.entry_zone || p.entry || 'N/A',
+        sl: p.stop_loss || p.sl || 'N/A',
+        tp1: p.take_profit_1 || p.tp1,
+        tp2: p.take_profit_2 || p.tp2,
+        tp3: p.take_profit_3 || p.tp3
+    })) : []);
+    const manajemen = parsedData.manajemen_risiko || parsedData.risk_management || null;
 
-    const { decision, riskLevel, plans, summary, mainReason } = parsedData;
+    // Typewriter
+    const typedReason = instant ? alasan : useTypewriter(alasan, 10);
+
+    const isLong = verdict === "LONG" || verdict === "BUY";
+    const isShort = verdict === "SHORT" || verdict === "SELL";
     
-    // Typewriter for Summary
-    const typedSummary = instant ? summary : useTypewriter(summary, 10);
-    const typedReason = instant ? mainReason : useTypewriter(mainReason, 20);
-
-    const isLong = decision === "BUY";
-    const isShort = decision === "SELL";
-    
-    const mainColor = isLong ? "text-emerald-500" : isShort ? "text-rose-500" : "text-slate-500";
-    const mainBg = isLong ? "bg-emerald-500" : isShort ? "bg-rose-500" : "bg-slate-500";
     const mainGradient = isLong ? "from-emerald-500 to-emerald-700" : isShort ? "from-rose-500 to-rose-700" : "from-slate-500 to-slate-700";
-
-    // Get trend label
-    const trendLabel = parsedData.marketStructure?.structure?.toUpperCase() || 'RANGING';
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -274,353 +128,136 @@ export default function AnalysisVisualizer({ markdown, coinName, instant = false
                     <div>
                         <div className="flex items-center gap-2 opacity-80 mb-1">
                             <span className="text-xs font-bold uppercase tracking-wider">{coinName} {text.intelligence}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">{riskLevel} {text.risk}</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
-                            {decision}
+                            {verdict}
                             {isLong && <ArrowUpCircle size={40} className="animate-pulse" />}
                             {isShort && <ArrowDownCircle size={40} className="animate-pulse" />}
                             {!isLong && !isShort && <AlertCircle size={40} />}
                         </h2>
-                        <p className="mt-4 text-white/90 max-w-lg text-lg font-medium leading-relaxed">
-                            {typedReason}<span className="animate-pulse">_</span>
-                        </p>
                     </div>
 
                     {/* Conviction Dial */}
-                    {plans.length > 0 && (
-                         <div className="flex flex-col items-center bg-black/20 backdrop-blur-sm rounded-2xl p-4 min-w-[120px]">
-                            <span className="text-xs font-bold opacity-70 mb-2 uppercase">{text.conviction}</span>
-                            <div className="relative w-24 h-12 overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-full bg-white/20 rounded-t-full"></div>
-                                <div 
-                                    className="absolute top-0 left-0 w-full h-full bg-white rounded-t-full origin-bottom transition-all duration-1000 ease-out"
-                                    style={{ transform: `rotate(${(plans[0].conviction / 100) * 180 - 180}deg)` }}
-                                ></div>
-                            </div>
-                            <span className="text-2xl font-black mt-[-10px] z-10">{plans[0].conviction}%</span>
-                         </div>
-                    )}
+                    <div className="flex flex-col items-center bg-black/20 backdrop-blur-sm rounded-2xl p-4 min-w-[120px]">
+                        <span className="text-xs font-bold opacity-70 mb-2 uppercase">{text.conviction}</span>
+                        <div className="relative w-24 h-12 overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full bg-white/20 rounded-t-full"></div>
+                            <div 
+                                className="absolute top-0 left-0 w-full h-full bg-white rounded-t-full origin-bottom transition-all duration-1000 ease-out"
+                                style={{ transform: `rotate(${(keyakinan / 100) * 180 - 180}deg)` }}
+                            ></div>
+                        </div>
+                        <span className="text-2xl font-black mt-[-10px] z-10">{keyakinan}%</span>
+                    </div>
                 </div>
             </div>
 
-            {/* DETAILED BREAKDOWN BOX */}
-            {summary && (
-                <div className="bg-slate-50 dark:bg-slate-900 border-l-4 border-neon p-4 rounded-r-xl">
-                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-500 mb-2 uppercase">
-                        <FileText size={16} /> {text.detailed_breakdown}
-                    </h3>
-                    <div className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm md:text-base markdown-content">
-                        <ReactMarkdown 
-                            components={{
-                                strong: ({node, ...props}) => <span className="font-bold text-slate-900 dark:text-white" {...props} />,
-                                ul: ({node, ...props}) => <ul className="list-disc pl-4 space-y-1 my-2" {...props} />,
-                                ol: ({node, ...props}) => <ol className="list-decimal pl-4 space-y-1 my-2" {...props} />,
-                                li: ({node, ...props}) => <li className="pl-1" {...props} />,
-                                p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />
-                            }}
-                        >
-                            {typedSummary}
-                        </ReactMarkdown>
-                    </div>
-                </div>
-            )}
+            {/* ALASAN UTAMA BOX */}
+            <div className="bg-slate-50 dark:bg-slate-900 border-l-4 border-neon p-4 sm:p-5 rounded-r-xl">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-slate-500 mb-2 uppercase tracking-widest">
+                    <Activity size={16} className="text-neon" /> {text.detailed_breakdown}
+                </h3>
+                <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-medium md:text-lg">
+                    {typedReason}<span className="animate-pulse text-neon">_</span>
+                </p>
+            </div>
 
             {/* TRADING PLANS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {plans.map((plan, idx) => {
-                    const isBuy = plan.direction === 'BUY';
-                    const dirColor = isBuy ? 'emerald' : 'rose';
-                    const dirBg = isBuy ? 'bg-emerald-500' : 'bg-rose-500';
-                    const dirText = isBuy ? 'text-emerald-500' : 'text-rose-500';
-                    const dirBadgeBg = isBuy ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-rose-500/10 text-rose-500 border-rose-500/30';
+            {setups && setups.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {setups.map((plan: any, idx: number) => {
+                        const sLong = plan.arah === 'LONG' || plan.arah === 'BUY';
+                        const sShort = plan.arah === 'SHORT' || plan.arah === 'SELL';
+                        
+                        const dirBg = sLong ? 'bg-emerald-500' : sShort ? 'bg-rose-500' : 'bg-slate-500';
+                        const dirText = sLong ? 'text-emerald-500' : sShort ? 'text-rose-500' : 'text-slate-500';
+                        const dirBadgeBg = sLong ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : sShort ? 'bg-rose-500/10 text-rose-500 border-rose-500/30' : 'bg-slate-500/10 text-slate-500 border-slate-500/30';
 
-                    // Clean title: "Primary Setup" or "Alternative Scenario"
-                    const planTitle = plan.isPrimary 
-                        ? (language === 'id' ? 'Primary Setup' : 'Primary Setup')
-                        : (language === 'id' ? 'Skenario Alternatif' : 'Alternative Scenario');
-                    
-                    // Subtitle: "Mengikuti Tren · Bullish" or "Counter-Trend"
-                    const planSubtitle = plan.isPrimary
-                        ? `${text.trend_following} · ${trendLabel}`
-                        : text.counter_trend;
+                        const planTitle = plan.tipe || (idx === 0 ? 'PRIMARY SETUP' : 'SKENARIO ALTERNATIF');
+                        const tps = [plan.tp1, plan.tp2, plan.tp3].filter(Boolean);
 
-                    return (
-                        <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
-                            {/* Side accent bar */}
-                            <div className={clsx("absolute top-0 left-0 w-1.5 h-full", dirBg)} />
-                            
-                            <div className="flex flex-col gap-3 pl-3 mb-4">
-                                {/* Direction Badge + Conviction */}
-                                <div className="flex justify-between items-start">
-                                    <div className={clsx("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-sm", dirBadgeBg)}>
-                                        {isBuy ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                                        {plan.direction}
+                        return (
+                            <div key={idx} className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg relative overflow-hidden group hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                                {/* Side accent bar */}
+                                <div className={clsx("absolute top-0 left-0 w-1.5 h-full", dirBg)} />
+                                
+                                <div className="flex flex-col gap-3 pl-3 mb-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className={clsx("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border font-black text-sm", dirBadgeBg)}>
+                                            {sLong ? <TrendingUp size={16} /> : sShort ? <TrendingDown size={16} /> : <AlertCircle size={16} />}
+                                            {plan.arah || "WAIT"}
+                                        </div>
                                     </div>
-                                    {plan.conviction > 0 && (
-                                        <span className={clsx("px-2 py-1 rounded text-xs font-bold", idx === 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-slate-100 dark:bg-slate-800 text-slate-500")}>
-                                            {plan.conviction}% {text.prob}
+                                    
+                                    <div>
+                                        <h3 className={clsx("font-black text-base md:text-lg", dirText)}>
+                                            {planTitle}
+                                        </h3>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-3 pl-3">
+                                    {/* Entry Zone */}
+                                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/50 rounded-lg">
+                                        <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                            <Target size={14} /> {text.entry}
                                         </span>
+                                        <span className="font-mono font-black text-slate-800 dark:text-slate-200 text-sm">{plan.entry || 'N/A'}</span>
+                                    </div>
+                                    
+                                    {/* Stop Loss */}
+                                    <div className="flex justify-between items-center p-3 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-900/20">
+                                        <span className="flex items-center gap-2 text-xs font-bold text-rose-500">
+                                            <Shield size={14} /> {text.sl}
+                                        </span>
+                                        <span className="font-mono font-black text-rose-600 dark:text-rose-400 text-sm">{plan.sl || 'N/A'}</span>
+                                    </div>
+
+                                    {/* Take Profit Levels */}
+                                    {tps.length > 0 && (
+                                        <div className={clsx("grid gap-2", tps.length > 2 ? "grid-cols-3" : "grid-cols-2")}>
+                                            {tps.map((tp: string, tpIdx: number) => (
+                                                <div key={tpIdx} className="p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
+                                                    <span className="block text-[10px] font-bold text-emerald-500 mb-1">TP {tpIdx + 1}</span>
+                                                    <span className="font-mono font-black text-sm text-emerald-700 dark:text-emerald-400">{tp}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
-                                
-                                {/* Plan Title */}
-                                <div>
-                                    <h3 className={clsx("font-black text-base md:text-lg", dirText)}>
-                                        {planTitle}
-                                    </h3>
-                                    <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                                        {plan.isPrimary ? <TrendingUpIcon /> : <Shield size={12} />}
-                                        {planSubtitle}
-                                    </div>
-                                </div>
                             </div>
-                            
-                            <div className="space-y-3 pl-3">
-                                {/* Entry Zone */}
-                                <div className="flex justify-between items-center p-2.5 bg-slate-50 dark:bg-slate-950/50 rounded-lg">
-                                    <span className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                                        <Target size={14} /> {text.entry}
-                                    </span>
-                                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{plan.entry}</span>
-                                </div>
-                                
-                                {/* Stop Loss */}
-                                <div className="flex justify-between items-center p-2.5 bg-rose-50 dark:bg-rose-900/10 rounded-lg border border-rose-100 dark:border-rose-900/20">
-                                    <span className="flex items-center gap-2 text-xs font-bold text-rose-500">
-                                        <Shield size={14} /> {text.sl}
-                                    </span>
-                                    <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{plan.sl}</span>
-                                </div>
-
-                                {/* Take Profit Levels - Dynamic Grid */}
-                                {plan.tps && plan.tps.length > 0 && (
-                                    <div className={clsx(
-                                        "grid gap-2",
-                                        plan.tps.length <= 2 ? "grid-cols-2" : 
-                                        plan.tps.length === 3 ? "grid-cols-3" :
-                                        plan.tps.length === 4 ? "grid-cols-2 md:grid-cols-4" :
-                                        "grid-cols-2 md:grid-cols-5"
-                                    )}>
-                                        {plan.tps.map((tp: string, tpIdx: number) => (
-                                            <div key={tpIdx} className="p-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/20">
-                                                <span className="block text-[10px] font-bold text-emerald-500 mb-1">TP {tpIdx + 1}</span>
-                                                <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400">{tp}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {/* Technical Reason */}
-                                {plan.reason && (
-                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-                                        <p className="text-xs text-slate-500 italic">"{plan.reason}"</p>
-                                    </div>
-                                )}
-
-                                {/* Conviction Reason */}
-                                {plan.convictionReason && (
-                                    <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/20">
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                            <Zap size={12} className="text-amber-500" />
-                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase">
-                                                {language === 'id' ? `Kenapa ${plan.conviction}%?` : `Why ${plan.conviction}%?`}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-amber-700 dark:text-amber-300">{plan.convictionReason}</p>
-                                    </div>
-                                )}
-
-                                {/* Entry Conditions */}
-                                {plan.kondisiEntry && plan.kondisiEntry.length > 0 && (
-                                    <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
-                                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase flex items-center gap-1.5 mb-1.5">
-                                            <CheckCircle2 size={12} /> {language === 'id' ? 'Kondisi Entry' : 'Entry Conditions'}
-                                        </span>
-                                        <ul className="space-y-1">
-                                            {plan.kondisiEntry.map((k: string, ki: number) => (
-                                                <li key={ki} className="text-xs text-blue-700 dark:text-blue-300 flex items-start gap-1.5">
-                                                    <span className="text-blue-400 mt-0.5">•</span> {k}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {/* Invalidation */}
-                                {plan.invalidasi && (
-                                    <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase">⛔ {language === 'id' ? 'Invalidasi' : 'Invalidation'}</span>
-                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{plan.invalidasi}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* MARKET STRUCTURE */}
-            {parsedData.marketStructure && (
-                <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
-                     <div className="flex items-center gap-2 mb-6">
-                        <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-slate-500">
-                            <Microscope size={20} />
-                        </div>
-                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">{text.market_structure}</h3>
-                     </div>
-                     
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                            <span className="text-xs text-slate-400 uppercase font-bold">{text.structure}</span>
-                            <div className={clsx(
-                                "font-bold mt-1",
-                                parsedData.marketStructure.structure?.toLowerCase() === 'bullish' ? 'text-emerald-600 dark:text-emerald-400' :
-                                parsedData.marketStructure.structure?.toLowerCase() === 'bearish' ? 'text-rose-600 dark:text-rose-400' :
-                                'text-slate-700 dark:text-slate-300'
-                            )}>
-                                {parsedData.marketStructure.structure}
-                            </div>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                            <span className="text-xs text-slate-400 uppercase font-bold">{text.key_support}</span>
-                            <div className="font-bold text-emerald-600 dark:text-emerald-400 mt-1">{parsedData.marketStructure.key_support}</div>
-                        </div>
-                         <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl">
-                            <span className="text-xs text-slate-400 uppercase font-bold">{text.key_resistance}</span>
-                            <div className="font-bold text-rose-600 dark:text-rose-400 mt-1">{parsedData.marketStructure.key_resistance}</div>
-                        </div>
-                     </div>
+                        );
+                    })}
                 </div>
             )}
 
-            {/* LIVE SNAPSHOT */}
-            {parsedData.liveSnapshot && (
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Activity size={14} /> Live Snapshot
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                        {Object.entries(parsedData.liveSnapshot).map(([key, val]) => (
-                            <div key={key} className="p-2.5 bg-slate-50 dark:bg-slate-900 rounded-lg">
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">{key.replace(/_/g, ' ')}</span>
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-0.5 block">{String(val)}</span>
-                            </div>
-                        ))}
+            {/* MANAJEMEN RISIKO */}
+            {manajemen && (
+                <div className="mt-8 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-2xl overflow-hidden">
+                    <div className="bg-amber-100/50 dark:bg-amber-900/40 px-5 py-3 flex items-center gap-2 border-b border-amber-200 dark:border-amber-900/30">
+                        <Shield size={16} className="text-amber-600 dark:text-amber-500" />
+                        <h3 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest">
+                            {language === 'id' ? 'MANAJEMEN RISIKO' : 'RISK MANAGEMENT'}
+                        </h3>
                     </div>
-                </div>
-            )}
-
-            {/* SINYAL TEKNIKAL */}
-            {parsedData.sinyalTeknikal.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Zap size={14} /> {language === 'id' ? 'Sinyal Teknikal' : 'Technical Signals'}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {parsedData.sinyalTeknikal.map((s: any, i: number) => (
-                            <div key={i} className={clsx(
-                                "flex items-start gap-3 p-3 rounded-lg border",
-                                s.aktif 
-                                    ? "bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800" 
-                                    : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-60"
-                            )}>
-                                <div className={clsx(
-                                    "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                                    s.aktif ? "bg-emerald-500" : "bg-slate-400"
-                                )} />
-                                <div>
-                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{s.nama}</span>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{s.detail}</p>
-                                </div>
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-start gap-3">
+                            <Activity size={18} className="text-amber-500 mt-0.5 shrink-0" />
+                            <div>
+                                <div className="text-[10px] text-amber-700/70 dark:text-amber-500/70 uppercase mb-1 font-bold">MAX LEVERAGE</div>
+                                <div className="text-sm font-bold text-amber-900 dark:text-amber-100">{manajemen.leverage_maks || manajemen.max_loss_rekomendasi || '10x'}</div>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* SQUEEZE ALERT */}
-            {parsedData.squeezeAlert && parsedData.squeezeAlert.tipe !== 'NONE' && (
-                <div className={clsx(
-                    "mt-6 p-4 rounded-xl border-2 flex items-start gap-3",
-                    parsedData.squeezeAlert.probabilitas === 'TINGGI' 
-                        ? "bg-orange-50 dark:bg-orange-900/10 border-orange-300 dark:border-orange-700"
-                        : "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-300 dark:border-yellow-700"
-                )}>
-                    <AlertCircle size={20} className="text-orange-500 shrink-0 mt-0.5" />
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-black text-orange-600 dark:text-orange-400">{parsedData.squeezeAlert.tipe}</span>
-                            <span className={clsx(
-                                "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                                parsedData.squeezeAlert.probabilitas === 'TINGGI' ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" :
-                                parsedData.squeezeAlert.probabilitas === 'SEDANG' ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" :
-                                "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400"
-                            )}>{parsedData.squeezeAlert.probabilitas}</span>
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{parsedData.squeezeAlert.catatan}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* RISK MANAGEMENT */}
-            {parsedData.riskManagement && (
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Shield size={14} /> {language === 'id' ? 'Manajemen Risiko' : 'Risk Management'}
-                    </h3>
-                    <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl space-y-2">
-                        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                            {language === 'id' ? 'Max Loss:' : 'Max Loss:'} {parsedData.riskManagement.max_loss_rekomendasi}
-                        </div>
-                        {parsedData.riskManagement.peringatan && parsedData.riskManagement.peringatan.length > 0 && (
-                            <ul className="space-y-1">
-                                {parsedData.riskManagement.peringatan.map((w: string, i: number) => (
-                                    <li key={i} className="text-xs text-rose-600 dark:text-rose-400 flex items-start gap-1.5">
-                                        <span className="mt-0.5">⚠️</span> {w}
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* TRADE MANAGEMENT */}
-            {parsedData.tradeManagement && (
-                <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                        <Target size={14} /> {language === 'id' ? 'Trade Management' : 'Trade Management'}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/20">
-                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase flex items-center gap-1.5 mb-2">
-                                <ArrowUpCircle size={12} /> {language === 'id' ? 'Setelah TP1 Tercapai' : 'After TP1 Hit'}
-                            </span>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                {parsedData.tradeManagement.tindakan_setelah_tp1}
-                            </p>
-                        </div>
-                        <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-100 dark:border-rose-900/20">
-                            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase flex items-center gap-1.5 mb-2">
-                                <ArrowDownCircle size={12} /> {language === 'id' ? 'Jika SL Tersentuh' : 'If SL Hit'}
-                            </span>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                {parsedData.tradeManagement.skenario_jika_sl_hit}
-                            </p>
+                        <div className="flex items-start gap-3">
+                            <DollarSign size={18} className="text-amber-500 mt-0.5 shrink-0" />
+                            <div>
+                                <div className="text-[10px] text-amber-700/70 dark:text-amber-500/70 uppercase mb-1 font-bold">ALOKASI MODAL</div>
+                                <div className="text-sm font-bold text-amber-900 dark:text-amber-100">{manajemen.alokasi_modal || '1-2% dari modal'}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
         </div>
     );
-}
-
-function TrendingUpIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-            <polyline points="17 6 23 6 23 12"></polyline>
-        </svg>
-    )
 }

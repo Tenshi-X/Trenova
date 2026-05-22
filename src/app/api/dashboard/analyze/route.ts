@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export const maxDuration = 60; // Max allowed for Vercel Hobby is 60s
 // Direct Gemini API — bypasses Supabase Edge Function for lower latency & full control
-const GEMINI_MODEL  = 'gemini-2.5-flash';
+const GEMINI_MODEL  = 'gemini-2.5-pro';
 const MAX_RETRIES   = 3;
 const RETRY_DELAY_MS = 2000;
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
             contents: [{ parts }],
             generationConfig: {
                 temperature: 0.4,
-                maxOutputTokens: 8192
+                maxOutputTokens: 2048
             }
         });
 

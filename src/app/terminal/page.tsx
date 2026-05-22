@@ -402,156 +402,46 @@ export default function PremiumTerminal() {
       const hasDominance   = uploadedSlots.some(id => id.startsWith('sl-btcd') || id.startsWith('sl-usdtd'));
       const chartSlotList  = uploadedSlots.filter(id => id.startsWith('sl-1') || id.startsWith('sl-4') || id.startsWith('sl-15')).map(id => id.replace('sl-','').toUpperCase()).join(', ');
 
-      // ── STEP 5: ASSEMBLE FULL DATA CONTEXT ──
+      // ── STEP 5: ASSEMBLE MINIMAL DATA CONTEXT ──
       const dataContext = [
-        `=== IDENTITAS TRADE ===`,
-        `Koin          : ${coinSymbol}`,
-        leverage ? `Leverage      : ${leverage} (${leverageNum}x)` : `Leverage      : tidak diinput (asumsikan 10x)`,
-        capital  ? `Modal         : ${capital} USDT` : `Modal         : tidak diinput (gunakan % risiko)`,
-        ``,
-        `=== DATA LIVE PASAR (REAL-TIME BINANCE) ===`,
-        liveMarket
-          ? `Harga Spot    : ${pFmt(liveMarket.price)} | 24h: ${liveMarket.change > 0 ? '+' : ''}${liveMarket.change.toFixed(2)}% | High: ${pFmt(liveMarket.high)} | Low: ${pFmt(liveMarket.low)}`
-          : `Harga Spot    : tidak tersedia di futures USDT`,
-        liveMarket
-          ? `Volume 24h    : $${(liveMarket.volume / 1e6).toFixed(2)}M USDT`
-          : `Volume 24h    : N/A`,
-        liveDerivs
-          ? `Mark Price    : ${pFmt(liveDerivs.markPrice)} | Index Price: ${pFmt(liveDerivs.indexPrice)}`
-          : `Mark Price    : N/A`,
-        liveDerivs
-          ? `Funding Rate  : ${pctFmt(liveDerivs.fundingRate)} — ${
-              liveDerivs.fundingRate > 0.0005 ? 'SANGAT TINGGI: market sangat overleveraged LONG, SHORT squeeze risk rendah, LONG squeeze risk TINGGI' :
-              liveDerivs.fundingRate > 0.0001 ? 'Positif moderat: lebih banyak longs, sedikit favoritkan SHORT' :
-              liveDerivs.fundingRate < -0.0005 ? 'SANGAT NEGATIF: market sangat overleveraged SHORT, SHORT squeeze probability TINGGI' :
-              liveDerivs.fundingRate < -0.0001 ? 'Negatif moderat: lebih banyak shorts, pertimbangkan LONG' :
-              'Netral: posisi pasar seimbang'
-            }`
-          : `Funding Rate  : N/A`,
-        `Next Funding  : ${nextFundingTime}${
-          minsToFunding !== null && minsToFunding <= 60
-            ? ` — SEGERA (${minsToFunding} menit lagi) — PERINGATAN: funding settlement imminent, posisi bisa di-close massal`
-            : minsToFunding !== null ? ` (${minsToFunding} menit lagi)` : ''
-        }`,
-        `Open Interest : ${openInterestUSD}${
-          openInterestUSD !== 'N/A'
-            ? ' (gunakan sebagai konfirmasi: OI naik + harga naik = trend valid; OI turun + harga naik = distribusi/fake pump)'
-            : ''
-        }`,
-        ``,
-        `=== HARGA LIKUIDASI (KALKULASI OTOMATIS) ===`,
-        `Leverage          : ${leverageNum}x`,
-        `Referensi Entry   : ${entryRef ? pFmt(entryRef) : 'N/A'}`,
-        `Likuidasi LONG    : ${liqLong} (${distPct}% di bawah entry)`,
-        `Likuidasi SHORT   : ${liqShort} (${distPct}% di atas entry)`,
-        `WAJIB: Stop Loss harus berada di antara entry dan harga likuidasi — jangan sampai melintasi level likuidasi`,
-        leverageNum >= 20 ? `PERINGATAN LEVERAGE TINGGI: Dengan ${leverageNum}x, volatilitas ${distPct}% sudah bisa LIKUIDASI TOTAL` : ``,
-        ``,
-        `=== KONTEKS MAKRO & SENTIMEN ===`,
-        `Fear & Greed      : ${fearGreedValue}/100 — ${fearGreedLabel} (${fgNote})`,
-        `BTC Spot          : ${liveBTC ? pFmt(liveBTC.price) + ' | 24h: ' + (liveBTC.change > 0 ? '+' : '') + liveBTC.change.toFixed(2) + '%' : 'N/A'}`,
-        liveBTCDeriv
-          ? `BTC Funding Rate  : ${pctFmt(liveBTCDeriv.fundingRate)} (${liveBTCDeriv.fundingRate > 0.0001 ? 'market longs dominan' : liveBTCDeriv.fundingRate < -0.0001 ? 'market shorts dominan' : 'balanced'})`
-          : `BTC Funding Rate  : N/A`,
-        `ATR 4H (14p)      : ${atr4h} ${atrNote ? '— ' + atrNote : ''}`,
-        `Top 5 Volume      : ${top5Vol}`,
-        ``,
-        `=== SCREENSHOT YANG DIUNGGAH ===`,
-        `Total             : ${uploadedSlots.length} screenshot`,
-        hasCharts      ? `Chart Koin    : TERSEDIA (${chartSlotList})` : `Chart Koin    : TIDAK ADA — gunakan data live di atas sebagai dasar`,
-        hasDerivatives ? `Derivatives   : TERSEDIA dari screenshot` : `Derivatives   : TIDAK ADA — gunakan funding rate live di atas`,
-        hasExhaustion  ? `Exhaustion    : TERSEDIA dari screenshot` : `Exhaustion    : TIDAK ADA — abaikan atau tandai [ESTIMASI]`,
-        hasBtcContext  ? `BTC Chart     : TERSEDIA` : `BTC Chart     : TIDAK ADA — gunakan data live BTC di atas`,
-        hasDominance   ? `Dominance     : TERSEDIA` : `Dominance     : TIDAK ADA — asumsikan kondisi netral`,
-      ].filter(l => l !== '').join('\n');
+        `Koin: ${coinSymbol}`,
+        leverage ? `Lev: ${leverage} (${leverageNum}x)` : `Lev: 10x`,
+        capital  ? `Modal: ${capital} USDT` : `Modal: N/A`,
+        `LIVE: Spot=${liveMarket ? pFmt(liveMarket.price) : 'N/A'}, FundRate=${liveDerivs ? pctFmt(liveDerivs.fundingRate) : 'N/A'}, OI=${openInterestUSD}`,
+        `LiqL=${liqLong}, LiqS=${liqShort}`,
+        `FnG=${fearGreedValue}/100, ATR4H=${atr4h !== 'N/A' ? atr4h : 'N/A'}`
+      ].join(' | ');
 
-      const analysisDepthNote = uploadedSlots.length === 0
-        ? `MODE ANALISIS: FUNDAMENTAL + DATA LIVE REAL-TIME\nData harga, funding rate, dan sentimen tersedia di atas. Lakukan analisis berdasarkan:\n- Data live Binance yang disediakan (harga, funding rate, volume)\n- Fear & Greed Index dan konteks makro\n- Pengetahuan mendalam tentang karakteristik ${coinSymbol}\n- Tandai semua level price dengan "[ESTIMASI ZON]" karena tidak ada chart untuk konfirmasi visual`
-        : uploadedSlots.length < 5
-        ? `MODE ANALISIS: DATA LIVE + SCREENSHOT PARSIAL (${uploadedSlots.length} screenshot)\nKombinasikan data live real-time dengan analisis chart. Untuk aspek tanpa screenshot, gunakan data live sebagai dasar estimasi. Tandai dengan "[ESTIMASI]".`
-        : `MODE ANALISIS: KOMPREHENSIF — data live + ${uploadedSlots.length} screenshot\nLakukan analisis penuh multi-timeframe. Validasi setiap sinyal teknikal dengan data live (funding rate, harga spot, FnG index).`;
-
-      const promptText = `
-Kamu adalah analis trading crypto senior dari Trenova Intelligence — sistem AI tier-1 analisis pasar kripto profesional.
-Waktu Analisis: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
-
-${dataContext}
-
-${analysisDepthNote}
+      const promptText = `Kamu analis trading crypto pro. Berikan analisa TO THE POINT untuk pemula.
+Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
+DATA: ${dataContext}
 
 INSTRUKSI KRITIS:
-1. SELALU gunakan data live real-time di atas sebagai ANCHOR keputusan — bukan spekulasi tanpa dasar
-2. SL yang direkomendasikan HARUS lebih dekat ke entry daripada harga likuidasi (${liqLong} untuk LONG, ${liqShort} untuk SHORT)
-3. ATR 4H adalah ${atr4h} — SL harus ditempatkan minimal 1x ATR dari entry untuk menghindari noise normal harga
-4. Open Interest ${openInterestUSD}: jika OI naik bersamaan harga naik = trend valid; jika OI turun saat harga naik = distribusi/fake breakout
-5. Funding Rate positif tinggi (>0.05%) = pasar overleveraged long = SHORT lebih favorable, waspadai long squeeze
-6. Funding Rate negatif tinggi (<-0.05%) = pasar overleveraged short = SHORT squeeze probability tinggi
-7. Fear & Greed >75 + Funding Rate positif tinggi = kombinasi terkuat untuk reversal bearish
-8. Fear & Greed <25 + Funding Rate negatif tinggi = kombinasi terkuat untuk reversal bullish
-9. KORELASI BTC: evaluasi apakah setup ${coinSymbol} konsisten dengan kondisi BTC saat ini (${liveBTC ? (liveBTC.change > 0 ? 'BTC bullish +' + liveBTC.change.toFixed(2) + '%' : 'BTC bearish ' + liveBTC.change.toFixed(2) + '%') : 'BTC data N/A'}). Jika altcoin dan BTC bergerak berlawanan, turunkan keyakinan dan jelaskan divergensinya
-10. Next Funding dalam ${minsToFunding !== null ? minsToFunding + ' menit' : 'N/A'} — jika < 60 menit, ini faktor risiko timing yang harus masuk "peringatan"
-11. Jika ada screenshot, baca level harga aktual dari chart untuk entry/SL/TP yang presisi
-12. JANGAN pernah tolak memberikan hasil — adaptasi kedalaman sesuai data yang ada
-13. Sinyal "Volume Divergence" (bukan CVD) dapat diidentifikasi dari bar volume pada chart — laporkan sebagai "Volume Divergence" bukan "CVD Divergence"
+1. Keputusan (verdict) harus tegas: LONG, SHORT, atau WAIT.
+2. SL HARUS lebih aman/dekat ke entry dari harga likuidasi (LiqL untuk LONG, LiqS untuk SHORT).
+3. Buat maksimal 3 setup: 1 PRIMARY, dan MAKSIMAL 2 ALTERNATIF.
 
-KEMBALIKAN HANYA JSON valid (tanpa backtick, tanpa markdown, tanpa teks di luar JSON):
+KEMBALIKAN HANYA JSON valid (tanpa backtick/teks lain):
 {
   "koin": "${coinSymbol}",
-  "timestamp_analisis": "${new Date().toISOString()}",
-  "data_completeness": "FULL" | "PARTIAL" | "MINIMAL",
-  "catatan_data": "ringkasan kualitas data dan limitasi analisis ini",
-  "live_snapshot": {
-    "harga_spot": "${liveMarket ? pFmt(liveMarket.price) : 'N/A'}",
-    "funding_rate": "${liveDerivs ? pctFmt(liveDerivs.fundingRate) : 'N/A'}",
-    "open_interest": "${openInterestUSD}",
-    "atr_4h": "${atr4h !== 'N/A' ? atr4h + ' (' + (atrNote.split(' —')[0] || '') + ')' : 'N/A'}",
-    "fear_greed": "${fearGreedValue}/100 ${fearGreedLabel}",
-    "next_funding": "${nextFundingTime}",
-    "likuidasi_long": "${liqLong}",
-    "likuidasi_short": "${liqShort}"
-  },
-  "bias": {
-    "arah": "BEARISH" | "BULLISH" | "SIDEWAYS",
-    "kekuatan": "KUAT" | "SEDANG" | "LEMAH",
-    "detail": [
-      {"tf": "aspek/timeframe", "kondisi": "penjelasan detail berbasis data", "sumber": "live_data" | "screenshot" | "estimasi"}
-    ]
-  },
-  "sinyal": [
-    {"nama": "nama sinyal", "on": true, "catatan": "penjelasan konkret berbasis data", "sumber": "live_data" | "screenshot" | "estimasi"}
-  ],
+  "verdict": "LONG" | "SHORT" | "WAIT",
+  "keyakinan": 80,
+  "alasan": "1 kalimat singkat alasan utama keputusan ini",
   "setup": [
     {
-      "arah": "LONG" | "SHORT" | "SKIP",
-      "keyakinan": 75,
-      "sinyal_count": 3,
-      "kenapa": ["alasan berbasis data konkret 1", "alasan 2"],
-      "entry": "${entryRef ? `zona sekitar ${pFmt(entryRef)}` : '$xxx - $yyy'}",
-      "sl": "level SL — pastikan LEBIH DEKAT ke entry dari likuidasi (LONG: ${liqLong} / SHORT: ${liqShort})",
-      "tp1": "$xxx", "tp2": "$yyy", "tp3": "$zzz",
-      "rr": "1:2",
-      "sizing": "${capital ? `kalkulasi konkret: modal ${capital} USDT, lev ${leverage || leverageNum + 'x'}` : '1-2% dari total modal per trade'}",
-      "kondisi_entry": ["konfirmasi sebelum entry"],
-      "invalidasi": "kondisi yang membatalkan setup"
+      "tipe": "PRIMARY",
+      "arah": "LONG" | "SHORT" | "WAIT",
+      "entry": "$xxx - $yyy",
+      "sl": "level SL",
+      "tp1": "$xxx",
+      "tp2": "$xxx"
     }
   ],
-  "squeeze": {
-    "tipe": "LONG SQUEEZE" | "SHORT SQUEEZE" | "NONE",
-    "probabilitas": "TINGGI" | "SEDANG" | "RENDAH",
-    "catatan": "penjelasan berdasarkan funding rate dan data live"
-  },
-  "risk_management": {
-    "leverage_used": "${leverage || leverageNum + 'x'}",
-    "likuidasi_long": "${liqLong}",
-    "likuidasi_short": "${liqShort}",
-    "jarak_likuidasi": "${distPct}% dari entry",
-    "max_loss_rekomendasi": "${capital ? `maks ${(parseFloat(capital) * 0.02).toFixed(2)} USDT (2% dari ${capital} USDT)` : '1-2% per trade dari total modal'}",
-    "rekomendasi_sizing": "penjelasan sizing optimal untuk kondisi dan leverage ini",
-    "peringatan": ["peringatan risiko spesifik WAJIB diperhatikan"]
-  },
-  "catatan_tambahan": ["insight berbasis data live", "risiko utama", "level yang perlu dipantau selanjutnya"]
-}
-`;
+  "manajemen_risiko": {
+    "leverage_maks": "${leverage || leverageNum + 'x'}",
+    "alokasi_modal": "${capital ? 'Maksimal 2% dari ' + capital + ' USDT' : '1-2% dari modal'}"
+  }
+}`;
 
       const imagePayload = Object.entries(images).map(([id, data]) => ({
         label: `Screenshot [${id.replace('sl-', '').toUpperCase()}]`,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const GEMINI_MODEL  = 'gemini-2.5-flash';
+const GEMINI_MODEL  = 'gemini-2.5-pro';
 const MAX_RETRIES   = 3;
 const RETRY_DELAY_MS = 2000;
 
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
             contents: [{ parts }],
             generationConfig: {
                 temperature: 0.1,
-                maxOutputTokens: 8192
+                maxOutputTokens: 2048
             }
         });
 
