@@ -43,7 +43,25 @@ export async function POST(req: Request) {
             generationConfig: {
                 temperature: 0.4,
                 maxOutputTokens: 2048
-            }
+            },
+            safetySettings: [
+                {
+                    category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_HARASSMENT",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_HATE_SPEECH",
+                    threshold: "BLOCK_NONE"
+                },
+                {
+                    category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                    threshold: "BLOCK_NONE"
+                }
+            ]
         });
 
         // ── AUTO-RETRY for 503 / UNAVAILABLE ──
@@ -63,13 +81,13 @@ export async function POST(req: Request) {
                 const candidate = geminiData.candidates?.[0];
                 if (!candidate) {
                     const blockReason = geminiData.promptFeedback?.blockReason;
-                    return NextResponse.json({ error: \`Prompt blocked by safety filter: \${blockReason}\`, retryable: false }, { status: 400 });
+                    return NextResponse.json({ error: `Prompt blocked by safety filter: ${blockReason}`, retryable: false }, { status: 400 });
                 }
                 
                 const textRes = candidate.content?.parts?.[0]?.text;
                 if (!textRes) {
                     const finishReason = candidate.finishReason;
-                    return NextResponse.json({ error: \`Generation blocked. Finish reason: \${finishReason}\`, retryable: false }, { status: 400 });
+                    return NextResponse.json({ error: `Generation blocked. Finish reason: ${finishReason}`, retryable: false }, { status: 400 });
                 }
                 
                 return NextResponse.json({ result: textRes });
