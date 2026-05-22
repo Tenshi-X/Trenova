@@ -451,10 +451,7 @@ export default function DashboardPage() {
         }
 
         if (!res.ok) {
-            if (res.status === 503 || resJson.retryable) {
-                throw new Error('⏳ Server AI sedang kelebihan beban. Tunggu 1–2 menit lalu coba lagi.');
-            }
-            throw new Error(resJson.error || `API Error ${res.status}`);
+            throw new Error(resJson.error || `API Error ${res.status} (${JSON.stringify(resJson)})`);
         }
 
         const aiOutput = resJson.result || '';
