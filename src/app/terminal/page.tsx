@@ -78,7 +78,7 @@ const SLOT_SECTIONS = [
     ]
   }
 ];
-
+//cihuy
 const ALL_SLOT_IDS = SLOT_SECTIONS.flatMap(sec => sec.slots.map(s => s.id));
 
 const TerminalClock = () => {
