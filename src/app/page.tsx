@@ -53,9 +53,13 @@ export default function LandingPage() {
                <ThemeToggle />
             </div>
 
-            <Link href="/sign-in" className="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-neon transition-colors font-mono">
+            <Link href="/login" className="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-neon transition-colors font-mono">
               <LogIn size={16} />
-              {t('nav_login')}
+              {t('nav_login') || 'Login'}
+            </Link>
+            
+            <Link href="/register" className="hidden sm:flex items-center gap-2 text-sm font-bold text-neon hover:text-white transition-colors font-mono">
+              Register
             </Link>
 
             <a href="https://s.shopee.co.id/LiCMmnIOs" target="_blank" rel="noopener noreferrer" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-emerald-400 transition-all shadow-neon/20 font-mono">
@@ -89,11 +93,19 @@ export default function LandingPage() {
                 <ArrowRight size={20} className="text-neon" />
               </a>
               <Link 
-                href="/sign-in" 
+                href="/login" 
                 className="p-4 rounded bg-slate-900 border border-slate-800 text-lg font-bold text-slate-300 flex items-center justify-between"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="flex items-center gap-2"><LogIn size={20} /> {t('nav_login')}</span>
+                <span className="flex items-center gap-2"><LogIn size={20} /> {t('nav_login') || 'Login'}</span>
+                <ArrowRight size={20} className="text-neon" />
+              </Link>
+              <Link 
+                href="/register" 
+                className="p-4 rounded bg-slate-900 border border-slate-800 text-lg font-bold text-neon flex items-center justify-between"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className="flex items-center gap-2">Register</span>
                 <ArrowRight size={20} className="text-neon" />
               </Link>
               <a 

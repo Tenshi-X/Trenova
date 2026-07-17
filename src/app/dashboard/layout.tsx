@@ -8,6 +8,7 @@ import { getUserUsage } from './actions';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import MobileDashboardSidebar from './MobileDashboardSidebar';
+import LogoutButton from '@/components/LogoutButton';
 
 export default async function DashboardLayout({
   children,
@@ -94,12 +95,11 @@ export default async function DashboardLayout({
                     >
                         Contact Developer
                     </a>
-                    <Link 
-                        href="/"
+                    <LogoutButton 
                         className="block w-full py-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-semibold text-sm transition-colors"
                     >
-                        Back to Home
-                    </Link>
+                        Back to Home (Logout)
+                    </LogoutButton>
                 </div>
                 
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
