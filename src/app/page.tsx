@@ -57,14 +57,10 @@ export default function LandingPage() {
               <LogIn size={16} />
               {t('nav_login') || 'Login'}
             </Link>
-            
-            <Link href="/register" className="hidden sm:flex items-center gap-2 text-sm font-bold text-neon hover:text-white transition-colors font-mono">
-              Register
-            </Link>
 
-            <a href="https://s.shopee.co.id/LiCMmnIOs" target="_blank" rel="noopener noreferrer" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-emerald-400 transition-all shadow-neon/20 font-mono">
+            <Link href="/register" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-emerald-400 transition-all shadow-neon/20 font-mono">
               &gt; INIT
-            </a>
+            </Link>
 
              <div className="md:hidden flex items-center gap-2 relative z-50">
                <LanguageSwitcher />
@@ -102,21 +98,11 @@ export default function LandingPage() {
               </Link>
               <Link 
                 href="/register" 
-                className="p-4 rounded bg-slate-900 border border-slate-800 text-lg font-bold text-neon flex items-center justify-between"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="flex items-center gap-2">Register</span>
-                <ArrowRight size={20} className="text-neon" />
-              </Link>
-              <a 
-                href="https://s.shopee.co.id/LiCMmnIOs" 
-                target="_blank" 
-                rel="noopener noreferrer" 
                 className="p-4 text-center rounded bg-neon text-slate-950 font-bold text-lg"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 &gt; INITIALIZE
-              </a>
+              </Link>
             </div>
           </div>
         )}
