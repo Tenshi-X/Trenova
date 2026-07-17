@@ -10,7 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
-export default function LoginClient() {
+export default function RegisterClient() {
   const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,38 +20,40 @@ export default function LoginClient() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate a small delay to show the nice animation even if auth is instant
       await new Promise(r => setTimeout(r, 2000)); 
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            role: 'user'
+          }
+        }
       });
 
       if (error) {
         throw error;
       }
 
-      // Redirect to dashboard
+      // Automatically redirect to dashboard, relying on dashboard to create user_profile if needed
       router.push('/dashboard');
       router.refresh();
       
     } catch (err: any) {
-      console.error("Login Error:", err);
-      // Only stop loading if there is an error. 
-      // If success, keep loading true to maintain the "Welcome screen" until navigation completes.
+      console.error("Register Error:", err);
       setLoading(false); 
       
       if (err.message === 'fetch failed' || (err.name === 'AuthRetryableFetchError')) {
            setError("Connection Error: Unable to reach the server. Please check your internet connection and try again.");
       } else {
-           setError(err.message || 'Failed to login');
+           setError(err.message || 'Failed to register');
       }
     }
   };
@@ -82,7 +84,7 @@ export default function LoginClient() {
       {/* Back to Home Button */}
       <Link href="/" className="absolute top-8 left-8 z-50 flex items-center gap-2 text-slate-500 hover:text-neon transition-colors font-semibold group">
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        {t('btn_back_home')}
+        {t('btn_back_home') || 'Back Home'}
       </Link>
 
       {/* Language & Theme Controls */}
@@ -108,7 +110,7 @@ export default function LoginClient() {
                </h1>
                
                <p className="text-lg md:text-2xl text-slate-600 dark:text-slate-400 font-medium animate-in slide-in-from-bottom-4 fade-in duration-700 delay-150">
-                 Bersiap menghasilkan <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 dark:bg-emerald-400/10 px-2 py-1 rounded-lg border border-emerald-500/20 dark:border-emerald-400/20">$1.000.000</span> dengan AI
+                 Mempersiapkan akun <span className="text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 dark:bg-emerald-400/10 px-2 py-1 rounded-lg border border-emerald-500/20 dark:border-emerald-400/20">Trenova</span> Anda
                </p>
 
                {/* Loading Indicator */}
@@ -128,9 +130,9 @@ export default function LoginClient() {
       </div>
 
       <div className="w-full max-w-md p-8 rounded-2xl relative z-10 shadow-xl border-t-4 border-t-neon bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-x border-b border-white/20 dark:border-slate-800">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('login_title')}</h1>
-          <p className="text-slate-500 dark:text-slate-400">{t('login_subtitle')}</p>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Daftar Akun</h1>
+          <p className="text-slate-500 dark:text-slate-400">Buat akun untuk memulai</p>
         </div>
 
         {error && (
@@ -140,9 +142,9 @@ export default function LoginClient() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleRegister} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('email_label')}</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('email_label') || 'Email'}</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
@@ -157,7 +159,7 @@ export default function LoginClient() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('password_label')}</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1">{t('password_label') || 'Password'}</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon transition-colors" size={20} />
               <input
@@ -189,9 +191,9 @@ export default function LoginClient() {
                 : "bg-neon hover:bg-neon-dim transform hover:-translate-y-0.5"
             )}
           >
-            {loading ? t('authenticating') : (
+            {loading ? t('authenticating') || 'Processing...' : (
               <>
-                {t('login_btn')} <ArrowRight size={20} />
+                Daftar Sekarang <ArrowRight size={20} />
               </>
             )}
           </button>
@@ -218,9 +220,9 @@ export default function LoginClient() {
         </button>
 
         <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-          Belum punya akun?{' '}
-          <Link href="/register" className="text-neon font-semibold hover:underline">
-            Daftar di sini
+          Sudah punya akun?{' '}
+          <Link href="/login" className="text-neon font-semibold hover:underline">
+            Login di sini
           </Link>
         </p>
 

@@ -35,10 +35,28 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // Logic for role-based redirect
+      // Logic for role-based redirect and creating profile if needed
       const { data: { user } } = await supabase.auth.getUser()
       const role = user?.user_metadata?.role || 'user'
       
+      if (user) {
+        // Ensure user_profile exists (especially for Google OAuth)
+        const { createSupabaseAdminClient } = await import('@/lib/supabase/admin')
+        const admin = createSupabaseAdminClient()
+        if (admin) {
+          const { data: profile } = await admin.from('user_profiles').select('id').eq('id', user.id).single()
+          if (!profile) {
+            await admin.from('user_profiles').insert({
+              id: user.id,
+              email: user.email,
+              role: role,
+              analysis_limit: 0,
+              current_analysis_count: 0
+            })
+          }
+        }
+      }
+
       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development'
       

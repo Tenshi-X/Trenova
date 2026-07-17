@@ -18,16 +18,32 @@ export async function checkUsageLimit() {
 
   const { data: profile, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('analysis_limit, current_analysis_count')
+    .select('analysis_limit, current_analysis_count, subscription_end_at')
     .eq('id', user.id)
     .single();
 
   if (error || !profile) {
-    return { allowed: false, error: "Could not fetch user profile stats" };
+    // If no profile exists, create one with 0 limits
+    await supabaseAdmin.from('user_profiles').insert({
+      id: user.id,
+      email: user.email,
+      role: 'user',
+      analysis_limit: 0,
+      current_analysis_count: 0
+    });
+    return { allowed: false, error: "Akun Anda belum aktif. Silakan hubungi Admin." };
   }
 
   const limit = profile.analysis_limit ?? 150; 
   const currentCount = profile.current_analysis_count || 0;
+  
+  const now = new Date();
+  const endAt = profile.subscription_end_at ? new Date(profile.subscription_end_at) : null;
+  const isExpired = endAt ? endAt < now : true;
+
+  if (limit <= 0 || isExpired) {
+    return { allowed: false, error: "Akun Anda belum aktif atau masa berlangganan telah habis." };
+  }
 
   if (currentCount >= limit) {
     return { allowed: false, error: `Analysis limit reached (${limit}/${limit}). Please upgrade.` };
@@ -95,21 +111,39 @@ export async function getUserUsage() {
 
   const { data: profile, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('analysis_limit, current_analysis_count')
+    .select('analysis_limit, current_analysis_count, subscription_end_at')
     .eq('id', user.id)
     .single();
 
-  if (error || !profile) return null;
+  let profileData: any = profile;
 
-  const current = profile.current_analysis_count || 0;
-  const limit = profile.analysis_limit ?? 150;
+  if (error || !profile) {
+      // Create default profile for newly registered users
+      await supabaseAdmin.from('user_profiles').insert({
+          id: user.id,
+          email: user.email,
+          role: 'user',
+          analysis_limit: 0,
+          current_analysis_count: 0
+      });
+      profileData = { analysis_limit: 0, current_analysis_count: 0, subscription_end_at: null };
+  }
+
+  const current = profileData?.current_analysis_count || 0;
+  const limit = profileData?.analysis_limit ?? 150;
+  
+  const now = new Date();
+  const endAt = profileData?.subscription_end_at ? new Date(profileData.subscription_end_at) : null;
+  const isExpired = endAt ? endAt < now : true;
+  const isRestricted = limit <= 0 || isExpired;
 
   return {
     analysis: {
       used: current,
       limit: limit,
-      remaining: limit - current
-    }
+      remaining: Math.max(0, limit - current)
+    },
+    isRestricted
   };
 }
 

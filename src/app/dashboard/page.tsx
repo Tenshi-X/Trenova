@@ -5,6 +5,7 @@ import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePo
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
+import { Lock, ArrowRight } from 'lucide-react';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
@@ -542,6 +543,28 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {usageStats?.isRestricted ? (
+        <div className="animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto mt-12 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-xl text-center">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Lock size={40} />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4">Akses Terbatas</h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
+                Akun Anda belum aktif atau masa berlangganan telah habis. Anda tidak memiliki kuota analisis yang tersisa.
+            </p>
+            <a 
+                href="https://shopee.co.id/Trading-Signal-Ai-Analisis-Crypto-TRENOVA-INTELLIGENCE-1-BULAN--i.1734650704.48456534787?extraParams=%7B%22display_model_id%22%3A345586316291%2C%22model_selection_logic%22%3A3%7D"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-neon text-white font-bold rounded-xl shadow-lg hover:shadow-neon/50 hover:-translate-y-1 transition-all"
+            >
+                Hubungi Developer (Beli Akses) <ArrowRight size={20} />
+            </a>
+            <p className="text-xs text-slate-400 mt-6">
+                Jika Anda sudah membeli akses, harap tunggu admin untuk mengaktifkan limit Anda, atau refresh halaman ini.
+            </p>
+        </div>
+      ) : (
       <div>
 
         {/* --- LIVE MARKET TAB --- */}
@@ -948,6 +971,7 @@ export default function DashboardPage() {
          </div>
 
       </div>
+      )}
     </div>
   );
 }
