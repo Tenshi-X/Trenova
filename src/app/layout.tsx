@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://trenova-intelligence.vercel.app"),
+  metadataBase: new URL("https://trenova.my.id"),
   title: "Trenova - Trading Intelligence",
   description: "AI-powered trading trends and analysis. Discover the next big crypto moves before they happen with our advanced terminal.",
   keywords: [
@@ -34,11 +34,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trenova - Trading Intelligence",
     description: "AI-powered trading trends and analysis. Discover the next big crypto moves before they happen with our advanced terminal.",
-    url: "https://trenova-intelligence.vercel.app",
+    url: "https://trenova.my.id",
     siteName: "Trenova Intelligence",
     images: [
       {
-        url: "https://trenova-intelligence.vercel.app/app-logo.png", // NOTE: Replace with a wider OG image if available (e.g. 1200x630)
+        url: "https://trenova.my.id/app-logo.png", // NOTE: Replace with a wider OG image if available (e.g. 1200x630)
         width: 800,
         height: 600,
         alt: "Trenova Trading Intelligence Logo",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Trenova - Trading Intelligence",
     description: "AI-powered trading trends and analysis. Discover the next big crypto moves before they happen with our advanced terminal.",
-    images: ["https://trenova-intelligence.vercel.app/app-logo.png"], // NOTE: Replace with a specific Twitter image if available
+    images: ["https://trenova.my.id/app-logo.png"], // NOTE: Replace with a specific Twitter image if available
   },
   robots: {
     index: true,
