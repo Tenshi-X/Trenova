@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://trenova.my.id';
+  const baseUrl = 'https://www.trenova.my.id';
 
   return [
     {

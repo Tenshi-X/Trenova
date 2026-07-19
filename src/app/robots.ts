@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/api/'], // Protect private routes from indexing
     },
-    sitemap: 'https://trenova.my.id/sitemap.xml',
+    sitemap: 'https://www.trenova.my.id/sitemap.xml',
   };
 }
