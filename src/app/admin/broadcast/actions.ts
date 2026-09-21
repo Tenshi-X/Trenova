@@ -1,7 +1,13 @@
 'use server';
 
-import nodemailer from 'nodemailer';
-import path from 'path';
+import {
+  EMAIL_FOOTER_ATTACHMENT,
+  EMAIL_SENDER_NAME,
+  getEmailCredentials,
+  getTrenovaTransporter,
+  sendTrenovaEmail,
+  wrapTrenovaHtml,
+} from '@/lib/email';
 
 export async function sendBroadcastEmail(
   emails: string[],
@@ -9,10 +15,9 @@ export async function sendBroadcastEmail(
   htmlContent: string
 ) {
   try {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_APP_PASSWORD;
+    const credentials = getEmailCredentials();
 
-    if (!user || !pass) {
+    if (!credentials) {
       return {
         success: false,
         error: "Server configuration error: EMAIL_USER or EMAIL_APP_PASSWORD is not set in environment variables.",
@@ -23,14 +28,14 @@ export async function sendBroadcastEmail(
       return { success: false, error: "No recipient emails provided." };
     }
 
-    // Create a transporter object using the default SMTP transport
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: user,
-        pass: pass,
-      },
-    });
+    // Reuse the shared Trenova transporter (src/lib/email.ts)
+    const transporter = getTrenovaTransporter();
+    if (!transporter) {
+      return {
+        success: false,
+        error: "Server configuration error: EMAIL_USER or EMAIL_APP_PASSWORD is not set in environment variables.",
+      };
+    }
 
     // Verify connection configuration
     await transporter.verify();
@@ -39,32 +44,11 @@ export async function sendBroadcastEmail(
     const results = await Promise.allSettled(
       emails.map((email) => {
         return transporter.sendMail({
-          from: `"Trenova" <${user}>`,
+          from: `"${EMAIL_SENDER_NAME}" <${credentials.user}>`,
           to: email,
           subject: subject,
-          html: `
-            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
-              <div style="margin-bottom: 20px;">
-                ${htmlContent.replace(/\n/g, '<br/>')}
-              </div>
-              <div style="margin-top: 20px;">
-                <img src="cid:footer_email_img" alt="Trenova Footer" style="max-width: 250px; height: auto; margin-bottom: 15px; display: block;" />
-                <div style="font-size: 14px; color: #000; line-height: 1.5;">
-                  <strong style="display: block; margin-bottom: 5px;">Trenova Intelligence</strong>
-                  <div><strong>Website:</strong> <a href="https://trenova-intelligence.vercel.app" style="color: #0066cc; text-decoration: none; font-weight: bold;">https://trenova-intelligence.vercel.app</a></div>
-                  <div><strong>Email:</strong> <a href="mailto:trenova151@gmail.com" style="color: #0066cc; text-decoration: none; font-weight: bold;">trenova151@gmail.com</a></div>
-                  <div><strong>Telegram: 6287734881107</strong></div>
-                </div>
-              </div>
-            </div>
-          `,
-          attachments: [
-            {
-              filename: 'footer-email.png',
-              path: path.join(process.cwd(), 'public', 'footer-email.png'),
-              cid: 'footer_email_img'
-            }
-          ]
+          html: wrapTrenovaHtml(htmlContent, true),
+          attachments: [EMAIL_FOOTER_ATTACHMENT]
         });
       })
     );
@@ -89,23 +73,13 @@ export async function sendNewAccountEmail(
   passwordInput: string
 ) {
   try {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_APP_PASSWORD;
-
-    if (!user || !pass) {
+    if (!getEmailCredentials()) {
       return { success: false, error: "Server configuration error: EMAIL_USER or EMAIL_APP_PASSWORD is not set." };
     }
 
     if (!email || !passwordInput) {
       return { success: false, error: "Email and password are required." };
     }
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user, pass },
-    });
-
-    await transporter.verify();
 
     const subject = "Detail Akun Trenova Intelligence Anda";
     const htmlContent = `Halo Kak,<br/><br/>
@@ -117,34 +91,18 @@ Silakan login melalui tautan berikut:<br/>
 <a href="https://trenova-intelligence.vercel.app/login" style="color: #0066cc; text-decoration: none; font-weight: bold;">https://trenova-intelligence.vercel.app/login</a><br/><br/>
 Harap simpan informasi ini baik-baik dan jangan membagikannya kepada siapa pun.`;
 
-    await transporter.sendMail({
-      from: `"Trenova" <${user}>`,
+    // Reuse the shared Trenova email service (src/lib/email.ts)
+    const result = await sendTrenovaEmail({
       to: email,
       subject: subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px;">
-          <div style="margin-bottom: 20px;">
-            ${htmlContent}
-          </div>
-          <div style="margin-top: 20px;">
-            <img src="cid:footer_email_img" alt="Trenova Footer" style="max-width: 250px; height: auto; margin-bottom: 15px; display: block;" />
-            <div style="font-size: 14px; color: #000; line-height: 1.5;">
-              <strong style="display: block; margin-bottom: 5px;">Trenova Intelligence</strong>
-              <div><strong>Website:</strong> <a href="https://trenova-intelligence.vercel.app" style="color: #0066cc; text-decoration: none; font-weight: bold;">https://trenova-intelligence.vercel.app</a></div>
-              <div><strong>Email:</strong> <a href="mailto:trenova151@gmail.com" style="color: #0066cc; text-decoration: none; font-weight: bold;">trenova151@gmail.com</a></div>
-              <div><strong>Telegram: 6287734881107</strong></div>
-            </div>
-          </div>
-        </div>
-      `,
-      attachments: [
-        {
-          filename: 'footer-email.png',
-          path: path.join(process.cwd(), 'public', 'footer-email.png'),
-          cid: 'footer_email_img'
-        }
-      ]
+      htmlContent,
+      convertNewlines: false, // htmlContent is already formatted HTML
     });
+
+    if (!result.success) {
+      console.error("Error sending new account email:", result.message);
+      return { success: false, error: result.message };
+    }
 
     return {
       success: true,

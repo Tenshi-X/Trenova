@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { 
   Menu, X, LogOut, LayoutDashboard, History, Shield, 
-  Clock, Zap, ChevronRight, Home, ExternalLink 
+  Clock, Zap, ChevronRight, Home, ExternalLink, MessageSquare 
 } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useLanguage } from '@/context/LanguageContext';
@@ -43,7 +44,7 @@ export default function DashboardSidebar({
 
   // Close on route change
   useEffect(() => {
-    setIsMobileOpen(false);
+    Promise.resolve().then(() => setIsMobileOpen(false));
   }, [pathname]);
 
   // Lock body scroll on mobile when open
@@ -65,6 +66,7 @@ export default function DashboardSidebar({
   const navItems = [
     { name: t('nav_dashboard'), href: '/dashboard', icon: LayoutDashboard },
     { name: t('nav_history'), href: '/dashboard/history', icon: History },
+    { name: t('nav_feedback'), href: '/dashboard/feedback', icon: MessageSquare },
     ...(isAdmin ? [{ name: t('nav_admin'), href: '/admin', icon: Shield }] : []),
   ];
 
@@ -120,7 +122,14 @@ export default function DashboardSidebar({
             "w-12 h-12 flex items-center justify-center shrink-0 bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-100 dark:border-slate-800 transition-all duration-500",
             "mx-0 md:mx-auto md:group-hover:mx-0"
           )}>
-            <img src="/app-logo.png" alt="Trenova" className="w-8 h-8 object-contain" />
+            <Image
+              src="/app-logo.png"
+              alt="Trenova"
+              width={32}
+              height={32}
+              className="w-8 h-8 object-contain"
+              unoptimized
+            />
           </div>
           <div className={clsx(
             "ml-4 transition-all duration-500 ease-in-out whitespace-nowrap transform",

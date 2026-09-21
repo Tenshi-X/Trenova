@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, LogOut, Menu, X, Users, Mail } from 'lucide-react';
+import { Shield, LogOut, Menu, X, Users, Mail, MessageSquare } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import clsx from 'clsx';
 
@@ -24,7 +25,7 @@ export default function Sidebar() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    setIsMobileOpen(false);
+    Promise.resolve().then(() => setIsMobileOpen(false));
   }, [pathname]);
 
   // Lock body scroll when mobile sidebar is open
@@ -47,6 +48,7 @@ export default function Sidebar() {
   const navItems = [
     { name: 'Manajemen User', href: '/admin', icon: Users },
     { name: 'Broadcast Email', href: '/admin/broadcast', icon: Mail },
+    { name: 'Feedback User', href: '/admin/feedback', icon: MessageSquare },
   ];
 
   return (
@@ -95,7 +97,14 @@ export default function Sidebar() {
               "w-12 h-12 flex items-center justify-center shrink-0 bg-white dark:bg-slate-900 rounded-xl shadow-md transition-all duration-500 border border-slate-100 dark:border-slate-800",
               "mx-0 md:mx-auto md:group-hover:mx-0"
           )}>
-              <img src="/app-logo.png" alt="Trenova" className="w-8 h-8 object-contain" />
+              <Image
+                src="/app-logo.png"
+                alt="Trenova"
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain"
+                unoptimized
+              />
           </div>
           <div className={clsx(
               "ml-4 transition-all duration-500 ease-in-out whitespace-nowrap transform",

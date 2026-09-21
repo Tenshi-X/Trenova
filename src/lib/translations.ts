@@ -111,6 +111,39 @@ export type TranslationKey =
   | 'feedback_message_label'
   | 'feedback_message_placeholder'
   | 'feedback_send_btn'
+  | 'feedback_page_title'
+  | 'feedback_page_desc'
+  | 'feedback_category_label'
+  | 'feedback_category_placeholder'
+  | 'feedback_email_label'
+  | 'feedback_email_placeholder'
+  | 'feedback_optional'
+  | 'feedback_sending'
+  | 'feedback_success'
+  | 'feedback_failed'
+  | 'feedback_note'
+  | 'feedback_cat_bug'
+  | 'feedback_cat_feature'
+  | 'feedback_cat_improvement'
+  | 'feedback_cat_general'
+  | 'feedback_err_required'
+  | 'feedback_err_subject_max'
+  | 'feedback_err_email_invalid'
+  | 'feedback_err_message_min'
+  | 'feedback_err_message_max'
+  | 'feedback_attachment_label'
+  | 'feedback_attachment_hint'
+  | 'feedback_link_label'
+  | 'feedback_link_placeholder'
+  | 'feedback_image_label'
+  | 'feedback_image_choose'
+  | 'feedback_image_change'
+  | 'feedback_image_remove'
+  | 'feedback_image_compressed'
+  | 'feedback_image_compressing'
+  | 'feedback_err_link_invalid'
+  | 'feedback_err_image_type'
+  | 'feedback_err_image_size'
   | 'lp_proof_header'
   | 'lp_proof_title'
   | 'lp_proof_title_accent'
@@ -516,6 +549,39 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     feedback_message_label: 'Message',
     feedback_message_placeholder: 'Tell us what you think...',
     feedback_send_btn: 'Send Feedback',
+    feedback_page_title: 'Feedback',
+    feedback_page_desc: 'Help us improve Trenova by sharing bugs, ideas, or feature requests.',
+    feedback_category_label: 'Category',
+    feedback_category_placeholder: 'Select a category',
+    feedback_email_label: 'Email',
+    feedback_email_placeholder: 'you@email.com',
+    feedback_optional: 'Optional',
+    feedback_sending: 'Saving...',
+    feedback_success: 'Thanks! Your feedback has been saved.',
+    feedback_failed: 'Failed to save feedback. Please try again.',
+    feedback_note: 'Your feedback goes straight to the Trenova team and is only visible to admins.',
+    feedback_cat_bug: 'Bug Report',
+    feedback_cat_feature: 'Feature Request',
+    feedback_cat_improvement: 'Improvement',
+    feedback_cat_general: 'General Feedback',
+    feedback_err_required: 'This field is required.',
+    feedback_err_subject_max: 'Subject must be {limit} characters or fewer.',
+    feedback_err_email_invalid: 'Please enter a valid email address.',
+    feedback_err_message_min: 'Message must be at least {limit} characters.',
+    feedback_err_message_max: 'Message must be {limit} characters or fewer.',
+    feedback_attachment_label: 'Attachment',
+    feedback_attachment_hint: 'Images are compressed automatically (max {limit} MB) before upload.',
+    feedback_link_label: 'Link / URL',
+    feedback_link_placeholder: 'https://...',
+    feedback_image_label: 'Image',
+    feedback_image_choose: 'Choose image',
+    feedback_image_change: 'Change image',
+    feedback_image_remove: 'Remove image',
+    feedback_image_compressed: 'Compressed {original} → {compressed}',
+    feedback_image_compressing: 'Compressing image...',
+    feedback_err_link_invalid: 'Enter a valid link (must start with http:// or https://).',
+    feedback_err_image_type: 'Only JPG, PNG or WebP images are allowed.',
+    feedback_err_image_size: 'Image is too large. Maximum {limit} MB after compression.',
 
     lp_comp_std: 'TRENOVA STANDARD',
     lp_comp_prem: 'TRENOVA PREMIUM',
@@ -961,6 +1027,39 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     feedback_message_label: 'Pesan',
     feedback_message_placeholder: 'Katakan pendapat Anda...',
     feedback_send_btn: 'Kirim Masukan',
+    feedback_page_title: 'Feedback',
+    feedback_page_desc: 'Bantu kami meningkatkan Trenova dengan melaporkan bug, ide, atau permintaan fitur.',
+    feedback_category_label: 'Kategori',
+    feedback_category_placeholder: 'Pilih kategori',
+    feedback_email_label: 'Email',
+    feedback_email_placeholder: 'kamu@email.com',
+    feedback_optional: 'Opsional',
+    feedback_sending: 'Menyimpan...',
+    feedback_success: 'Terima kasih! Masukan Anda sudah tersimpan.',
+    feedback_failed: 'Gagal menyimpan masukan. Silakan coba lagi.',
+    feedback_note: 'Masukan Anda langsung dibaca tim Trenova dan hanya terlihat oleh admin.',
+    feedback_cat_bug: 'Laporan Bug',
+    feedback_cat_feature: 'Permintaan Fitur',
+    feedback_cat_improvement: 'Peningkatan',
+    feedback_cat_general: 'Masukan Umum',
+    feedback_err_required: 'Kolom ini wajib diisi.',
+    feedback_err_subject_max: 'Subjek maksimal {limit} karakter.',
+    feedback_err_email_invalid: 'Masukkan alamat email yang valid.',
+    feedback_err_message_min: 'Pesan minimal {limit} karakter.',
+    feedback_err_message_max: 'Pesan maksimal {limit} karakter.',
+    feedback_attachment_label: 'Lampiran',
+    feedback_attachment_hint: 'Gambar otomatis dikompres (maks {limit} MB) sebelum dikirim.',
+    feedback_link_label: 'Link / URL',
+    feedback_link_placeholder: 'https://...',
+    feedback_image_label: 'Gambar',
+    feedback_image_choose: 'Pilih gambar',
+    feedback_image_change: 'Ganti gambar',
+    feedback_image_remove: 'Hapus gambar',
+    feedback_image_compressed: 'Dikompres {original} → {compressed}',
+    feedback_image_compressing: 'Mengompres gambar...',
+    feedback_err_link_invalid: 'Masukkan link yang valid (harus diawali http:// atau https://).',
+    feedback_err_image_type: 'Hanya gambar JPG, PNG, atau WebP yang diperbolehkan.',
+    feedback_err_image_size: 'Gambar terlalu besar. Maksimal {limit} MB setelah dikompres.',
 
     lp_comp_std: 'TRENOVA STANDARD',
     lp_comp_prem: 'TRENOVA PREMIUM',
