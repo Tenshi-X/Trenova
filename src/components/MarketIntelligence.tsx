@@ -49,6 +49,8 @@ export default function MarketIntelligence() {
     const [globalData, setGlobalData] = useState<GlobalData | null>(null);
     const [fng, setFng] = useState<any>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [dataSource, setDataSource] = useState<string>('binance');
+    const [isDegraded, setIsDegraded] = useState(false);
     
     // Customization state
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>(DEFAULT_WIDGETS);
@@ -93,8 +95,10 @@ export default function MarketIntelligence() {
             const json = await res.json();
 
             if (json.degraded) {
-              console.warn('[MarketIntelligence] Using degraded Binance data');
+              console.warn('[MarketIntelligence] Using degraded data, source:', json.source);
             }
+            setDataSource(json.source || 'binance');
+            setIsDegraded(!!json.degraded);
 
             const data: GlobalData = {
                 totalVolume24h: json.global?.totalVolume24h || 0,
@@ -482,7 +486,7 @@ export default function MarketIntelligence() {
             {lastUpdated ? (
                 <div className="mb-6 text-[10px] text-slate-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    Live · Updated {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · Binance /10s · FNG /5min
+                    Live · Updated {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {dataSource}{isDegraded ? ' (cached)' : ''} /10s · FNG /5min
                 </div>
             ) : null}
 
