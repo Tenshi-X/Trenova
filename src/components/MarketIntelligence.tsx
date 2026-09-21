@@ -152,13 +152,15 @@ export default function MarketIntelligence() {
                 }
             }
 
-            const res = await fetch("https://api.alternative.me/fng/?limit=1");
+            const res = await fetch('/api/fng');
             if (!res.ok) return;
             const data = await res.json();
-            if (data.data?.[0]) {
-                setFng(data.data[0]);
+            // Proxy returns the item directly (or a degraded Neutral item).
+            const item = data?.data?.[0] ?? data;
+            if (item?.value) {
+                setFng(item);
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: data.data[0] }));
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: item }));
                 }
             }
         } catch (e) {

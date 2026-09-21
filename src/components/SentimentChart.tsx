@@ -17,65 +17,43 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
 
     const fetchBinance = useCallback(async (sym: string) => {
         let clean = sym.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (!clean || clean === 'USDT' || clean === 'USD') throw new Error('Empty symbol');
         if (clean.endsWith('USD') && !clean.endsWith('USDT')) clean = clean.replace(/USD$/, 'USDT');
         if (!clean.endsWith('USDT') && !clean.endsWith('BTC') && !clean.endsWith('ETH')) clean = `${clean}USDT`;
         const res = await fetch(`/api/binance-klines?symbol=${clean}&interval=1h&limit=100`);
-        if (!res.ok) throw new Error("Binance symbol not found");
+        if (!res.ok) throw new Error('Klines proxy error ' + res.status);
         const raw = await res.json();
-        if (raw.error) throw new Error("Proxy error");
-        return raw.map((d: any[]) => ({
+        // Degraded envelope: { data: [] } -> treat as failure so caller shows "Data unavailable"
+        const arr = Array.isArray(raw) ? raw : raw?.data;
+        if (!Array.isArray(arr) || !arr.length) throw new Error('Proxy degraded');
+        return arr.map((d: any[]) => ({
             close: parseFloat(d[4]),
             high: parseFloat(d[2]),
             low: parseFloat(d[3])
         }));
     }, []);
 
-    const fetchCryptoCompare = useCallback(async (sym: string) => {
-        let base = sym.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        if (base.endsWith('USDT')) base = base.replace('USDT', '');
-        else if (base.endsWith('USD')) base = base.replace('USD', '');
-        const res = await fetch(`https://min-api.cryptocompare.com/data/v2/histohour?fsym=${base}&tsym=USD&limit=100`);
-        const data = await res.json();
-        if (data.Response === 'Error') throw new Error("CC symbol not found");
-        return data.Data.Data.map((d: any) => ({
-            close: d.close,
-            high: d.high,
-            low: d.low
-        }));
-    }, []);
-
     const fetchData = useCallback(async () => {
         if (!symbol) return;
+        const base = symbol.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        if (!base || base === 'USDT' || base === 'USD') return;
         setLoading(true);
         setError('');
         try {
-            // Strategy 1: Try Binance
-            try {
-                const result = await fetchBinance(symbol);
-                if (result && result.length > 30) {
-                    setData(result);
-                    setLastRefresh(new Date());
-                    return;
-                }
-                throw new Error("Binance data incomplete");
-            } catch {
-                console.log("Binance failed, trying fallback...");
-            }
-            // Strategy 2: CryptoCompare fallback
-            const result = await fetchCryptoCompare(symbol);
-            if (result.length > 30) {
+            const result = await fetchBinance(symbol);
+            if (result && result.length > 30) {
                 setData(result);
                 setLastRefresh(new Date());
-            } else {
-                throw new Error("Insufficient data");
+                return;
             }
+            throw new Error('Insufficient data');
         } catch (e) {
-            console.warn("Sentiment Data Fetch Failed", e);
-            setError("Data unavailable");
+            console.warn('Sentiment Data Fetch Failed', e);
+            setError('Data unavailable');
         } finally {
             setLoading(false);
         }
-    }, [symbol, fetchBinance, fetchCryptoCompare]);
+    }, [symbol, fetchBinance]);
 
     useEffect(() => {
         fetchData();

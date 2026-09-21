@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 25;
+export const revalidate = 10;
+// Live market aggregator. Priority: Coinbase (Vercel-friendly) -> Binance -> CoinLore -> static.
+// Always returns 200, never 500/502.
 const D1 = { symbol: 'BTC', price: 67500, change: 2.35, high: 68200, low: 66100, volume: 2500000000, funding: 0.0001, rank: 1 };
 const D2 = { symbol: 'ETH', price: 3450, change: 1.82, high: 3490, low: 3390, volume: 1500000000, funding: 0.0002, rank: 2 };
 const D3 = { symbol: 'SOL', price: 145.2, change: 5.12, high: 147.5, low: 138, volume: 3200000000, funding: 0.0005, rank: 3 };
@@ -34,22 +37,76 @@ function degradedGlobal(price: number, change: number) {
     gainersCount: 10, losersCount: 5, totalPairs: 15,
   };
 }
+function withTimeout(ms: number) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  return { signal: c.signal, done: () => clearTimeout(t) };
+}
+async function fetchJson(url: string, ms = 4000) {
+  const { signal, done } = withTimeout(ms);
+  try {
+    const r = await fetch(url, { signal, headers: { 'User-Agent': 'TrenovaBot/1.0' }, cache: 'no-store' });
+    done();
+    if (!r.ok) return { ok: false as const, error: 'http-' + r.status };
+    return { ok: true as const, data: await r.json() };
+  } catch (e: any) {
+    done();
+    return { ok: false as const, error: String(e?.name || e) };
+  }
+}
 const BINANCE_URLS = ['https://api.binance.com','https://api1.binance.com','https://api2.binance.com','https://api3.binance.com','https://api4.binance.com'];
 const FAPI_URLS = ['https://fapi.binance.com'];
 async function bFetch(urls: string[], path: string) {
-  for (const base of urls) {
-    try {
-      const c = new AbortController();
-      const t = setTimeout(() => c.abort(), 3500);
-      const r = await fetch(base + path, { signal: c.signal, headers: { 'User-Agent': 'TrenovaBot/1.0' } });
-      clearTimeout(t);
-      if (!r.ok) continue;
-      const d = await r.json();
-      if (!Array.isArray(d)) continue;
-      return d as any[];
-    } catch { /* next mirror */ }
+  // Parallel race: all mirrors at once, first valid array wins. Total ~4s max.
+  const jobs = urls.map((base) => (async () => {
+    const out = await fetchJson(base + path, 4000);
+    if (out.ok && Array.isArray((out as any).data)) return (out as any).data as any[];
+    return null;
+  })());
+  const results = await Promise.allSettled(jobs);
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value && r.value.length) return r.value;
   }
   return null;
+}
+const CB = 'https://api.exchange.coinbase.com';
+// Coinbase pairs we track -> display symbol + decimals hint
+const CB_PAIRS: { id: string; symbol: string }[] = [
+  { id: 'BTC-USD', symbol: 'BTC' }, { id: 'ETH-USD', symbol: 'ETH' },
+  { id: 'SOL-USD', symbol: 'SOL' }, { id: 'BNB-USD', symbol: 'BNB' },
+  { id: 'XRP-USD', symbol: 'XRP' }, { id: 'DOGE-USD', symbol: 'DOGE' },
+  { id: 'ADA-USD', symbol: 'ADA' }, { id: 'AVAX-USD', symbol: 'AVAX' },
+  { id: 'DOT-USD', symbol: 'DOT' }, { id: 'LINK-USD', symbol: 'LINK' },
+  { id: 'MATIC-USD', symbol: 'MATIC' }, { id: 'ATOM-USD', symbol: 'ATOM' },
+  { id: 'UNI-USD', symbol: 'UNI' }, { id: 'OP-USD', symbol: 'OP' },
+  { id: 'ARB-USD', symbol: 'ARB' },
+];
+async function coinbaseSnapshot() {
+  // Fetch ticker + 24h stats per pair in parallel. ~2 round trips each.
+  const jobs = CB_PAIRS.map(async (p) => {
+    const [tk, st] = await Promise.all([
+      fetchJson(CB + '/products/' + p.id + '/ticker', 4000),
+      fetchJson(CB + '/products/' + p.id + '/stats', 4000),
+    ]);
+    if (!tk.ok || !st.ok) return null;
+    const price = parseFloat((tk as any).data?.price ?? '0');
+    const open = parseFloat((st as any).data?.open ?? '0');
+    const high = parseFloat((st as any).data?.high ?? '0');
+    const low = parseFloat((st as any).data?.low ?? '0');
+    const vol = parseFloat((st as any).data?.volume ?? '0'); // base volume
+    if (!price) return null;
+    const chg = open ? ((price - open) / open) * 100 : 0;
+    return { symbol: p.symbol, price, priceChangePercent: chg, high24h: high, low24h: low, volume24h: vol * price, marketCap: 0, fundingRate: 0, sparkline: [] as number[] };
+  });
+  const settled = await Promise.allSettled(jobs);
+  const coins = settled.flatMap((r, i) => {
+    if (r.status !== 'fulfilled' || !r.value) return [];
+    return [{ rank: 0, ...r.value }];
+  });
+  if (coins.length < 3) return null; // need quorum
+  coins.sort((a, b) => b.volume24h - a.volume24h);
+  coins.forEach((c, i) => { c.rank = i + 1; });
+  return coins;
 }
 const CL = 'https://api.coinlore.net';
 async function clGlobal() {
@@ -68,11 +125,76 @@ async function clTickers() {
     return Array.isArray(j?.data) ? j.data : null;
   } catch { return null; }
 }
-export async function GET() {
+// Public CoinGecko markets (NO API key). Free tier ~5-15 req/min per IP,
+// so a single batched call + server cache does the job. API key stays
+// reserved for the AI analysis menu only (dashboard/actions.ts).
+const CG = 'https://api.coingecko.com/api/v3';
+async function cgMarkets() {
   try {
-    const tickers = await bFetch(BINANCE_URLS, '/api/v3/ticker/24hr');
-    const funding = await bFetch(FAPI_URLS, '/fapi/v1/premiumIndex');
-    if (tickers && tickers.length) {
+    const r = await fetch(CG + '/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false&price_change_percentage=24h', { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return Array.isArray(j) ? j : null;
+  } catch { return null; }
+}
+export async function GET(req: Request) {
+  const debug = new URL(req.url).searchParams.get('debug') === '1';
+  const attempts: { provider: string; ok: boolean; ms: number; error?: string }[] = [];
+  const timed = async <T,>(provider: string, fn: () => Promise<T>): Promise<T | null> => {
+    const t0 = Date.now();
+    try {
+      const v = await fn();
+      attempts.push({ provider, ok: !!v, ms: Date.now() - t0 });
+      return v;
+    } catch (e: any) {
+      attempts.push({ provider, ok: false, ms: Date.now() - t0, error: String(e?.message || e) });
+      return null;
+    }
+  };
+  const globalFromCoins = (coins: any[], totalPairs: number, avgFR = 0, btcDom = 52) => {
+    let topG = { symbol: '', change: -Infinity, price: 0, volume: 0 };
+    let topL = { symbol: '', change: Infinity, price: 0, volume: 0 };
+    let gainers = 0, losers = 0, totalVol = 0;
+    for (const c of coins) {
+      totalVol += c.volume24h || 0;
+      const chg = c.priceChangePercent || 0;
+      if (chg > topG.change) topG = { symbol: c.symbol, change: chg, price: c.price, volume: c.volume24h };
+      if (chg < topL.change) topL = { symbol: c.symbol, change: chg, price: c.price, volume: c.volume24h };
+      if (chg > 0) gainers++; else if (chg < 0) losers++;
+    }
+    const px = (s: string) => coins.find((c) => c.symbol === s);
+    const btc = px('BTC'), eth = px('ETH'), sol = px('SOL'), bnb = px('BNB'), xrp = px('XRP'), doge = px('DOGE');
+    return {
+      totalVolume24h: totalVol, btcVolDominance: btcDom,
+      btcPrice: btc?.price ?? 0, btcChange24h: btc?.priceChangePercent ?? 0,
+      ethPrice: eth?.price ?? 0, ethChange24h: eth?.priceChangePercent ?? 0,
+      solPrice: sol?.price ?? 0, solChange24h: sol?.priceChangePercent ?? 0,
+      bnbPrice: bnb?.price ?? 0, bnbChange24h: bnb?.priceChangePercent ?? 0,
+      xrpPrice: xrp?.price ?? 0, xrpChange24h: xrp?.priceChangePercent ?? 0,
+      dogePrice: doge?.price ?? 0, dogeChange24h: doge?.priceChangePercent ?? 0,
+      avgFundingRate: avgFR, topGainer: topG, topLoser: topL,
+      gainersCount: gainers, losersCount: losers, totalPairs,
+    };
+  };
+  try {
+    // P1: Coinbase (Vercel-friendly, no key, no geo-block)
+    const cb = await timed('coinbase', coinbaseSnapshot);
+    if (cb && cb.length >= 3) {
+      const body: any = { coins: cb, global: globalFromCoins(cb, cb.length), timestamp: Date.now(), source: 'coinbase', degraded: false };
+      if (debug) body.attempts = attempts;
+      return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20' } });
+    }
+    // P2: Binance (parallel mirror race)
+    const bn = await timed('binance', async () => {
+      const [tickers, funding] = await Promise.all([
+        bFetch(BINANCE_URLS, '/api/v3/ticker/24hr'),
+        bFetch(FAPI_URLS, '/fapi/v1/premiumIndex'),
+      ]);
+      if (!tickers || !tickers.length) return null;
+      return { tickers, funding };
+    });
+    if (bn && bn.tickers && bn.tickers.length) {
+      const { tickers, funding } = bn;
       const stable = ['USDCUSDT','BUSDUSDT','TUSDUSDT','DAIUSDT','FDUSDUSDT','USDPUSDT','EURUSDT'];
       const usdt = tickers.filter((t: any) => t.symbol?.endsWith('USDT') && !stable.includes(t.symbol));
       let totalVol = 0, btcVol = 0, gainers = 0, losers = 0;
@@ -103,56 +225,40 @@ export async function GET() {
       let tf = 0, tfc = 0;
       for (const k in fm) { if (k.endsWith('USDT') && !stable.includes(k)) { tf += fm[k]; tfc++; } }
       const avgFR = tfc > 0 ? tf / tfc : 0;
-      const pick = (s: string) => tickers.find((t: any) => t.symbol === s);
-      const btc = pick('BTCUSDT'), eth = pick('ETHUSDT'), sol = pick('SOLUSDT');
-      const bnb = pick('BNBUSDT'), xrp = pick('XRPUSDT'), doge = pick('DOGEUSDT');
-      const np = (v: any) => parseFloat(v ?? '0');
-      const global = {
-        totalVolume24h: totalVol, btcVolDominance: parseFloat(btcDom.toFixed(2)),
-        btcPrice: np(btc?.lastPrice), btcChange24h: np(btc?.priceChangePercent),
-        ethPrice: np(eth?.lastPrice), ethChange24h: np(eth?.priceChangePercent),
-        solPrice: np(sol?.lastPrice), solChange24h: np(sol?.priceChangePercent),
-        bnbPrice: np(bnb?.lastPrice), bnbChange24h: np(bnb?.priceChangePercent),
-        xrpPrice: np(xrp?.lastPrice), xrpChange24h: np(xrp?.priceChangePercent),
-        dogePrice: np(doge?.lastPrice), dogeChange24h: np(doge?.priceChangePercent),
-        avgFundingRate: parseFloat(avgFR.toFixed(4)), topGainer: topG, topLoser: topL,
-        gainersCount: gainers, losersCount: losers, totalPairs: usdt.length,
-      };
-      return NextResponse.json({ coins, global, timestamp: Date.now(), source: 'binance', degraded: false }, { headers: { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=3' } });
+      const body: any = { coins, global: globalFromCoins(coins, usdt.length, parseFloat(avgFR.toFixed(4)), parseFloat(btcDom.toFixed(2))), timestamp: Date.now(), source: 'binance', degraded: false };
+      if (debug) body.attempts = attempts;
+      return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=3' } });
     }
-    const clG = await clGlobal();
-    const clT = await clTickers();
-    if (clG && clT && clT.length) {
+    const clPair = await timed('coinlore', async () => {
+      const [clG, clT] = await Promise.all([clGlobal(), clTickers()]);
+      if (!clG || !clT || !clT.length) return null;
+      return { clG, clT };
+    });
+    if (clPair && clPair.clT && clPair.clT.length) {
+      const { clG, clT } = clPair;
       const allow = ['BTC','ETH','SOL','BNB','XRP','DOGE','ADA','AVAX','DOT','LINK','MATIC','ATOM','UNI','OP','ARB'];
       const coins = clT.filter((t: any) => allow.includes(String(t.symbol).toUpperCase())).slice(0, 50).map((t: any, i: number) => ({
         rank: i + 1, symbol: String(t.symbol).toUpperCase(), price: parseFloat(t.price),
         priceChangePercent: parseFloat(t.percent_change_24h) || 0, high24h: 0, low24h: 0,
         volume24h: parseFloat(t.volume_24h) || 0, marketCap: parseFloat(t.market_cap) || 0, fundingRate: 0, sparkline: [],
       }));
-      let cg = { symbol: '', change: -Infinity, price: 0, volume: 0 };
-      let cl = { symbol: '', change: Infinity, price: 0, volume: 0 };
-      let gn = 0, ls = 0;
-      for (const t of clT) {
-        const chg = parseFloat(t.percent_change_24h), prc = parseFloat(t.price), vol = parseFloat(t.volume_24h);
-        if (chg > cg.change) cg = { symbol: String(t.symbol).toUpperCase(), change: chg, price: prc, volume: vol };
-        if (chg < cl.change) cl = { symbol: String(t.symbol).toUpperCase(), change: chg, price: prc, volume: vol };
-        if (chg > 0) gn++; if (chg < 0) ls++;
-      }
-      const fp = (s: string) => clT.find((t: any) => t.symbol === s);
-      const cb = fp('BTC'), ce = fp('ETH'), cs = fp('SOL'), cn = fp('BNB'), cx = fp('XRP'), cd = fp('DOGE');
       const mp = (v: any) => parseFloat(v ?? '0');
-      const cglobal = {
-        totalVolume24h: mp(clG.total_volume_24h), btcVolDominance: mp(clG.btc_dominance),
-        btcPrice: mp(cb?.price), btcChange24h: mp(cb?.percent_change_24h),
-        ethPrice: mp(ce?.price), ethChange24h: mp(ce?.percent_change_24h),
-        solPrice: mp(cs?.price), solChange24h: mp(cs?.percent_change_24h),
-        bnbPrice: mp(cn?.price), bnbChange24h: mp(cn?.percent_change_24h),
-        xrpPrice: mp(cx?.price), xrpChange24h: mp(cx?.percent_change_24h),
-        dogePrice: mp(cd?.price), dogeChange24h: mp(cd?.percent_change_24h),
-        avgFundingRate: 0, topGainer: cg, topLoser: cl,
-        gainersCount: gn, losersCount: ls, totalPairs: clT.length,
-      };
-      return NextResponse.json({ coins, global: cglobal, timestamp: Date.now(), source: 'coinlore', degraded: true }, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } });
+      const body: any = { coins, global: globalFromCoins(coins, clT.length, 0, mp(clG.btc_dominance)), timestamp: Date.now(), source: 'coinlore', degraded: true };
+      if (debug) body.attempts = attempts;
+      return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } });
+    }
+    // P3b: Public CoinGecko markets (no key). Rich data incl. market cap.
+    const cg = await timed('coingecko-public', cgMarkets);
+    if (cg && cg.length >= 3) {
+      const coins = cg.map((t: any, i: number) => ({
+        rank: i + 1, symbol: String(t.symbol).toUpperCase(), price: parseFloat(t.current_price) || 0,
+        priceChangePercent: parseFloat(t.price_change_percentage_24h) || 0,
+        high24h: parseFloat(t.high_24h) || 0, low24h: parseFloat(t.low_24h) || 0,
+        volume24h: parseFloat(t.total_volume) || 0, marketCap: parseFloat(t.market_cap) || 0, fundingRate: 0, sparkline: [],
+      }));
+      const body: any = { coins, global: globalFromCoins(coins, cg.length), timestamp: Date.now(), source: 'coingecko', degraded: true };
+      if (debug) body.attempts = attempts;
+      return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } });
     }
     const dcoins = DEGRADED_COINS.map((c) => ({
       rank: c.rank, symbol: c.symbol,
@@ -162,7 +268,9 @@ export async function GET() {
       low24h: parseFloat(c.low.toFixed(c.price >= 1 ? 2 : 6)),
       volume24h: c.volume, marketCap: 0, fundingRate: c.funding, sparkline: [],
     }));
-    return NextResponse.json({ coins: dcoins, global: degradedGlobal(dcoins[0].price, dcoins[0].priceChangePercent), timestamp: Date.now(), source: 'fallback', degraded: true }, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } });
+    const fbody: any = { coins: dcoins, global: degradedGlobal(dcoins[0].price, dcoins[0].priceChangePercent), timestamp: Date.now(), source: 'fallback', degraded: true };
+    if (debug) fbody.attempts = attempts;
+    return NextResponse.json(fbody, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } });
   } catch {
     const ecoins = DEGRADED_COINS.map((c) => ({
       rank: c.rank, symbol: c.symbol, price: c.price, priceChangePercent: c.change,

@@ -51,7 +51,10 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                     }
                 }
 
-                const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false`);
+                // Public proxy (no API key): /api/coingecko -> api.coingecko.com.
+                // Server caches 5 min to respect the public rate limit.
+                // The CoinGecko API key stays reserved for the AI analysis menu only.
+                const res = await fetch(`/api/coingecko`);
                 if (res.ok) {
                     const data = await res.json();
                     if (typeof window !== 'undefined') {
