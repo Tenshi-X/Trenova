@@ -92,6 +92,10 @@ export default function MarketIntelligence() {
             if (!res.ok) throw new Error('Binance market API error');
             const json = await res.json();
 
+            if (json.degraded) {
+              console.warn('[MarketIntelligence] Using degraded Binance data');
+            }
+
             const data: GlobalData = {
                 totalVolume24h: json.global?.totalVolume24h || 0,
                 btcVolDominance: json.global?.btcVolDominance || 0,
