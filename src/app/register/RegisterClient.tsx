@@ -51,7 +51,7 @@ export default function RegisterClient() {
       setLoading(false); 
       
       if (err.message === 'fetch failed' || (err.name === 'AuthRetryableFetchError')) {
-           setError("Connection Error: Unable to reach the server. Please check your internet connection and try again.");
+           setError(t('auth_conn_error'));
       } else {
            setError(err.message || 'Failed to register');
       }
@@ -84,7 +84,7 @@ export default function RegisterClient() {
       {/* Back to Home Button */}
       <Link href="/" className="absolute top-8 left-8 z-50 flex items-center gap-2 text-slate-500 hover:text-neon transition-colors font-semibold group">
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        {t('btn_back_home') || 'Back Home'}
+        {t('btn_back_home')}
       </Link>
 
       {/* Language & Theme Controls */}
@@ -131,8 +131,8 @@ export default function RegisterClient() {
 
       <div className="w-full max-w-md p-8 rounded-2xl relative z-10 shadow-xl border-t-4 border-t-neon bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-x border-b border-white/20 dark:border-slate-800">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Daftar Akun</h1>
-          <p className="text-slate-500 dark:text-slate-400">Buat akun untuk memulai</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">{t('register_title')}</h1>
+          <p className="text-slate-500 dark:text-slate-400">{t('register_subtitle')}</p>
         </div>
 
         {error && (
@@ -191,9 +191,9 @@ export default function RegisterClient() {
                 : "bg-neon hover:bg-neon-dim transform hover:-translate-y-0.5"
             )}
           >
-            {loading ? t('authenticating') || 'Processing...' : (
+            {loading ? t('authenticating') : (
               <>
-                Daftar Sekarang <ArrowRight size={20} />
+                {t('auth_register_btn')} <ArrowRight size={20} />
               </>
             )}
           </button>
@@ -201,7 +201,7 @@ export default function RegisterClient() {
 
         <div className="mt-6 flex items-center">
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-            <span className="flex-shrink-0 mx-4 text-slate-400 text-sm">Atau lanjutkan dengan</span>
+            <span className="flex-shrink-0 mx-4 text-slate-400 text-sm">{t('auth_divider')}</span>
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
         </div>
 
@@ -220,9 +220,9 @@ export default function RegisterClient() {
         </button>
 
         <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-          Sudah punya akun?{' '}
+          {t('auth_has_account')}{' '}
           <Link href="/login" className="text-neon font-semibold hover:underline">
-            Login di sini
+            {t('auth_login_link')}
           </Link>
         </p>
 

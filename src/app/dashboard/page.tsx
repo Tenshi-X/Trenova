@@ -409,7 +409,7 @@ export default function DashboardPage() {
     try {
         const usageCheck = await checkUsageLimit();
         if (!usageCheck.allowed) {
-            toast.error(usageCheck.error || "Usage limit reached");
+            toast.error(usageCheck.error || t('dash_toast_limit'));
             setChatLoading(false);
             return;
         }
@@ -419,7 +419,7 @@ export default function DashboardPage() {
         const marketData = await dataRes.json();
         
         if (!marketData.dataAvailable) {
-            toast.error(`Data Binance untuk ${selectedCoin.symbol.toUpperCase()} tidak tersedia. Pastikan pair USDT ada di Binance.`);
+            toast.error(t('dash_toast_no_data'));
             setChatLoading(false);
             return;
         }
@@ -448,12 +448,12 @@ export default function DashboardPage() {
             resJson = JSON.parse(rawText);
         } catch (e) {
             console.error('Server returned non-JSON response:', rawText);
-            throw new Error(`Server Error (${res.status}): Server sibuk atau merespons dengan format yang salah. Harap tunggu sebentar lalu tekan Generate lagi.`);
+            throw new Error(`${t('dash_err_server')} (${res.status})`);
         }
 
         if (!res.ok) {
             if (res.status === 503 || resJson.retryable) {
-                throw new Error('⏳ Server AI sedang kelebihan beban. Tunggu 1–2 menit lalu coba lagi.');
+                throw new Error(t('dash_err_overload'));
             }
             throw new Error(resJson.error || `API Error ${res.status}`);
         }
@@ -466,13 +466,13 @@ export default function DashboardPage() {
              await incrementUsage();
              await saveAnalysis(result, selectedCoin?.symbol, selectedCoin?.name);
              await fetchUsage();
-             toast.success("Analysis Complete!");
+             toast.success(t('dash_toast_done'));
              router.refresh();
         }
 
     } catch (e: any) {
         console.error("Critical Analysis Error:", e);
-        toast.error(e.message || "An unexpected error occurred while generating analysis.");
+        toast.error(e.message || t('dash_toast_fail'));
     } finally {
         setChatLoading(false);
     }
@@ -516,7 +516,7 @@ export default function DashboardPage() {
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <Radio size={15} /> Live Market
+            <Radio size={15} /> {t('nav_market')}
             <span className="text-[8px] sm:text-[9px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
@@ -528,7 +528,7 @@ export default function DashboardPage() {
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
-            <Newspaper size={15} /> News
+            <Newspaper size={15} /> {t('nav_news')}
         </button>
         <button
             onClick={() => setActiveTab('analysis')}
@@ -548,9 +548,9 @@ export default function DashboardPage() {
             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Lock size={40} />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4">Akses Terbatas</h2>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-4">{t('dash_limit_title')}</h2>
             <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
-                Akun Anda belum aktif atau masa berlangganan telah habis. Anda tidak memiliki kuota analisis yang tersisa.
+                {t('dash_limit_desc')}
             </p>
             <a 
                 href="https://shopee.co.id/Trading-Signal-Ai-Analisis-Crypto-TRENOVA-INTELLIGENCE-1-BULAN--i.1734650704.48456534787?extraParams=%7B%22display_model_id%22%3A345586316291%2C%22model_selection_logic%22%3A3%7D"
@@ -558,10 +558,10 @@ export default function DashboardPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-neon text-white font-bold rounded-xl shadow-lg hover:shadow-neon/50 hover:-translate-y-1 transition-all"
             >
-                Hubungi Developer (Beli Akses) <ArrowRight size={20} />
+                {t('dash_limit_btn')} <ArrowRight size={20} />
             </a>
             <p className="text-xs text-slate-400 mt-6">
-                Jika Anda sudah membeli akses, harap tunggu admin untuk mengaktifkan limit Anda, atau refresh halaman ini.
+                {t('dash_limit_desc')}
             </p>
         </div>
       ) : (
@@ -649,7 +649,7 @@ export default function DashboardPage() {
                                         <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{item.description}</div>
                                     </div>
                                     <div className="opacity-0 group-hover:opacity-100 transition-opacity text-neon text-xs font-bold whitespace-nowrap">
-                                        Open Chart
+                                        {t('dash_view_chart')}
                                     </div>
                                 </button>
                             ))}
@@ -754,7 +754,7 @@ export default function DashboardPage() {
                             {/* Single image upload */}
                             <div className="flex-1 lg:max-w-xs">
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
-                                    {t('upload_label')} <span className="text-slate-400 font-normal">(Opsional)</span>
+                                    {t('upload_label')} <span className="text-slate-400 font-normal">({t('feedback_optional')})</span>
                                 </label>
                                 {!imagePreview ? (
                                     <div
@@ -764,7 +764,7 @@ export default function DashboardPage() {
                                         <Upload size={20} className="group-hover:scale-110 transition-transform" />
                                         <div>
                                             <p className="font-bold text-sm">{t('upload_text')}</p>
-                                            <p className="text-[10px] opacity-70">or Paste Screenshot (Ctrl+V)</p>
+                                            <p className="text-[10px] opacity-70">{t('dash_paste_label')}</p>
                                         </div>
                                         <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                                     </div>
@@ -811,7 +811,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Menentukan durasi trading (Cepat/Harian/Berminggu). Mempengaruhi jarak target harga dan agresivitas setup AI.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_style_hint')}</p>
                             </div>
 
                             {/* Timeframe Dropdown */}
@@ -833,7 +833,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Resolusi data candle (OHLC) yang dianalisis. Mempengaruhi presisi entry point yang diberikan AI.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_tf_hint')}</p>
                             </div>
 
                             {/* Risk Tolerance */}
@@ -853,7 +853,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Menentukan jarak Stop Loss (SL). Low risk memberi SL lebih lebar/aman, High risk memberi SL ketat.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_risk_hint')}</p>
                             </div>
 
                             {/* Strategy Focus */}
@@ -874,7 +874,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Memaksa AI mencari pola spesifik. Misal: Breakout untuk momen harga menembus resistance.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_strategy_hint')}</p>
                             </div>
 
                             {/* Indicator Preference */}
@@ -895,7 +895,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Bobot analisa teknikal. Fokus Price Action mengabaikan indikator, Momentum mencari overbought/oversold.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_indicator_hint')}</p>
                             </div>
 
                             {/* Target Risk/Reward */}
@@ -915,7 +915,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} /> 
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">Filter rekomendasi AI. Hanya setup dengan rasio potensi Profit (Reward) vs Risiko (Risk) di atas batas ini yang diberikan.</p>
+                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_rr_hint')}</p>
                             </div>
                         </div>
 

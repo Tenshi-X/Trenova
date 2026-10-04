@@ -46,9 +46,9 @@ export default function Sidebar() {
 
   // Admin-only nav items
   const navItems = [
-    { name: 'Manajemen User', href: '/admin', icon: Users },
-    { name: 'Broadcast Email', href: '/admin/broadcast', icon: Mail },
-    { name: 'Feedback User', href: '/admin/feedback', icon: MessageSquare },
+    { name: t('admin_nav_users'), href: '/admin', icon: Users },
+    { name: t('admin_nav_broadcast'), href: '/admin/broadcast', icon: Mail },
+    { name: t('admin_nav_feedback'), href: '/admin/feedback', icon: MessageSquare },
   ];
 
   return (
@@ -112,7 +112,7 @@ export default function Sidebar() {
               "md:opacity-0 md:group-hover:opacity-100 md:translate-x-10 md:group-hover:translate-x-0"
           )}>
              <h1 className="text-xl font-bold tracking-wider text-foreground">{t('app_title')}</h1>
-             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">Admin Panel</p>
+             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">{t('admin_panel')}</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function Sidebar() {
         )}>
           <div className="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 flex items-center gap-2">
             <Shield size={14} className="text-amber-600 dark:text-amber-400" />
-            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Administrator</span>
+            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">{t('admin_role')}</span>
           </div>
         </div>
 
@@ -187,7 +187,7 @@ export default function Sidebar() {
                       isMobileOpen ? "opacity-100" : "opacity-0",
                       "md:opacity-0 md:group-hover:opacity-100"
                   )}>
-                    Logout
+                    {t('nav_signout')}
                   </span>
               </button>
 
@@ -201,7 +201,7 @@ export default function Sidebar() {
                     isMobileOpen ? "opacity-100" : "opacity-0",
                     "md:opacity-0 md:group-hover:opacity-100"
                 )}>
-                  v2.4.0 • Admin
+                  v2.4.0 • {t('admin_version')}
                 </span>
               </div>
             </div>

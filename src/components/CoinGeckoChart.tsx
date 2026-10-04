@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, memo } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface CoinGeckoChartProps {
   coinId: string;
@@ -8,6 +9,7 @@ interface CoinGeckoChartProps {
 function CoinGeckoChart({ coinId }: CoinGeckoChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const { language } = useLanguage();
 
   useEffect(() => {
     // Determine the script URL
@@ -28,7 +30,7 @@ function CoinGeckoChart({ coinId }: CoinGeckoChartProps) {
         if (containerRef.current) {
             containerRef.current.innerHTML = '';
             const widget = document.createElement("gecko-coin-price-chart-widget");
-            widget.setAttribute("locale", "en");
+            widget.setAttribute("locale", language === 'id' ? "id" : "en");
             widget.setAttribute("dark-mode", theme === 'dark' ? "true" : "false");
             widget.setAttribute("coin-id", coinId);
             widget.setAttribute("initial-currency", "usd");
@@ -43,7 +45,7 @@ function CoinGeckoChart({ coinId }: CoinGeckoChartProps) {
     // We can just append the element.
     renderWidget();
     
-  }, [coinId, theme]);
+  }, [coinId, theme, language]);
 
   return (
     <div className="w-full h-[500px] bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden my-6 transition-colors p-4 flex flex-col justify-center">

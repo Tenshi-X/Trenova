@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Newspaper, ExternalLink, Loader2, Clock, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import clsx from 'clsx';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface NewsItem {
   title: string;
@@ -17,6 +18,7 @@ interface NewsItem {
 const ITEMS_PER_PAGE = 10;
 
 export default function CryptoNews() {
+  const { t } = useLanguage();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,7 +74,7 @@ export default function CryptoNews() {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center h-64">
         <Loader2 className="animate-spin text-neon mb-3" size={28} />
-        <p className="text-sm text-slate-500">Memuat berita crypto terbaru...</p>
+        <p className="text-sm text-slate-500">{t('news_loading')}</p>
       </div>
     );
   }
@@ -81,7 +83,7 @@ export default function CryptoNews() {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col items-center justify-center h-64 text-slate-400">
         <Newspaper size={32} className="mb-3 opacity-50" />
-        <p className="text-sm">Tidak ada berita tersedia saat ini.</p>
+        <p className="text-sm">{t('news_empty')}</p>
       </div>
     );
   }
@@ -94,14 +96,14 @@ export default function CryptoNews() {
           <div className="p-2 bg-neon/10 rounded-xl">
             <Newspaper className="text-neon" size={20} />
           </div>
-          <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">Live Crypto News</h2>
+          <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">{t('news_title')}</h2>
           <span className="text-[10px] font-bold tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full ml-2 hidden sm:inline-block">
             MULTI-SOURCE
           </span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-slate-400 hidden sm:inline">
-            {news.length} articles
+            {news.length} {t('news_articles')}
           </span>
           <button
             onClick={() => { setLoading(true); fetchNews(true); }}
@@ -164,7 +166,7 @@ export default function CryptoNews() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 group-hover:text-neon transition-colors">
-                    Baca <ExternalLink size={10} />
+                    {t('news_read')} <ExternalLink size={10} />
                   </div>
                 </div>
               </div>

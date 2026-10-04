@@ -36,16 +36,16 @@ export default function BroadcastEmailPage() {
     
     const emailList = emails.split(/[\n,]+/).map(e => e.trim()).filter(e => e !== '');
 
-    if (emailList.length === 0) return setResult({ success: false, message: 'Harap masukkan setidaknya satu alamat email.' });
-    if (!subject.trim()) return setResult({ success: false, message: 'Harap masukkan judul email.' });
-    if (!content.trim()) return setResult({ success: false, message: 'Harap masukkan deskripsi email.' });
+    if (emailList.length === 0) return setResult({ success: false, message: t('bcast_fill_emails') });
+    if (!subject.trim()) return setResult({ success: false, message: t('bcast_fill_subject') });
+    if (!content.trim()) return setResult({ success: false, message: t('bcast_fill_content') });
 
     setLoading(true);
     try {
       const res = await sendBroadcastEmail(emailList, subject, content);
-      setResult({ success: res.success, message: res.success ? (res.message || 'Email berhasil dikirim.') : (res.error || 'Gagal mengirim email.') });
+      setResult({ success: res.success, message: res.success ? (res.message || t('bcast_sent_ok')) : (res.error || t('bcast_sent_fail')) });
     } catch (err: any) {
-      setResult({ success: false, message: err.message || 'Terjadi kesalahan sistem.' });
+      setResult({ success: false, message: err.message || t('bcast_sys_error') });
     } finally {
       setLoading(false);
     }
@@ -56,19 +56,19 @@ export default function BroadcastEmailPage() {
     setResult(null);
 
     if (!newUserEmail.trim() || !newUserPassword.trim()) {
-      return setResult({ success: false, message: 'Harap masukkan email dan password.' });
+      return setResult({ success: false, message: t('bcast_fill_account') });
     }
 
     setLoading(true);
     try {
       const res = await sendNewAccountEmail(newUserEmail.trim(), newUserPassword.trim());
-      setResult({ success: res.success, message: res.success ? res.message : (res.error || 'Gagal mengirim email.') });
+      setResult({ success: res.success, message: res.success ? res.message : (res.error || t('bcast_sent_fail')) });
       if (res.success) {
          setNewUserEmail('');
          setNewUserPassword('');
       }
     } catch (err: any) {
-       setResult({ success: false, message: err.message || 'Terjadi kesalahan sistem.' });
+       setResult({ success: false, message: err.message || t('bcast_sys_error') });
     } finally {
        setLoading(false);
     }
@@ -81,9 +81,9 @@ export default function BroadcastEmailPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
-            <Mail className="text-neon-dark" /> Broadcast & Notifikasi
+            <Mail className="text-neon-dark" /> {t('bcast_title')}
           </h1>
-          <p className="text-slate-500">Kirim email pemberitahuan massal atau data akun baru.</p>
+          <p className="text-slate-500">{t('bcast_subtitle')}</p>
         </div>
         <div className="flex gap-2 sm:gap-4 items-center flex-wrap">
              <div className="flex items-center gap-2 mr-0 sm:mr-2 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-4">
@@ -112,7 +112,7 @@ export default function BroadcastEmailPage() {
                 activeTab === 'broadcast' ? "bg-white dark:bg-slate-900 text-foreground shadow-sm" : "text-slate-500 hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-slate-800"
               )}
             >
-              <Mail size={16} /> Broadcast Promo
+              <Mail size={16} /> {t('bcast_tab_broadcast')}
             </button>
             <button 
               type="button"
@@ -122,7 +122,7 @@ export default function BroadcastEmailPage() {
                 activeTab === 'new-account' ? "bg-white dark:bg-slate-900 text-foreground shadow-sm" : "text-slate-500 hover:text-foreground hover:bg-slate-200/50 dark:hover:bg-slate-800"
               )}
             >
-              <UserPlus size={16} /> Kirim Data Akun Baru
+              <UserPlus size={16} /> {t('bcast_tab_newaccount')}
             </button>
          </div>
 
@@ -135,7 +135,7 @@ export default function BroadcastEmailPage() {
             )}>
               {result.success ? <CheckCircle2 className="shrink-0 mt-0.5" size={20} /> : <AlertCircle className="shrink-0 mt-0.5" size={20} />}
               <div>
-                 <h3 className="font-bold">{result.success ? "Berhasil" : "Gagal"}</h3>
+                 <h3 className="font-bold">{result.success ? t('bcast_sent_ok') : t('bcast_sent_fail')}</h3>
                  <p className="text-sm mt-1">{result.message}</p>
               </div>
             </div>
@@ -148,14 +148,14 @@ export default function BroadcastEmailPage() {
                    {/* Email List Input */}
                    <div className="space-y-2">
                       <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         Daftar Email Tujuan <span className="text-red-500">*</span>
+                         {t('bcast_recipients')} <span className="text-red-500">*</span>
                       </label>
-                      <p className="text-xs text-slate-500 mb-2">Pisahkan dengan koma (,) atau baris baru (enter).</p>
+                      <p className="text-xs text-slate-500 mb-2">{t('bcast_hint_recipients')}</p>
                       <textarea 
                         value={emails}
                         onChange={(e) => setEmails(e.target.value)}
                         rows={5}
-                        placeholder="contoh1@gmail.com, contoh2@gmail.com&#10;contoh3@gmail.com"
+                        placeholder={t('bcast_recipients_ph')}
                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50 text-sm font-mono placeholder:text-slate-400"
                         required
                       />
@@ -164,13 +164,13 @@ export default function BroadcastEmailPage() {
                    {/* Subject Input */}
                    <div className="space-y-2">
                       <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         Judul Email (Subject) <span className="text-red-500">*</span>
+                         {t('bcast_subject')} <span className="text-red-500">*</span>
                       </label>
                       <input 
                         type="text"
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
-                        placeholder="Masukkan judul email"
+                        placeholder={t('bcast_subject_ph')}
                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50 text-sm placeholder:text-slate-400"
                         required
                       />
@@ -179,9 +179,9 @@ export default function BroadcastEmailPage() {
                    {/* Content Input */}
                    <div className="space-y-2">
                       <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         Deskripsi Email <span className="text-red-500">*</span>
+                         {t('bcast_content')} <span className="text-red-500">*</span>
                       </label>
-                      <p className="text-xs text-slate-500 mb-2">Pesan ini akan dikonversi ke HTML secara otomatis (baris baru menjadi &lt;br&gt;).</p>
+                      <p className="text-xs text-slate-500 mb-2">{t('bcast_hint_content')}</p>
                       <textarea 
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -202,7 +202,7 @@ export default function BroadcastEmailPage() {
                           ) : (
                             <Send size={18} />
                           )}
-                          {loading ? 'Mengirim...' : 'Kirim Email Promo'}
+                          {loading ? t('bcast_sending') : t('bcast_send_btn')}
                        </button>
                    </div>
                 </form>
@@ -214,7 +214,7 @@ export default function BroadcastEmailPage() {
                    {/* Email Input */}
                    <div className="space-y-2">
                       <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         Email Pelanggan <span className="text-red-500">*</span>
+                         {t('bcast_new_email')} <span className="text-red-500">*</span>
                       </label>
                       <input 
                         type="email"
@@ -229,20 +229,20 @@ export default function BroadcastEmailPage() {
                    {/* Password Input */}
                    <div className="space-y-2">
                       <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         Password Akses <span className="text-red-500">*</span>
+                         {t('bcast_new_pass')} <span className="text-red-500">*</span>
                       </label>
                       <input 
                         type="text"
                         value={newUserPassword}
                         onChange={(e) => setNewUserPassword(e.target.value)}
-                        placeholder="Masukkan password akun baru"
+                        placeholder={t('bcast_new_pass_ph')}
                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50 text-sm placeholder:text-slate-400 font-mono"
                         required
                       />
                    </div>
 
                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
-                      <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Template Email yang Akan Dikirim:</h4>
+                      <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t('bcast_template_title')}</h4>
                       <div className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-mono whitespace-pre-wrap">
 {`Halo Kak,
 
@@ -268,7 +268,7 @@ https://trenova-intelligence.vercel.app/login`}
                           ) : (
                             <Send size={18} />
                           )}
-                          {loading ? 'Mengirim...' : 'Kirim Data Akun'}
+                          {loading ? t('bcast_sending_account') : t('bcast_send_account')}
                        </button>
                    </div>
                 </form>

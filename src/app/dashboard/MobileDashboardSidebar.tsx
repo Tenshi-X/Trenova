@@ -169,13 +169,13 @@ export default function DashboardSidebar({
                 : "text-red-500 dark:text-red-400"
             )} />
             <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subscription</p>
+              <p className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('side_sub_label')}</p>
               {!isExpired ? (
                 <p className={clsx("text-xs font-black", daysLeft > 7 ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400")}>
-                  {daysLeft} Days Left
+                  {daysLeft} {t('dash_days_left')}
                 </p>
               ) : (
-                <p className="text-xs font-black text-red-600 dark:text-red-400">Expired</p>
+                <p className="text-xs font-black text-red-600 dark:text-red-400">{t('dash_expired')}</p>
               )}
             </div>
           </div>
@@ -185,7 +185,7 @@ export default function DashboardSidebar({
             <div className="flex items-center gap-3 mb-1.5">
               <Zap size={16} className="text-blue-600 dark:text-blue-400 fill-blue-600 dark:fill-blue-400" />
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Tokens</p>
+                <p className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('side_tokens_label')}</p>
                 <p className="text-xs font-black text-blue-700 dark:text-blue-400">
                   {tokenRemaining} <span className="text-[9px] font-semibold text-blue-500/80">/ {tokenLimit}</span>
                 </p>
@@ -269,7 +269,7 @@ export default function DashboardSidebar({
                 isMobileOpen ? "opacity-100" : "opacity-0",
                 "md:opacity-0 md:group-hover:opacity-100"
               )}>
-                Logout
+                {t('nav_signout')}
               </span>
             </button>
 
@@ -284,7 +284,7 @@ export default function DashboardSidebar({
                 isMobileOpen ? "opacity-100" : "opacity-0",
                 "md:opacity-0 md:group-hover:opacity-100"
               )}>
-                v2.4.0 • Active
+                v2.4.0 • {t('side_version_active')}
               </span>
             </div>
           </div>

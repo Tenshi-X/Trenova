@@ -49,7 +49,7 @@ export default function LoginClient() {
       setLoading(false); 
       
       if (err.message === 'fetch failed' || (err.name === 'AuthRetryableFetchError')) {
-           setError("Connection Error: Unable to reach the server. Please check your internet connection and try again.");
+           setError(t('auth_conn_error'));
       } else {
            setError(err.message || 'Failed to login');
       }
@@ -199,7 +199,7 @@ export default function LoginClient() {
 
         <div className="mt-6 flex items-center">
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-            <span className="flex-shrink-0 mx-4 text-slate-400 text-sm">Atau lanjutkan dengan</span>
+            <span className="flex-shrink-0 mx-4 text-slate-400 text-sm">{t('auth_divider')}</span>
             <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
         </div>
 
@@ -218,9 +218,9 @@ export default function LoginClient() {
         </button>
 
         <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
-          Belum punya akun?{' '}
+          {t('auth_no_account')}{' '}
           <Link href="/register" className="text-neon font-semibold hover:underline">
-            Daftar di sini
+            {t('auth_register_link')}
           </Link>
         </p>
 

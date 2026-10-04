@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Search, Loader2, Filter } from 'lucide-react';
 import clsx from 'clsx';
+import { useLanguage } from '@/context/LanguageContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CoinData {
@@ -82,6 +83,7 @@ function getHeuristicTA(coin: CoinData) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps) {
+  const { t } = useLanguage();
   const [coins, setCoins]             = useState<CoinData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading]     = useState(true);
@@ -176,7 +178,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       console.error('Market data fetch error:', err);
       setIsConnected(false);
       if (coins.length === 0) {
-        setError('Gagal memuat data. Coba lagi...');
+        setError(t('market_load_fail'));
       }
       setIsLoading(false);
     }
@@ -277,7 +279,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                         type="text" 
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search Symbol"
+                        placeholder={t('market_search_ph')}
                         className="w-32 pl-7 pr-3 py-1 bg-slate-900 border border-slate-800 rounded text-[10px] focus:border-neon focus:outline-none transition-colors"
                     />
                  </div>
@@ -310,7 +312,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         {isLoading && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-500">
             <Loader2 className="animate-spin text-neon" size={24} />
-            <span className="text-xs tracking-widest">LOADING MARKET DATA...</span>
+            <span className="text-xs tracking-widest">{t('market_loading')}</span>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
@@ -319,12 +321,12 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
               onClick={() => { setIsLoading(true); setError(''); fetchMarketData(true); }}
               className="text-[10px] px-3 py-1 bg-slate-800 rounded text-slate-300 hover:text-neon transition-colors"
             >
-              RETRY
+              {t('market_retry')}
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-xs text-slate-500 tracking-widest uppercase">
-            {search ? `NO MATCH FOR "${search}"` : 'NO DATA AVAILABLE'}
+            {search ? `${t('market_no_match')} "${search}"` : t('market_no_data')}
           </div>
         ) : (
           filtered.map((coin, index) => {
@@ -449,13 +451,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       {/* ── Footer ── */}
       <div className="flex-none px-4 py-2 border-t border-slate-800/80 bg-slate-950 flex items-center justify-between">
         <span className="text-[9px] text-slate-500 uppercase tracking-widest">
-          Showing {filtered.length} of {coins.length} pairs
+          {t('market_showing')} {filtered.length} {t('market_of')} {coins.length} pairs
         </span>
         <span className="text-[9px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
           <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-neon animate-pulse' : 'bg-rose-500')} />
           {isConnected
-            ? `SYNCED · BINANCE /5s · ${lastUpdated?.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) ?? ''}`
-            : 'DISCONNECTED'
+            ? `${t('market_synced')} ${lastUpdated?.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) ?? ''}`
+            : t('market_disconnected')
           }
         </span>
       </div>

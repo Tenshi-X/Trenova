@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, memo } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface TradingViewWidgetProps {
   symbol: string;
@@ -10,6 +11,7 @@ interface TradingViewWidgetProps {
 function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (!container.current) return;
@@ -35,7 +37,7 @@ function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
       "timezone": "Etc/UTC",
       "theme": theme === 'dark' ? 'dark' : 'light',
       "style": "1",
-      "locale": "en",
+      "locale": language === 'id' ? 'id_ID' : 'en',
       "enable_publishing": false,
       "allow_symbol_change": true,
       "calendar": false,
@@ -44,7 +46,7 @@ function TradingViewWidget({ symbol }: TradingViewWidgetProps) {
     });
 
     container.current.appendChild(script);
-  }, [symbol, theme]);
+  }, [symbol, theme, language]);
 
   return (
     <div className="w-full h-[500px] bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden my-6 transition-colors">

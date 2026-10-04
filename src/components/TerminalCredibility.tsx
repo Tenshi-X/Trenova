@@ -34,9 +34,9 @@ export default function TerminalCredibility() {
               </div>
             </div>
             <div className="text-[11px] text-slate-500 leading-[1.9] mb-6">
-              {t('lp_cred_desc1')} <strong className="text-slate-300">{t('lp_cred_desc1_bold')}</strong> — kami komunitas trader Indonesia yang membangun tools yang kami sendiri butuhkan setiap hari.
+              {t('lp_cred_desc1')} <strong className="text-slate-300">{t('lp_cred_desc1_bold')}</strong>
               <br /><br />
-              {t('lp_cred_desc2')} <strong className="text-slate-300">{t('lp_cred_desc2_bold')}</strong>. Kamu yang beli adalah bagian dari komunitas yang ikut membentuk roadmap fitur berikutnya.
+              {t('lp_cred_desc2')} <strong className="text-slate-300">{t('lp_cred_desc2_bold')}</strong>
             </div>
           </div>
 

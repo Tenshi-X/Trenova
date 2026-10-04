@@ -45,7 +45,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4 justify-end">
             <a href="https://discord.gg/gGdkQypYWM" target="_blank" rel="noopener noreferrer" className="hidden md:block text-sm font-bold text-slate-400 hover:text-white transition-colors mr-2 font-mono">
-              [COMMUNITY]
+              [{t('nav_mobile_community')}]
             </a>
 
             <div className="hidden md:flex items-center gap-3 mr-2 border-r border-slate-800 pr-4">
@@ -55,11 +55,11 @@ export default function LandingPage() {
 
             <Link href="/login" className="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-neon transition-colors font-mono">
               <LogIn size={16} />
-              {t('nav_login') || 'Login'}
+              {t('nav_login')}
             </Link>
 
             <Link href="/register" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-emerald-400 transition-all shadow-neon/20 font-mono">
-              &gt; INIT
+              &gt; {t('nav_mobile_cta')}
             </Link>
 
              <div className="md:hidden flex items-center gap-2 relative z-50">
@@ -85,7 +85,7 @@ export default function LandingPage() {
                 className="p-4 rounded bg-slate-900 border border-slate-800 text-lg font-bold text-slate-300 flex items-center justify-between"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                [COMMUNITY]
+                [{t('nav_mobile_community')}]
                 <ArrowRight size={20} className="text-neon" />
               </a>
               <Link 
@@ -93,7 +93,7 @@ export default function LandingPage() {
                 className="p-4 rounded bg-slate-900 border border-slate-800 text-lg font-bold text-slate-300 flex items-center justify-between"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="flex items-center gap-2"><LogIn size={20} /> {t('nav_login') || 'Login'}</span>
+                <span className="flex items-center gap-2"><LogIn size={20} /> {t('nav_login')}</span>
                 <ArrowRight size={20} className="text-neon" />
               </Link>
               <Link 
@@ -101,7 +101,7 @@ export default function LandingPage() {
                 className="p-4 text-center rounded bg-neon text-slate-950 font-bold text-lg"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                &gt; INITIALIZE
+                &gt; {t('nav_mobile_cta')}
               </Link>
             </div>
           </div>
@@ -318,15 +318,15 @@ export default function LandingPage() {
             {/* Telegram Contact CTA */}
             <div className="mt-16 text-center max-w-2xl mx-auto">
                <div className="p-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center shadow-sm">
-                  <h3 className="text-2xl font-bold text-foreground mb-3">Punya Pertanyaan Spesifik?</h3>
-                  <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm md:text-base">Tanya-tanya terkait fitur, kegunaan, dan panduan menggunakan Trenova Terminal langsung dengan tim kami.</p>
+                  <h3 className="text-2xl font-bold text-foreground mb-3">{t('lp_contact_title')}</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm md:text-base">{t('lp_contact_desc')}</p>
                   <a 
                      href="https://t.me/TRENOVATERMINAL" 
                      target="_blank" 
                      rel="noopener noreferrer"
                      className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#229ED9] hover:bg-[#1CA0DE] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 active:scale-95"
                   >
-                     <MessageCircle size={20} /> Hubungi Kami
+                     <MessageCircle size={20} /> {t('lp_contact_btn')}
                   </a>
                </div>
             </div>

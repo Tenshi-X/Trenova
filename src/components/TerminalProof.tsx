@@ -29,13 +29,13 @@ export default function TerminalProof() {
         {/* Header */}
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
-            ── TRACK RECORD NYATA
+            ── {t('lp_proof_header')}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Bukan Klaim.<br /><span className="text-neon">Ini Buktinya.</span>
+            {t('lp_proof_title')}<br /><span className="text-neon">{t('lp_proof_title_accent')}</span>
           </h2>
           <p className="text-slate-500 text-[13px] max-w-xl leading-[1.8]">
-            Hasil trade nyata dari komunitas Trenova Intelligence — long maupun short, market bullish maupun bearish. Screenshot asli, tidak diedit.
+            {t('lp_proof_desc')}
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function TerminalProof() {
         {/* Ticker Row - More Results */}
         <div className="border border-slate-800 bg-slate-950 p-4 mb-6">
           <div className="text-[9px] text-slate-600 uppercase tracking-[0.12em] text-center mb-4">
-            LEBIH BANYAK HASIL → GESER →
+            {t('lp_proof_more')}
           </div>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {tickerResults.map((t, i) => (
@@ -85,17 +85,17 @@ export default function TerminalProof() {
         {/* Stats & Testimonials remain the same below */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-800 border border-slate-800 mb-px">
           {[
-            { num: '327', suffix: '%+', label: 'MAX ROI', sub: 'Rekor tertinggi komunitas' },
-            { num: '1,200', suffix: '+', label: 'TOTAL ANALISA', sub: 'Diproses oleh AI' },
-            { num: '4.8', suffix: '/5', label: 'USER RATING', sub: '100+ ulasan verified' },
-            { num: '<60', suffix: 's', label: 'ANALISA TIME', sub: 'Rata-rata per sesi' },
+            { num: '327', suffix: '%+', labelKey: 'lp_proof_stat1' as const, subKey: 'lp_proof_stat1_desc' as const },
+            { num: '1,200', suffix: '+', labelKey: 'lp_proof_stat2' as const, subKey: 'lp_proof_stat2_desc' as const },
+            { num: '4.8', suffix: '/5', labelKey: 'lp_proof_stat3' as const, subKey: 'lp_proof_stat3_desc' as const },
+            { num: '<60', suffix: 's', labelKey: 'lp_proof_stat4' as const, subKey: 'lp_proof_stat4_desc' as const },
           ].map((s, i) => (
             <div key={i} className="bg-slate-950 p-6 text-center relative">
               <div className="text-3xl md:text-[40px] font-bold text-neon leading-none mb-1.5 tracking-tight">
                 {s.num}<span className="text-lg text-neon/70">{s.suffix}</span>
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-[0.06em] mb-1">{s.label}</div>
-              <div className="text-[10px] text-slate-700">{s.sub}</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-[0.06em] mb-1">{t(s.labelKey)}</div>
+              <div className="text-[10px] text-slate-700">{t(s.subKey)}</div>
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon/50 to-transparent" />
             </div>
           ))}

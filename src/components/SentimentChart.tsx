@@ -4,12 +4,14 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { calculateRSI, calculateStoch, calculateCCI, normalizeRSI, normalizeStoch, normalizeCCI } from '@/lib/technical-analysis';
 import clsx from 'clsx';
 import { Loader2, Activity } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface SentimentChartProps {
     symbol: string;
 }
 
 export default function SentimentChart({ symbol }: SentimentChartProps) {
+    const { t, language } = useLanguage();
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -85,13 +87,13 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
     if (loading) return (
         <div className="mt-4 p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center gap-3 text-sm text-slate-500">
             <Loader2 className="animate-spin text-neon" size={18}/>
-            <span>Analyzing Market Sentiment for {symbol}...</span>
+            <span>{t('dash_symptom_load')}</span>
         </div>
     );
 
     if (error) return (
         <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center gap-2 text-xs text-slate-400">
-            <span>⚠️ Sentiment analysis unavailable for <b>{symbol}</b> (Data source mismatch)</span>
+            <span>⚠️ {t('dash_symptom_chart')}</span>
         </div>
     );
 
@@ -118,7 +120,7 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
                 <div className="flex-1 flex flex-col items-center justify-center relative min-w-[200px]">
                     <div className="absolute top-0 left-0 flex items-center gap-2 text-slate-500">
                         <Activity size={16} />
-                        <span className="text-xs font-bold uppercase">Technical Sentiment</span>
+                        <span className="text-xs font-bold uppercase">{t('dash_view_insight')}</span>
                     </div>
                     <div className="relative w-48 h-24 mt-6 overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-full bg-slate-100 dark:bg-slate-800 rounded-t-full" />
@@ -132,7 +134,7 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
                                     {sentiment.toFixed(1)}%
                                 </div>
                                 <div className="text-[10px] font-bold uppercase text-slate-400">
-                                    {sentiment >= 60 ? "Bullish" : sentiment <= 40 ? "Bearish" : "Neutral"}
+                                    {sentiment >= 60 ? t('dash_bullish') : sentiment <= 40 ? t('dash_bearish') : t('dash_neutral')}
                                 </div>
                             </div>
                         </div>
@@ -148,10 +150,10 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
             </div>
 
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
-                <span>Powered by Technical Analysis Engine</span>
+                <span>{t('dash_view_insight')}</span>
                 <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    {lastRefresh ? `Updated ${lastRefresh.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit' })} · Auto-refresh /5min` : 'Loading...'}
+                    {lastRefresh ? `${t('market_synced')} ${lastRefresh.toLocaleTimeString(language === 'id' ? 'id-ID' : 'en-US', { hour: '2-digit', minute: '2-digit' })}` : t('loading')}
                 </span>
             </div>
         </div>

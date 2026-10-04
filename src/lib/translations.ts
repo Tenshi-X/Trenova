@@ -149,7 +149,6 @@ export type TranslationKey =
   | 'lp_proof_title_accent'
   | 'lp_proof_desc'
   | 'lp_proof_more'
-  | 'lp_proof_pill'
   | 'lp_proof_stat1'
   | 'lp_proof_stat2'
   | 'lp_proof_stat3'
@@ -158,27 +157,6 @@ export type TranslationKey =
   | 'lp_proof_stat2_desc'
   | 'lp_proof_stat3_desc'
   | 'lp_proof_stat4_desc'
-  | 'lp_proof_stat1_num'
-  | 'lp_proof_stat1_label'
-  | 'lp_proof_stat1_sub'
-  | 'lp_proof_stat2_num'
-  | 'lp_proof_stat2_label'
-  | 'lp_proof_stat2_sub'
-  | 'lp_proof_stat3_num'
-  | 'lp_proof_stat3_label'
-  | 'lp_proof_stat3_sub'
-  | 'lp_proof_stat4_num'
-  | 'lp_proof_stat4_label'
-  | 'lp_proof_stat4_sub'
-  | 'lp_proof_t1_name'
-  | 'lp_proof_t1_role'
-  | 'lp_proof_t1_quote'
-  | 'lp_proof_t2_name'
-  | 'lp_proof_t2_role'
-  | 'lp_proof_t2_quote'
-  | 'lp_proof_t3_name'
-  | 'lp_proof_t3_role'
-  | 'lp_proof_t3_quote'
   | 'admin_console'
   | 'admin_subtitle'
   | 'btn_create_auth'
@@ -278,6 +256,168 @@ export type TranslationKey =
   | 'faq_a4'
   | 'faq_q5'
   | 'faq_a5'
+  | 'nav_mobile_community'
+  | 'nav_mobile_login'
+  | 'nav_mobile_cta'
+  | 'lp_hero_middle'
+  | 'lp_contact_title'
+  | 'lp_contact_desc'
+  | 'lp_contact_btn'
+  | 'lp_proof_pill'
+  | 'lp_proof_desc'
+  | 'auth_divider'
+  | 'auth_register_btn'
+  | 'auth_has_account'
+  | 'auth_login_link'
+  | 'auth_no_account'
+  | 'auth_register_link'
+  | 'auth_conn_error'
+  | 'dash_block_new_title'
+  | 'dash_block_new_desc'
+  | 'dash_block_exp_title'
+  | 'dash_block_exp_desc'
+  | 'dash_block_support'
+  | 'dash_block_contact'
+  | 'dash_token_runs'
+  | 'dash_days_left'
+  | 'dash_expired'
+  | 'dash_title'
+  | 'dash_desc'
+  | 'dash_seed_label'
+  | 'dash_change_btn'
+  | 'dash_change_title'
+  | 'dash_paste_label'
+  | 'dash_context_ph'
+  | 'dash_select_coin_first'
+  | 'dash_symptom_load'
+  | 'dash_symptom_chart'
+  | 'dash_limit_title'
+  | 'dash_limit_desc'
+  | 'dash_limit_btn'
+  | 'dash_style_hint'
+  | 'dash_tf_hint'
+  | 'dash_risk_hint'
+  | 'dash_strategy_hint'
+  | 'dash_indicator_hint'
+  | 'dash_rr_hint'
+  | 'dash_toast_limit'
+  | 'dash_toast_no_data'
+  | 'dash_toast_done'
+  | 'dash_toast_fail'
+  | 'dash_err_server'
+  | 'dash_err_overload'
+  | 'dash_bullish'
+  | 'dash_bearish'
+  | 'dash_neutral'
+  | 'dash_risk_conservative'
+  | 'dash_risk_moderate'
+  | 'dash_risk_aggressive'
+  | 'dash_strategy_allround'
+  | 'dash_indicator_default'
+  | 'dash_view_chart'
+  | 'dash_view_insight'
+  | 'news_loading'
+  | 'news_empty'
+  | 'news_read'
+  | 'news_title'
+  | 'market_showing'
+  | 'market_of'
+  | 'market_synced'
+  | 'market_disconnected'
+  | 'side_token_title'
+  | 'side_token_sub'
+  | 'side_quick_title'
+  | 'side_open_terminal'
+  | 'side_back_home'
+  | 'side_version_active'
+  | 'admin_nav_users'
+  | 'admin_nav_broadcast'
+  | 'admin_nav_feedback'
+  | 'admin_version'
+  | 'bcast_title'
+  | 'bcast_subtitle'
+  | 'bcast_tab_broadcast'
+  | 'bcast_tab_newaccount'
+  | 'bcast_recipients'
+  | 'bcast_recipients_ph'
+  | 'bcast_subject'
+  | 'bcast_content'
+  | 'bcast_send_btn'
+  | 'bcast_sending'
+  | 'bcast_hint_recipients'
+  | 'bcast_hint_content'
+  | 'bcast_subject_ph'
+  | 'bcast_fill_emails'
+  | 'bcast_fill_subject'
+  | 'afb_link_fail'
+  | 'afb_purged_note'
+  | 'afb_row_sender'
+  | 'afb_row_contact'
+  | 'afb_row_message'
+  | 'afb_row_attach'
+  | 'afb_row_no_email'
+  | 'afb_row_no_contact'
+  | 'afb_row_no_attach'
+  | 'afb_row_link_title'
+  | 'market_load_fail'
+  | 'bcast_fill_content'
+  | 'bcast_sent_ok'
+  | 'bcast_sent_fail'
+  | 'bcast_sys_error'
+  | 'bcast_new_email'
+  | 'bcast_new_pass'
+  | 'bcast_new_pass_ph'
+  | 'bcast_template_title'
+  | 'bcast_send_account'
+  | 'bcast_sending_account'
+  | 'bcast_fill_account'
+  | 'afb_title'
+  | 'afb_subtitle'
+  | 'afb_refresh'
+  | 'afb_cleanup'
+  | 'afb_search_ph'
+  | 'afb_filter_all'
+  | 'afb_st_new'
+  | 'afb_st_read'
+  | 'afb_st_resolved'
+  | 'afb_total'
+  | 'afb_new_today'
+  | 'afb_last30'
+  | 'afb_empty'
+  | 'afb_no_match'
+  | 'afb_no_match_desc'
+  | 'afb_detail'
+  | 'afb_mark_read'
+  | 'afb_mark_resolved'
+  | 'afb_delete'
+  | 'afb_page_of'
+  | 'afb_delete_title'
+  | 'afb_delete_desc'
+  | 'afb_cancel'
+  | 'afb_confirm_delete'
+  | 'afb_load_fail'
+  | 'afb_delete_fail'
+  | 'term_analyzing'
+  | 'term_need_coin'
+  | 'term_slots_full'
+  | 'term_img_fail'
+  | 'term_history_fail'
+  | 'market_loading'
+  | 'market_retry'
+  | 'market_no_data'
+  | 'market_no_match'
+  | 'term_done_ok'
+  | 'term_fail_prefix'
+  | 'register_title'
+  | 'register_subtitle'
+  | 'lp_hero_desc_tail'
+  | 'admin_panel'
+  | 'admin_role'
+  | 'market_search_ph'
+  | 'news_articles'
+  | 'side_sub_label'
+  | 'side_tokens_label'
+  | 'dash_nav_title'
   | 'testimonial_title'
   | 'testimonial_1_name'
   | 'testimonial_1_text'
@@ -324,7 +464,6 @@ export type TranslationKey =
   | 'lp_comp_col_cap'
   | 'lp_comp_col_manual'
   | 'lp_comp_col_signal'
-  | 'lp_comp_col_trenova'
   | 'lp_comp_col_trenova_rec'
   | 'lp_comp_r1'
   | 'lp_comp_r2'
@@ -750,7 +889,167 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     faq_q4: 'How do I upload a chart?',
     faq_a4: 'It is incredibly seamless; simply take a screenshot of your chart from TradingView or any exchange, paste or upload it into our dashboard, and let our Vision AI do the heavy lifting. Within seconds, the system will scan every candle to detect hidden patterns like Bull Flags or Head and Shoulders, delivering a comprehensive technical breakdown that would normally take hours.',
     faq_q5: 'Is my data safe?',
-    faq_a5: 'Your security and privacy are our absolute top priorities, which is why we employ enterprise-grade encryption and strictly ensure that we never store sensitive trading keys or wallet seed phrases. You can focus entirely on your trading performance with peace of mind, knowing that your chart data is processed securely and your personal identity remains heavily protected.',
+    faq_a5: 'Your security and privacy are our absolute top priorities, which is why we employ enterprise-grade encryption and strictly ensure that we never store sensitive trading keys or wallet seed phrases.',
+    nav_mobile_community: 'Community',
+    nav_mobile_login: 'Login',
+    nav_mobile_cta: 'Get Started',
+    lp_hero_middle: ', in-depth technical analysis, and',
+    lp_contact_title: 'Have Specific Questions?',
+    lp_contact_desc: 'Ask about features, use cases, and guides directly with our team.',
+    lp_contact_btn: 'Contact Us',
+    auth_divider: 'Or continue with',
+    auth_register_btn: 'Register Now',
+    auth_has_account: 'Already have an account?',
+    auth_login_link: 'Login here',
+    auth_no_account: "Don't have an account?",
+    auth_register_link: 'Register here',
+    auth_conn_error: 'Connection Error: Unable to reach the server.',
+    dash_block_new_title: 'Account Activation',
+    dash_block_new_desc: 'Your account is new and not yet activated.',
+    dash_block_exp_title: 'Access Restricted',
+    dash_block_exp_desc: 'Your subscription plan has expired.',
+    dash_block_support: 'Support / Activation:',
+    dash_block_contact: 'Contact Developer',
+    dash_token_runs: 'Runs',
+    dash_days_left: 'Days Left',
+    dash_expired: 'Expired',
+    dash_title: 'AI Trading Dashboard',
+    dash_desc: 'AI-powered market intelligence: pick any coin and get forecasts.',
+    dash_seed_label: 'AI Engine Seed',
+    dash_change_btn: 'Change',
+    dash_change_title: 'Change your Coin / TradingView pair here',
+    dash_paste_label: 'Tip: Click an image box above, then press Ctrl+V to paste.',
+    dash_context_ph: 'Ex: Focus on long entries, beware of fakeout...',
+    dash_select_coin_first: 'Select a coin first',
+    dash_symptom_load: 'Loading market data... please refresh.',
+    dash_symptom_chart: 'Select a coin to view charts and AI intelligence.',
+    dash_limit_title: 'Token Quota Exceeded',
+    dash_limit_desc: 'You have used up your AI analysis quota.',
+    dash_limit_btn: 'Contact Developer',
+    dash_style_hint: 'Trade duration. Affects target distance.',
+    dash_tf_hint: 'Candle data resolution analyzed.',
+    dash_risk_hint: 'Position size and stop distance.',
+    dash_strategy_hint: 'Focus AI on one setup or auto-select.',
+    dash_indicator_hint: 'Prioritize favorite confluences.',
+    dash_rr_hint: 'AI filters setups below this target.',
+    dash_toast_limit: 'Usage limit reached',
+    dash_toast_no_data: 'Binance data unavailable. Make sure the USDT pair exists on Binance.',
+    dash_toast_done: 'Analysis Complete!',
+    dash_toast_fail: 'An unexpected error occurred while generating analysis.',
+    dash_err_server: 'Server Error: server is busy or returned a wrong format. Please wait then press Generate again.',
+    dash_err_overload: 'AI server is overloaded. Wait 1–2 minutes then try again.',
+    dash_bullish: 'Bullish',
+    dash_bearish: 'Bearish',
+    dash_neutral: 'Neutral',
+    dash_risk_conservative: 'Conservative',
+    dash_risk_moderate: 'Moderate',
+    dash_risk_aggressive: 'Aggressive',
+    dash_strategy_allround: 'Free / All-Round',
+    dash_indicator_default: 'Standard (RSI + MACD + EMA)',
+    dash_view_chart: 'TradingView Chart',
+    dash_view_insight: 'AI Insight & Technical',
+    news_loading: 'Loading latest crypto news...',
+    news_empty: 'No news available right now.',
+    news_read: 'Read',
+    news_title: 'Live Crypto News',
+    market_showing: 'Showing',
+    market_of: 'of',
+    market_synced: 'SYNCED · BINANCE /5s ·',
+    market_disconnected: 'DISCONNECTED',
+    side_token_title: 'AI Engine Seed',
+    side_token_sub: 'Unique hash per session.',
+    side_quick_title: 'Quick Actions',
+    side_open_terminal: 'Open Terminal Intelligence',
+    side_back_home: 'Back to Home',
+    side_version_active: 'Active',
+    admin_nav_users: 'User Management',
+    admin_nav_broadcast: 'Email Broadcast',
+    admin_nav_feedback: 'User Feedback',
+    admin_version: 'Admin',
+    bcast_title: 'Email Broadcast',
+    bcast_subtitle: 'Send promotional and account emails.',
+    bcast_tab_broadcast: 'Reactivation Broadcast',
+    bcast_tab_newaccount: 'New Account',
+    bcast_recipients: 'Recipient Emails',
+    bcast_recipients_ph: 'email1@gmail.com, email2@gmail.com...',
+    bcast_subject: 'Email Subject',
+    bcast_content: 'Email Content',
+    bcast_send_btn: 'Send Broadcast Email',
+    bcast_sending: 'Sending...',
+    bcast_hint_recipients: 'Separate multiple emails with commas or new lines.',
+    bcast_hint_content: 'You can use plain text. Links are clickable automatically.',
+    bcast_subject_ph: 'Enter email subject',
+    bcast_fill_emails: 'Please enter at least one email.',
+    bcast_fill_subject: 'Please enter the subject.',
+    afb_link_fail: 'Failed to create attachment link.',
+    afb_purged_note: 'Attachment was auto-cleaned by housekeeping.',
+    afb_row_sender: 'Sender Account',
+    afb_row_contact: 'Contact Email',
+    afb_row_message: 'Message',
+    afb_row_attach: 'Attachment',
+    afb_row_no_email: 'No email',
+    afb_row_no_contact: 'Not provided',
+    afb_row_no_attach: 'No image attachment.',
+    afb_row_link_title: 'Attachment Link',
+    market_load_fail: 'Failed to load data. Try again...',
+    bcast_fill_content: 'Please enter the content.',
+    bcast_sent_ok: 'Email sent successfully.',
+    bcast_sent_fail: 'Failed to send email.',
+    bcast_sys_error: 'A system error occurred.',
+    bcast_new_email: 'Customer Email',
+    bcast_new_pass: 'Access Password',
+    bcast_new_pass_ph: 'Enter new account password',
+    bcast_template_title: 'Email Template to Be Sent:',
+    bcast_send_account: 'Send Account Data',
+    bcast_sending_account: 'Sending...',
+    bcast_fill_account: 'Please enter email and password.',
+    afb_title: 'User Feedback',
+    afb_subtitle: 'Review issues and suggestions.',
+    afb_refresh: 'Reload',
+    afb_cleanup: 'Cleanup',
+    afb_search_ph: 'Search name, email, subject...',
+    afb_filter_all: 'All Statuses',
+    afb_st_new: 'New',
+    afb_st_read: 'Read',
+    afb_st_resolved: 'Resolved',
+    afb_total: 'Total Feedback',
+    afb_new_today: 'New',
+    afb_last30: 'Last 30 Days',
+    afb_empty: 'Inbox Empty',
+    afb_no_match: 'No feedback matches the filter.',
+    afb_no_match_desc: 'Try changing keywords.',
+    afb_detail: 'Detail',
+    afb_mark_read: 'Mark as Read',
+    afb_mark_resolved: 'Mark as Resolved',
+    afb_delete: 'Delete',
+    afb_page_of: 'Page',
+    afb_delete_title: 'Delete this feedback?',
+    afb_delete_desc: 'Row and attachment will be deleted permanently.',
+    afb_cancel: 'Cancel',
+    afb_confirm_delete: 'Delete',
+    afb_load_fail: 'Failed to load feedback.',
+    afb_delete_fail: 'Failed to delete feedback.',
+    term_analyzing: 'Analyzing market data...',
+    term_need_coin: 'Enter the coin name first.',
+    term_slots_full: 'All slots are filled.',
+    term_img_fail: 'Failed to read image file.',
+    term_history_fail: 'Failed to sync history to cloud.',
+    market_loading: 'LOADING MARKET DATA...',
+    market_retry: 'RETRY',
+    market_no_data: 'NO DATA AVAILABLE',
+    market_no_match: 'NO MATCH FOR',
+    term_done_ok: 'Analysis complete!',
+    term_fail_prefix: 'Analysis failed: ',
+    register_title: 'Create Account',
+    register_subtitle: 'Create an account to get started',
+    lp_hero_desc_tail: 'built for traders who play seriously in the futures market.',
+    admin_panel: 'Admin Panel',
+    admin_role: 'Administrator',
+    market_search_ph: 'Search Symbol',
+    news_articles: 'articles',
+    side_sub_label: 'Subscription',
+    side_tokens_label: 'AI Tokens',
+    dash_nav_title: 'Trenova Dashboard',
 
     // Testimonial Section
     testimonial_title: 'MEMBER TESTIMONIES',
@@ -801,7 +1100,6 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_comp_col_cap: 'CAPABILITY',
     lp_comp_col_manual: 'Manual Analysis',
     lp_comp_col_signal: 'Buy Signal Provider',
-    lp_comp_col_trenova: 'TRENOVA TERMINAL',
     lp_comp_col_trenova_rec: 'Recommended',
     lp_comp_r1: '⏱️ Time per analysis session',
     lp_comp_r2: '📊 Multi-timeframe coverage',
@@ -823,6 +1121,35 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_how3_desc: 'Click GENERATE. Claude AI will read all screenshots simultaneously — analyzing EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest — then produce a complete structured analysis.',
     lp_how4_title: 'Copy Output & Execute',
     lp_how4_desc: 'Analysis output is one-click copy — complete with entry range, stop loss, take profit, risk/reward ratio, and win probability. Save to history for long-term performance tracking. Execute trades with full confidence.',
+    lp_proof_pill: 'REAL TRACK RECORD',
+    lp_proof_header: 'REAL TRACK RECORD',
+    lp_proof_title: 'Not a Claim.',
+    lp_proof_title_accent: 'Here Is the Proof.',
+    lp_proof_desc: 'Real trading results from the Trenova Intelligence community — long or short, in bullish or bearish markets. Original screenshots, unedited.',
+    lp_proof_more: 'MORE RESULTS → SWIPE →',
+    lp_proof_stat1: 'MAX ROI',
+    lp_proof_stat2: 'TOTAL ANALYSES',
+    lp_proof_stat3: 'USER RATING',
+    lp_proof_stat4: 'ANALYSIS TIME',
+    lp_proof_stat1_desc: 'Community all-time high',
+    lp_proof_stat2_desc: 'Processed by AI',
+    lp_proof_stat3_desc: '100+ verified reviews',
+    lp_proof_stat4_desc: 'Average per session',
+    lp_cred_pill: 'WHO IS BEHIND THIS',
+    lp_cred_title: 'Built by Traders,',
+    lp_cred_title_accent: 'for Traders.',
+    lp_cred_brand: 'Trenova Intelligence',
+    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
+    lp_cred_ig_label: 'Instagram:',
+    lp_cred_desc1: 'Trenova Intelligence was born from the same trader frustration — too much time spent preparing analysis, too little time left for confident execution.',
+    lp_cred_desc1_bold: 'We are not a large company.',
+    lp_cred_desc2: 'The founder uses this terminal personally for BTC and altcoin trading on OKX every session — it was not made merely to sell, but',
+    lp_cred_desc2_bold: 'because traders genuinely need it.',
+    lp_cred_stat1_label: 'Instagram Followers',
+    lp_cred_stat2_label: 'Discord Members',
+    lp_cred_stat3_label: 'Years in the community',
+    lp_cred_stat4_label: 'Focus on Indonesian crypto',
+    lp_cred_quote: 'I use this terminal myself every day before opening a trade. If it were not worthwhile, I would not sell it. My own money is here too.',
 
     lp_faq_pill: 'FAQ',
     lp_faq_title: 'Frequently',
@@ -863,56 +1190,6 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_footer_rights: 'Trenova Intelligence. All rights reserved.',
     lp_footer_disclaimer: 'Analysis is not financial advice. Trading involves risk of loss.',
     lp_cred_quote_author: 'Founder Trenova Intelligence',
-    lp_proof_header: 'REAL TRADE RECORD',
-    lp_proof_title: 'Not a Claim.',
-    lp_proof_title_accent: 'Here is the Proof.',
-    lp_proof_desc: 'Real trade results from the Trenova Intelligence community — long and short, bullish and bearish markets. Original, unedited screenshots.',
-    lp_proof_more: 'MORE RESULTS → SWIPE →',
-    lp_proof_stat1: 'MAX ROI',
-    lp_proof_stat2: 'TOTAL ANALYSIS',
-    lp_proof_stat3: 'USER RATING',
-    lp_proof_stat4: 'ANALYSIS TIME',
-    lp_proof_stat1_desc: 'Highest community record',
-    lp_proof_stat2_desc: 'Processed by AI',
-    lp_proof_stat3_desc: '100+ verified reviews',
-    lp_proof_stat4_desc: 'Average per session',
-    lp_proof_pill: 'SOCIAL PROOF',
-    lp_proof_stat1_num: '327',
-    lp_proof_stat1_label: 'MAX ROI',
-    lp_proof_stat1_sub: 'Highest community record',
-    lp_proof_stat2_num: '1,200',
-    lp_proof_stat2_label: 'TOTAL ANALYSIS',
-    lp_proof_stat2_sub: 'Processed by AI',
-    lp_proof_stat3_num: '4.8',
-    lp_proof_stat3_label: 'USER RATING',
-    lp_proof_stat3_sub: '100+ verified reviews',
-    lp_proof_stat4_num: '<60',
-    lp_proof_stat4_label: 'ANALYSIS TIME',
-    lp_proof_stat4_sub: 'Average per session',
-    lp_proof_t1_name: 'AR',
-    lp_proof_t1_role: 'Swing Trader · 2 years',
-    lp_proof_t1_quote: 'Analysis from Trenova is very detailed. My ROI increased significantly since using these tools. Highly recommended!',
-    lp_proof_t2_name: 'DM',
-    lp_proof_t2_role: 'Day Trader · Binance',
-    lp_proof_t2_quote: 'Saves so much time! Usually manual analysis takes 1 hour, now only 1 minute. The output is also ready to copy.',
-    lp_proof_t3_name: 'SF',
-    lp_proof_t3_role: 'Crypto Enthusiast',
-    lp_proof_t3_quote: 'Initially hesitated, but after trying directly subscribed. The AI is truly advanced and risk management is comprehensive.',
-    lp_cred_pill: 'WHO IS BEHIND THIS',
-    lp_cred_title: 'Built by Traders,',
-    lp_cred_title_accent: 'for Traders.',
-    lp_cred_brand: 'Trenova Intelligence',
-    lp_cred_brand_sub: 'CRYPTO TRADING EDUCATION & TOOLS',
-    lp_cred_ig_label: 'Instagram:',
-    lp_cred_desc1: 'Trenova Intelligence was born from the frustration of many traders — too much time spent on analysis setup, too little time for mature execution.',
-    lp_cred_desc1_bold: 'We are not a big company',
-    lp_cred_desc2: 'This terminal is used directly by the founder for BTC and altcoin trading on OKX every session — not a tool made to be sold, but',
-    lp_cred_desc2_bold: 'a tool made because it was needed',
-    lp_cred_stat1_label: 'Instagram Followers',
-    lp_cred_stat2_label: 'Discord Members',
-    lp_cred_stat3_label: 'Active in community',
-    lp_cred_stat4_label: 'Indonesia crypto focus',
-    lp_cred_quote: 'This terminal I use myself every day before opening a trade. If it was not worthy, I would not sell it. My money is also here.',
   },
   id: {
     nav_dashboard: 'Dasbor',
@@ -1270,7 +1547,6 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_comp_col_cap: 'KEMAMPUAN',
     lp_comp_col_manual: 'Analisa Manual',
     lp_comp_col_signal: 'Beli Signal Provider',
-    lp_comp_col_trenova: 'TRENOVA TERMINAL',
     lp_comp_col_trenova_rec: 'Direkomendasikan',
     lp_comp_r1: '⏱️ Waktu analisa per sesi',
     lp_comp_r2: '📊 Multi-timeframe coverage',
@@ -1305,28 +1581,6 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_proof_stat2_desc: 'Diproses oleh AI',
     lp_proof_stat3_desc: '100+ ulasan verified',
     lp_proof_stat4_desc: 'Rata-rata per sesi',
-    lp_proof_pill: 'SOCIAL PROOF',
-    lp_proof_stat1_num: '500',
-    lp_proof_stat1_label: 'Active Traders',
-    lp_proof_stat1_sub: 'Komunitas Trenova Intelligence',
-    lp_proof_stat2_num: '12K',
-    lp_proof_stat2_label: 'Analisa Dihasilkan',
-    lp_proof_stat2_sub: 'Sejak peluncuran pertama',
-    lp_proof_stat3_num: '4.8',
-    lp_proof_stat3_label: 'Rating Pengguna',
-    lp_proof_stat3_sub: 'Berdasarkan feedback komunitas',
-    lp_proof_stat4_num: '<60',
-    lp_proof_stat4_label: 'Rata-rata Output Time',
-    lp_proof_stat4_sub: 'Dari screenshot ke analisa lengkap',
-    lp_proof_t1_name: 'Arief R.',
-    lp_proof_t1_role: 'Altcoin Futures Trader • OKX',
-    lp_proof_t1_quote: 'Sebelumnya analisa 4H saja bisa 1 jam lebih. Sekarang 15 menit sudah dapat output lengkap. Beda banget kualitas decisionnya.',
-    lp_proof_t2_name: 'Dimas M.',
-    lp_proof_t2_role: 'BTC Perp Trader • 50× Leverage',
-    lp_proof_t2_quote: 'Terminal ini bukan tools biasa. Cara dia baca CVD sama funding rate bareng bisa ngasih insight yang biasanya cuma dimiliki trader institusional.',
-    lp_proof_t3_name: 'Siti F.',
-    lp_proof_t3_role: 'Crypto Trader • Trenova Member',
-    lp_proof_t3_quote: 'Fitur history-nya yang paling underrated. Bisa review semua keputusan trading, tahu di mana salah, dan improve sistem sendiri. Ini bukan tools — ini mentor.',
     lp_cred_pill: 'SIAPA DI BALIK INI',
     lp_cred_title: 'Dibangun oleh Trader,',
     lp_cred_title_accent: 'untuk Trader.',
@@ -1381,5 +1635,166 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_footer_refund: 'Kebijakan Pengembalian',
     lp_footer_rights: 'Trenova Intelligence. Hak cipta dilindungi.',
     lp_footer_disclaimer: 'Analisa bukan merupakan financial advice. Trading mengandung risiko kerugian.',
+    nav_mobile_community: 'Komunitas',
+    nav_mobile_login: 'Masuk',
+    nav_mobile_cta: 'Mulai Sekarang',
+    lp_hero_middle: ', analisa teknikal mendalam, dan',
+    lp_contact_title: 'Punya Pertanyaan Spesifik?',
+    lp_contact_desc: 'Tanya-tanya terkait fitur dan panduan langsung dengan tim kami.',
+    lp_contact_btn: 'Hubungi Kami',
+    auth_divider: 'Atau lanjutkan dengan',
+    auth_register_btn: 'Daftar Sekarang',
+    auth_has_account: 'Sudah punya akun?',
+    auth_login_link: 'Login di sini',
+    auth_no_account: 'Belum punya akun?',
+    auth_register_link: 'Daftar di sini',
+    auth_conn_error: 'Connection Error: Tidak dapat menjangkau server.',
+    dash_block_new_title: 'Aktivasi Akun',
+    dash_block_new_desc: 'Akun Anda baru dan belum diaktivasi.',
+    dash_block_exp_title: 'Akses Dibatasi',
+    dash_block_exp_desc: 'Paket langganan Anda telah kedaluwarsa.',
+    dash_block_support: 'Dukungan / Aktivasi:',
+    dash_block_contact: 'Hubungi Developer',
+    dash_token_runs: 'Runs',
+    dash_days_left: 'Hari Tersisa',
+    dash_expired: 'Kedaluwarsa',
+    dash_title: 'AI Trading Dashboard',
+    dash_desc: 'Intelijen pasar AI: pilih koin dan dapatkan prakiraan.',
+    dash_seed_label: 'AI Engine Seed',
+    dash_change_btn: 'Ubah',
+    dash_change_title: 'Ubah pasangan Koin / TradingView di sini',
+    dash_paste_label: 'Tips: Klik kotak gambar, lalu Ctrl+V untuk paste.',
+    dash_context_ph: 'Cth: Fokus long, waspada fakeout...',
+    dash_select_coin_first: 'Pilih koin dulu',
+    dash_symptom_load: 'Memuat data pasar... silakan refresh.',
+    dash_symptom_chart: 'Pilih koin untuk melihat chart dan AI.',
+    dash_limit_title: 'Kuota Token Habis',
+    dash_limit_desc: 'Kuota analisis AI Anda habis.',
+    dash_limit_btn: 'Hubungi Developer',
+    dash_style_hint: 'Durasi trade. Mempengaruhi jarak target.',
+    dash_tf_hint: 'Resolusi data candle yang dianalisis.',
+    dash_risk_hint: 'Ukuran posisi dan jarak stop.',
+    dash_strategy_hint: 'Fokus AI ke satu setup atau otomatis.',
+    dash_indicator_hint: 'Prioritaskan konfluensi favorit.',
+    dash_rr_hint: 'AI menyaring setup di bawah target ini.',
+    dash_toast_limit: 'Batas kuota tercapai',
+    dash_toast_no_data: 'Data Binance tidak tersedia. Pastikan pair USDT ada di Binance.',
+    dash_toast_done: 'Analisis Selesai!',
+    dash_toast_fail: 'Terjadi kesalahan tak terduga saat membuat analisis.',
+    dash_err_server: 'Server Error: server sibuk atau format salah. Tunggu sebentar lalu tekan Generate lagi.',
+    dash_err_overload: 'Server AI kelebihan beban. Tunggu 1–2 menit lalu coba lagi.',
+    dash_bullish: 'Bullish',
+    dash_bearish: 'Bearish',
+    dash_neutral: 'Netral',
+    dash_risk_conservative: 'Konservatif',
+    dash_risk_moderate: 'Moderat',
+    dash_risk_aggressive: 'Agresif',
+    dash_strategy_allround: 'Bebas / All-Round',
+    dash_indicator_default: 'Standar (RSI + MACD + EMA)',
+    dash_view_chart: 'Chart TradingView',
+    dash_view_insight: 'Insight AI & Teknikal',
+    news_loading: 'Memuat berita crypto terbaru...',
+    news_empty: 'Tidak ada berita tersedia saat ini.',
+    news_read: 'Baca',
+    news_title: 'Live Crypto News',
+    market_showing: 'Menampilkan',
+    market_of: 'dari',
+    market_synced: 'SYNCED · BINANCE /5s ·',
+    market_disconnected: 'DISCONNECTED',
+    side_token_title: 'AI Engine Seed',
+    side_token_sub: 'Hash unik per sesi.',
+    side_quick_title: 'Aksi Cepat',
+    side_open_terminal: 'Buka Terminal Intelligence',
+    side_back_home: 'Kembali ke Beranda',
+    side_version_active: 'Aktif',
+    admin_nav_users: 'Manajemen User',
+    admin_nav_broadcast: 'Broadcast Email',
+    admin_nav_feedback: 'Feedback User',
+    admin_version: 'Admin',
+    bcast_title: 'Broadcast Email',
+    bcast_subtitle: 'Kirim email promosi dan akun.',
+    bcast_tab_broadcast: 'Broadcast Reaktivasi',
+    bcast_tab_newaccount: 'Akun Baru',
+    bcast_recipients: 'Email Penerima',
+    bcast_recipients_ph: 'email1@gmail.com, email2@gmail.com...',
+    bcast_subject: 'Judul Email',
+    bcast_content: 'Isi Email',
+    bcast_send_btn: 'Kirim Broadcast Email',
+    bcast_sending: 'Mengirim...',
+    bcast_hint_recipients: 'Pisahkan beberapa email dengan koma atau baris baru.',
+    bcast_hint_content: 'Bisa pakai teks biasa. Link otomatis bisa diklik.',
+    bcast_subject_ph: 'Masukkan judul email',
+    bcast_fill_emails: 'Masukkan minimal satu email.',
+    bcast_fill_subject: 'Masukkan judul email.',
+    afb_link_fail: 'Gagal membuat link lampiran.',
+    afb_purged_note: 'Lampiran sudah dibersihkan otomatis oleh housekeeping.',
+    afb_row_sender: 'Akun Pengirim',
+    afb_row_contact: 'Email Kontak',
+    afb_row_message: 'Pesan',
+    afb_row_attach: 'Lampiran',
+    afb_row_no_email: 'Tanpa email',
+    afb_row_no_contact: 'Tidak diberikan',
+    afb_row_no_attach: 'Tanpa lampiran gambar.',
+    afb_row_link_title: 'Link Lampiran',
+    market_load_fail: 'Gagal memuat data. Coba lagi...',
+    bcast_fill_content: 'Masukkan isi email.',
+    bcast_sent_ok: 'Email berhasil dikirim.',
+    bcast_sent_fail: 'Gagal mengirim email.',
+    bcast_sys_error: 'Terjadi kesalahan sistem.',
+    bcast_new_email: 'Email Pelanggan',
+    bcast_new_pass: 'Password Akses',
+    bcast_new_pass_ph: 'Masukkan password akun baru',
+    bcast_template_title: 'Template Email yang Dikirim:',
+    bcast_send_account: 'Kirim Data Akun',
+    bcast_sending_account: 'Mengirim...',
+    bcast_fill_account: 'Masukkan email dan password.',
+    afb_title: 'Feedback User',
+    afb_subtitle: 'Tinjau masalah dan saran.',
+    afb_refresh: 'Muat ulang',
+    afb_cleanup: 'Bersihkan',
+    afb_search_ph: 'Cari nama, email, subjek...',
+    afb_filter_all: 'Semua Status',
+    afb_st_new: 'Baru',
+    afb_st_read: 'Dibaca',
+    afb_st_resolved: 'Selesai',
+    afb_total: 'Total Feedback',
+    afb_new_today: 'Baru',
+    afb_last30: '30 Hari Terakhir',
+    afb_empty: 'Kotak Masuk Kosong',
+    afb_no_match: 'Tidak ada feedback yang cocok.',
+    afb_no_match_desc: 'Coba ubah kata kunci.',
+    afb_detail: 'Detail',
+    afb_mark_read: 'Tandai Dibaca',
+    afb_mark_resolved: 'Tandai Selesai',
+    afb_delete: 'Hapus',
+    afb_page_of: 'Halaman',
+    afb_delete_title: 'Hapus feedback ini?',
+    afb_delete_desc: 'Baris dan lampiran akan dihapus permanen.',
+    afb_cancel: 'Batal',
+    afb_confirm_delete: 'Hapus',
+    afb_load_fail: 'Gagal memuat feedback.',
+    afb_delete_fail: 'Gagal menghapus feedback.',
+    term_analyzing: 'Menganalisa data market...',
+    term_need_coin: 'Masukkan nama koin dulu.',
+    term_slots_full: 'Semua slot sudah terisi.',
+    term_img_fail: 'Gagal membaca file gambar.',
+    term_history_fail: 'Gagal sinkron riwayat ke cloud.',
+    market_loading: 'MEMUAT DATA PASAR...',
+    market_retry: 'COBA LAGI',
+    market_no_data: 'TIDAK ADA DATA',
+    market_no_match: 'TIDAK COCOK UNTUK',
+    term_done_ok: 'Analisa selesai!',
+    term_fail_prefix: 'Analisa gagal: ',
+    register_title: 'Daftar Akun',
+    register_subtitle: 'Buat akun untuk memulai',
+    lp_hero_desc_tail: 'dirancang untuk trader yang bermain serius di futures market.',
+    lp_proof_pill: 'REKAM JEJAK NYATA',
+    admin_panel: 'Admin Panel',
+    admin_role: 'Administrator',
+    market_search_ph: 'Cari Simbol',
+    news_articles: 'artikel',
+    side_sub_label: 'Langganan',
+    side_tokens_label: 'Token AI',
+    dash_nav_title: 'Trenova Dashboard',
   }
 };

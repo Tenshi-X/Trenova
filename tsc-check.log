@@ -1,0 +1,14 @@
+src/lib/translations.ts(1146,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1211,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1221,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1224,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1227,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1230,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1233,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1733,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1736,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1737,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1738,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1739,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1740,5): error TS1117: An object literal cannot have multiple properties with the same name.
+src/lib/translations.ts(1743,5): error TS1117: An object literal cannot have multiple properties with the same name.

@@ -42,7 +42,7 @@ export default function TerminalComparison() {
             <div className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_manual')}</div>
             <div className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_signal')}</div>
             <div className="px-5 py-3 text-[10px] font-bold text-neon uppercase tracking-[0.12em] text-center border-t-2 border-t-neon bg-neon/[0.04]">
-              TRENOVA STANDARD
+              TRENOVA TERMINAL
               <div className="text-[9px] text-neon/70 font-normal mt-0.5">⭐ {t('lp_comp_col_trenova_rec')}</div>
             </div>
           </div>

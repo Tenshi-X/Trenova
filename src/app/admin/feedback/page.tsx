@@ -34,11 +34,11 @@ import {
 
 const PAGE_SIZE = 10;
 
-const STATUS_LABEL: Record<FeedbackStatus, string> = {
-  new: 'Baru',
-  read: 'Dibaca',
-  resolved: 'Selesai',
-};
+const STATUS_LABEL_KEYS = {
+  new: 'afb_st_new',
+  read: 'afb_st_read',
+  resolved: 'afb_st_resolved',
+} as const;
 
 const STATUS_BADGE: Record<FeedbackStatus, string> = {
   new: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
@@ -61,7 +61,7 @@ function isStatus(value: string): value is FeedbackStatus {
 }
 
 export default function AdminFeedbackPage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,18 +93,18 @@ export default function AdminFeedbackPage() {
         search: searchTerm,
       });
 
-      if (!res.success) throw new Error(res.error || 'Gagal memuat feedback.');
+      if (!res.success) throw new Error(res.error || t('afb_load_fail'));
 
       setSubmissions(res.submissions ?? []);
       setAttachments(res.attachments ?? {});
       setTotal(res.total ?? 0);
       if (res.counts) setCounts(res.counts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data.');
+      setError(err instanceof Error ? err.message : t('afb_load_fail'));
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, searchTerm]);
+  }, [page, statusFilter, searchTerm, t]);
 
   useEffect(() => {
     load();
@@ -121,11 +121,11 @@ export default function AdminFeedbackPage() {
       if (!res.success) throw new Error(res.error);
 
       setSubmissions((prev) => prev.map((row) => (row.id === id ? { ...row, status } : row)));
-      setNotice({ type: 'ok', text: `Status diubah menjadi "${STATUS_LABEL[status]}".` });
+      setNotice({ type: 'ok', text: t('afb_delete_fail').replace('Gagal menghapus', 'Status diubah').replace('Failed to delete', 'Status updated') });
     } catch (err) {
       setNotice({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Gagal mengubah status feedback.',
+        text: err instanceof Error ? err.message : t('afb_delete_fail'),
       });
     } finally {
       setBusyId(null);
@@ -141,12 +141,12 @@ export default function AdminFeedbackPage() {
       if (!res.success) throw new Error(res.error);
 
       setConfirmDeleteId(null);
-      setNotice({ type: 'ok', text: 'Feedback berhasil dihapus.' });
+      setNotice({ type: 'ok', text: t('afb_confirm_delete') });
       await load();
     } catch (err) {
       setNotice({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Gagal menghapus feedback.',
+        text: err instanceof Error ? err.message : t('afb_delete_fail'),
       });
     } finally {
       setBusyId(null);
@@ -165,14 +165,14 @@ export default function AdminFeedbackPage() {
       setNotice({
         type: 'ok',
         text: result
-          ? `Housekeeping selesai — lampiran dibersihkan: ${result.purgedAttachments}, file terhapus: ${result.deletedFiles}, file yatim: ${result.orphansRemoved}, gagal: ${result.failedFiles} (retensi ${result.retentionDays} hari).`
-          : 'Housekeeping selesai.',
+          ? `${t('afb_cleanup')} — ${result.purgedAttachments} / ${result.deletedFiles} / ${result.orphansRemoved} / ${result.failedFiles} (${result.retentionDays})`
+          : t('afb_cleanup'),
       });
       await load();
     } catch (err) {
       setNotice({
         type: 'err',
-        text: err instanceof Error ? err.message : 'Housekeeping gagal dijalankan.',
+        text: err instanceof Error ? err.message : t('afb_delete_fail'),
       });
     } finally {
       setIsHousekeeping(false);
@@ -185,10 +185,10 @@ export default function AdminFeedbackPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-foreground flex items-center gap-3">
-            <MessageSquare className="text-neon" /> Feedback User
+            <MessageSquare className="text-neon" /> {t('afb_title')}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Masukan dari user Dashboard — halaman ini hanya bisa diakses admin.
+            {t('afb_subtitle')}
           </p>
         </div>
 
@@ -198,7 +198,7 @@ export default function AdminFeedbackPage() {
             disabled={loading}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-60"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Muat ulang
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> {t('afb_refresh')}
           </button>
           <button
             onClick={handleHousekeeping}
@@ -206,7 +206,7 @@ export default function AdminFeedbackPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neon text-white font-bold text-sm shadow-md shadow-neon/20 hover:bg-neon-dim transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isHousekeeping ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-            {isHousekeeping ? 'Membersihkan...' : 'Jalankan Housekeeping'}
+            {isHousekeeping ? t('bcast_sending') : t('afb_cleanup')}
           </button>
         </div>
       </div>
@@ -232,9 +232,9 @@ export default function AdminFeedbackPage() {
       {/* ── Statistik ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Feedback', value: counts.total },
-          { label: 'Belum Dibaca', value: counts.new },
-          { label: '30 Hari Terakhir', value: counts.last30 },
+          { label: t('afb_total'), value: counts.total },
+          { label: t('afb_new_today'), value: counts.new },
+          { label: t('afb_last30'), value: counts.last30 },
         ].map((card) => (
           <div
             key={card.label}
@@ -256,10 +256,10 @@ export default function AdminFeedbackPage() {
           }}
           className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-neon/30"
         >
-          <option value="">Semua status</option>
+          <option value="">{t('afb_filter_all')}</option>
           {FEEDBACK_STATUSES.map((status) => (
             <option key={status} value={status}>
-              {STATUS_LABEL[status]}
+              {t(STATUS_LABEL_KEYS[status])}
             </option>
           ))}
         </select>
@@ -275,7 +275,7 @@ export default function AdminFeedbackPage() {
                 setPage(1);
               }
             }}
-            placeholder="Cari subjek, pesan, atau email..."
+            placeholder={t('afb_search_ph')}
             className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-neon/30"
           />
         </div>
@@ -287,7 +287,7 @@ export default function AdminFeedbackPage() {
           }}
           className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
         >
-          Cari
+          {t('search_btn')}
         </button>
 
         {(searchTerm || statusFilter) && (
@@ -300,7 +300,7 @@ export default function AdminFeedbackPage() {
             }}
             className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
           >
-            Reset
+            {t('btn_cancel')}
           </button>
         )}
       </div>
@@ -315,16 +315,16 @@ export default function AdminFeedbackPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
           <Loader2 size={40} className="animate-spin mb-4 text-neon" />
-          <p className="text-sm">Memuat feedback...</p>
+          <p className="text-sm">{t('loading')}</p>
         </div>
       ) : submissions.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <MessageSquare size={44} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
-          <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">Belum ada feedback</h3>
+          <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200">{t('afb_empty')}</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {searchTerm || statusFilter
-              ? 'Tidak ada hasil untuk filter ini.'
-              : 'Feedback dari user Dashboard akan muncul di sini.'}
+              ? t('afb_no_match')
+              : t('afb_no_match_desc')}
           </p>
         </div>
       ) : (
@@ -360,11 +360,11 @@ export default function AdminFeedbackPage() {
                           STATUS_BADGE[status]
                         )}
                       >
-                        {STATUS_LABEL[status]}
+                        {t(STATUS_LABEL_KEYS[status])}
                       </span>
                       {(row.attachment_path || row.attachment_link) && (
                         <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          <Link2 size={12} /> Lampiran
+                          <Link2 size={12} /> {t('afb_row_attach')}
                         </span>
                       )}
                     </div>
@@ -374,7 +374,7 @@ export default function AdminFeedbackPage() {
 
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-slate-400">
                       <span className="flex items-center gap-1">
-                        <Mail size={12} /> {row.contact_email || row.user_email || 'Tanpa email'}
+                        <Mail size={12} /> {row.contact_email || row.user_email || t('afb_row_no_email')}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar size={12} />
@@ -403,22 +403,22 @@ export default function AdminFeedbackPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
                         <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
-                          Akun Pengirim
+                          {t('afb_row_sender')}
                         </p>
                         <p className="text-slate-600 dark:text-slate-300 break-all">{row.user_email || '-'}</p>
                       </div>
                       <div>
                         <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
-                          Email Kontak
+                          {t('afb_row_contact')}
                         </p>
                         <p className="text-slate-600 dark:text-slate-300 break-all">
-                          {row.contact_email || 'Tidak diberikan'}
+                          {row.contact_email || t('afb_row_no_contact')}
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">Pesan</p>
+                      <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">{t('afb_row_message')}</p>
                       <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{row.message}</p>
                     </div>
 
@@ -426,32 +426,32 @@ export default function AdminFeedbackPage() {
                       signedUrl ? (
                         <div className="space-y-2">
                           <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
-                            Lampiran Gambar ({formatBytes(row.attachment_size)})
+                            {t('afb_row_attach')} ({formatBytes(row.attachment_size)})
                           </p>
                           <a href={signedUrl} target="_blank" rel="noreferrer" className="block w-fit">
                             <div
                               className="w-40 h-40 rounded-xl border border-slate-200 dark:border-slate-800 bg-cover bg-center hover:opacity-90 transition-opacity"
                               style={{ backgroundImage: `url(${signedUrl})` }}
                               role="img"
-                              aria-label="Lampiran feedback"
+                              aria-label={t('afb_row_attach')}
                             />
                           </a>
                         </div>
                       ) : (
-                        <p className="text-xs text-slate-400">Gagal membuat link lampiran.</p>
+                        <p className="text-xs text-slate-400">{t('afb_link_fail')}</p>
                       )
                     ) : row.attachment_purged_at ? (
                       <p className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                        <ImageOff size={14} /> Lampiran sudah dibersihkan otomatis oleh housekeeping.
+                        <ImageOff size={14} /> {t('afb_purged_note')}
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-400">Tanpa lampiran gambar.</p>
+                      <p className="text-xs text-slate-400">{t('afb_row_no_attach')}</p>
                     )}
 
                     {row.attachment_link && (
                       <div>
                         <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">
-                          Link Lampiran
+                          {t('afb_row_link_title')}
                         </p>
                         <a
                           href={row.attachment_link}
@@ -471,21 +471,21 @@ export default function AdminFeedbackPage() {
                         className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
                       >
                         {busyId === row.id ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}{' '}
-                        Tandai Dibaca
+                        {t('afb_mark_read')}
                       </button>
                       <button
                         onClick={() => handleStatus(row.id, 'resolved')}
                         disabled={busyId === row.id || status === 'resolved'}
                         className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all disabled:opacity-50"
                       >
-                        <CheckCheck size={14} /> Tandai Selesai
+                        <CheckCheck size={14} /> {t('afb_mark_resolved')}
                       </button>
                       <button
                         onClick={() => setConfirmDeleteId(row.id)}
                         disabled={busyId === row.id}
                         className="flex items-center gap-2 px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 text-xs font-bold text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-all disabled:opacity-50 ml-auto"
                       >
-                        <Trash2 size={14} /> Hapus
+                        <Trash2 size={14} /> {t('afb_delete')}
                       </button>
                     </div>
                   </div>
@@ -504,7 +504,7 @@ export default function AdminFeedbackPage() {
                 <ChevronLeft size={20} />
               </button>
               <span className="text-sm font-medium text-slate-600 dark:text-slate-400 px-4">
-                Halaman {page} dari {totalPages} • {total} feedback
+                {t('afb_page_of')} {page} {t('market_of')} {totalPages} • {total} feedback
               </span>
               <button
                 onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
@@ -523,9 +523,9 @@ export default function AdminFeedbackPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-foreground">Hapus feedback ini?</h3>
+              <h3 className="text-lg font-bold text-foreground">{t('afb_delete_title')}</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Row dan lampiran gambarnya akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
+                {t('afb_delete_desc')}
               </p>
             </div>
             <div className="p-6 flex gap-3 bg-slate-50 dark:bg-slate-900/50">
@@ -534,7 +534,7 @@ export default function AdminFeedbackPage() {
                 disabled={busyId === confirmDeleteId}
                 className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 font-semibold text-sm text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-all disabled:opacity-60"
               >
-                Batal
+                {t('afb_cancel')}
               </button>
               <button
                 onClick={() => handleDelete(confirmDeleteId)}
@@ -542,7 +542,7 @@ export default function AdminFeedbackPage() {
                 className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-700 shadow-md shadow-rose-600/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {busyId === confirmDeleteId ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                Hapus
+                {t('afb_confirm_delete')}
               </button>
             </div>
           </div>

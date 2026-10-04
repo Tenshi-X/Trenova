@@ -31,7 +31,7 @@ export default function TerminalHero() {
               {t('lp_hero_subtitle_1')}<br />{t('lp_hero_subtitle_2')}
             </p>
             <p className="text-[13px] text-slate-500 mb-8 leading-[1.8] max-w-xl">
-              {t('lp_hero_desc')} <strong className="text-slate-300">{t('lp_hero_desc_bold1')}</strong>, analisa teknikal mendalam, dan <strong className="text-slate-300">{t('lp_hero_desc_bold2')}</strong> — dirancang untuk trader yang bermain serius di futures market.
+              {t('lp_hero_desc')} <strong className="text-slate-300">{t('lp_hero_desc_bold1')}</strong>{t('lp_hero_middle')} <strong className="text-slate-300">{t('lp_hero_desc_bold2')}</strong> — {t('lp_hero_desc_tail') || ''}
             </p>
 
             <div className="bg-slate-900 border border-slate-800 p-3 rounded mb-8 inline-flex items-center gap-2">

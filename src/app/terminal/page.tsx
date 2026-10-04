@@ -13,6 +13,7 @@ import MarketIntelligence from '@/components/MarketIntelligence';
 import PremiumAnalysisVisualizer from '@/components/PremiumAnalysisVisualizer';
 import TradingViewWidget from '@/components/TradingViewWidget';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/context/LanguageContext';
 
 // ── TYPES ──
 type TabId = 'input' | 'market' | 'intel' | 'research' | 'derivatives' | 'onchain' | 'tools' | 'history' | 'guide' | 'chart';
@@ -95,6 +96,7 @@ const TerminalClock = () => {
 };
 
 export default function PremiumTerminal() {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabId>('input');
   const [images, setImages] = useState<Record<string, { file: File, preview: string, base64: string }>>({});
   const [activePasteSlot, setActivePasteSlot] = useState<string | null>(null);
@@ -166,7 +168,7 @@ export default function PremiumTerminal() {
       
       if (error) {
         console.error("Supabase Save Error:", error);
-        toast.error("Failed to sync history to cloud.");
+        toast.error(t('term_history_fail'));
       }
     } else {
       // Fallback to local storage if not logged in (though terminal is premium)
@@ -251,7 +253,7 @@ export default function PremiumTerminal() {
       e.preventDefault();
       const targetSlotId = activePasteSlot || nextEmptySlot;
       if (!targetSlotId) {
-        toast.info("Semua slot sudah terisi.");
+        toast.info(t('term_slots_full'));
         return;
       }
       await handleFileSelect(imageFile, targetSlotId);
@@ -277,7 +279,7 @@ export default function PremiumTerminal() {
       const preview = URL.createObjectURL(file);
       setImages(prev => ({ ...prev, [slotId]: { file, preview, base64 } }));
     } catch (e) {
-      toast.error("Gagal membaca file gambar.");
+      toast.error(t('term_img_fail'));
     }
   };
 
@@ -293,13 +295,13 @@ export default function PremiumTerminal() {
 
   const executeAnalysis = async () => {
     if (!coinName) {
-      toast.error('Masukkan nama koin terlebih dahulu.');
+      toast.error(t('term_need_coin'));
       return;
     }
 
     setIsExecuting(true);
     setResultData(null);
-    toast.loading('Menganalisa data market...', { id: 'analyze-toast' });
+    toast.loading(t('term_analyzing'), { id: 'analyze-toast' });
 
     try {
       // ── STEP 1: FETCH FEAR & GREED INDEX (free, CORS-safe) ──
@@ -460,22 +462,22 @@ KEMBALIKAN HANYA JSON valid (tanpa backtick/teks lain):
       if (!res.ok) {
         // Handle Gemini-specific errors with informative messages
         if (res.status === 503 || resJson.retryable) {
-          throw new Error('⏳ Server Gemini sedang kelebihan beban. Tunggu 1–2 menit lalu coba lagi.');
+          throw new Error(t('dash_err_overload'));
         }
         throw new Error(resJson.error || `API Error ${res.status}`);
       }
 
       const rawResult = resJson.result;
       const jsonMatch = rawResult.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('AI tidak mengembalikan format JSON yang valid. Coba lagi.');
+      if (!jsonMatch) throw new Error(t('dash_err_server'));
       const parsedData = JSON.parse(jsonMatch[0]);
       
       setResultData(parsedData);
       saveToHistory(parsedData);
-      toast.success('Analisa selesai!', { id: 'analyze-toast' });
+      toast.success(t('term_done_ok'), { id: 'analyze-toast' });
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message, { id: 'analyze-toast', duration: 6000 });
+      toast.error(`${t('term_fail_prefix')}${e.message}`, { id: 'analyze-toast', duration: 6000 });
     } finally {
       setIsExecuting(false);
     }
