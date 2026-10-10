@@ -1,5 +1,8 @@
 'use server';
 
+import { getAdminContext } from '@/lib/authz';
+import { getSiteUrl } from '@/lib/site-url';
+
 import {
   EMAIL_FOOTER_ATTACHMENT,
   EMAIL_SENDER_NAME,
@@ -15,6 +18,12 @@ export async function sendBroadcastEmail(
   htmlContent: string
 ) {
   try {
+    const context = await getAdminContext();
+    if (!context) return { success: false, error: 'Akses admin diperlukan.' };
+    if (emails.length > 100 || subject.length > 180 || htmlContent.length > 10_000
+      || emails.some((email) => !/^\S+@\S+\.\S+$/.test(email) || email.length > 254)) {
+      return { success: false, error: 'Jumlah penerima atau isi pesan terlalu besar.' };
+    }
     const credentials = getEmailCredentials();
 
     if (!credentials) {
@@ -55,6 +64,8 @@ export async function sendBroadcastEmail(
 
     const successful = results.filter((r) => r.status === 'fulfilled').length;
     const failed = results.filter((r) => r.status === 'rejected').length;
+    await context.admin.from('admin_audit_events').insert({ actor_id: context.user.id,
+      action: 'broadcast_email', target: 'recipients', details: { recipient_count: emails.length, successful, failed } });
 
     return {
       success: true,
@@ -62,34 +73,41 @@ export async function sendBroadcastEmail(
       successfulCount: successful,
       failedCount: failed,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error sending broadcast email:", error);
-    return { success: false, error: error.message || "Failed to send emails." };
+    return { success: false, error: (error instanceof Error ? error.message : 'Terjadi kesalahan.') || "Failed to send emails." };
   }
 }
 
-export async function sendNewAccountEmail(
-  email: string,
-  passwordInput: string
-) {
+export async function sendNewAccountEmail(email: string) {
   try {
+    const context = await getAdminContext();
+    if (!context) return { success: false, error: 'Akses admin diperlukan.' };
     if (!getEmailCredentials()) {
       return { success: false, error: "Server configuration error: EMAIL_USER or EMAIL_APP_PASSWORD is not set." };
     }
 
-    if (!email || !passwordInput) {
-      return { success: false, error: "Email and password are required." };
+    if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) {
+      return { success: false, error: 'Alamat email tidak valid.' };
     }
 
-    const subject = "Detail Akun Trenova Intelligence Anda";
+    const { data: linkData, error: linkError } = await context.admin.auth.admin.generateLink({
+      type: 'recovery', email,
+    });
+    if (linkError || !linkData.properties?.hashed_token) {
+      return { success: false, error: linkError?.message || 'Tautan tidak dapat dibuat.' };
+    }
+
+    const safeEmail = email.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
+    const recoveryUrl = `${getSiteUrl()}/auth/confirm?type=recovery&token_hash=${encodeURIComponent(linkData.properties.hashed_token)}`;
+    const subject = "Atur Kata Sandi Akun Trenova Anda";
     const htmlContent = `Halo Kak,<br/><br/>
 Terima kasih telah melakukan pembelian akses Trenova Intelligence.<br/>
 Berikut adalah detail login akun Anda:<br/><br/>
-<b>Email:</b> ${email}<br/>
-<b>Password:</b> ${passwordInput}<br/><br/>
-Silakan login melalui tautan berikut:<br/>
-<a href="https://trenova-intelligence.vercel.app/login" style="color: #0066cc; text-decoration: none; font-weight: bold;">https://trenova-intelligence.vercel.app/login</a><br/><br/>
-Harap simpan informasi ini baik-baik dan jangan membagikannya kepada siapa pun.`;
+    <b>Email:</b> ${safeEmail}<br/><br/>
+    Buat kata sandi Anda melalui tautan aman berikut:<br/>
+    <a href="${recoveryUrl}" style="color: #0066cc; text-decoration: none; font-weight: bold;">Atur kata sandi</a><br/><br/>
+    Abaikan pesan ini jika Anda tidak meminta akses.`;
 
     // Reuse the shared Trenova email service (src/lib/email.ts)
     const result = await sendTrenovaEmail({
@@ -103,14 +121,16 @@ Harap simpan informasi ini baik-baik dan jangan membagikannya kepada siapa pun.`
       console.error("Error sending new account email:", result.message);
       return { success: false, error: result.message };
     }
+    await context.admin.from('admin_audit_events').insert({ actor_id: context.user.id,
+      action: 'send_password_link', target: email, details: {} });
 
     return {
       success: true,
       message: `Berhasil mengirim detail akun ke ${email}`,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error sending new account email:", error);
-    return { success: false, error: error.message || "Failed to send email." };
+    return { success: false, error: (error instanceof Error ? error.message : 'Terjadi kesalahan.') || "Failed to send email." };
   }
 }
 

@@ -35,9 +35,9 @@ export default function DashboardSidebar({
   useEffect(() => {
     async function checkRole() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.role === 'admin') {
-        setIsAdmin(true);
-      }
+      if (!user) return;
+      const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).single();
+      setIsAdmin(profile?.role === 'admin');
     }
     checkRole();
   }, [supabase]);

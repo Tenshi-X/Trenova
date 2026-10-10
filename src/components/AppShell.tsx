@@ -9,7 +9,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Sidebar ONLY appears on /admin pages
   // - /dashboard → has its own MobileDashboardSidebar in layout
-  // - /terminal  → premium, no sidebar needed
   // - Other pages (login, home, feedback) → no sidebar
   const showSidebar = pathname?.startsWith('/admin');
   

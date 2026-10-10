@@ -42,16 +42,16 @@ export default function LoginClient() {
       router.push('/dashboard');
       router.refresh();
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login Error:", err);
       // Only stop loading if there is an error. 
       // If success, keep loading true to maintain the "Welcome screen" until navigation completes.
       setLoading(false); 
       
-      if (err.message === 'fetch failed' || (err.name === 'AuthRetryableFetchError')) {
+      if (err instanceof Error && (err.message === 'fetch failed' || err.name === 'AuthRetryableFetchError')) {
            setError(t('auth_conn_error'));
       } else {
-           setError(err.message || 'Failed to login');
+           setError((err instanceof Error ? err.message : 'Terjadi kesalahan.') || 'Failed to login');
       }
     }
   };
@@ -69,10 +69,10 @@ export default function LoginClient() {
       });
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google Auth Error:", err);
       setLoading(false);
-      setError(err.message || 'Failed to login with Google');
+      setError((err instanceof Error ? err.message : 'Terjadi kesalahan.') || 'Failed to login with Google');
     }
   };
 

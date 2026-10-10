@@ -25,7 +25,6 @@ export default function BroadcastEmailPage() {
 
   // New Account state
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -44,8 +43,8 @@ export default function BroadcastEmailPage() {
     try {
       const res = await sendBroadcastEmail(emailList, subject, content);
       setResult({ success: res.success, message: res.success ? (res.message || t('bcast_sent_ok')) : (res.error || t('bcast_sent_fail')) });
-    } catch (err: any) {
-      setResult({ success: false, message: err.message || t('bcast_sys_error') });
+    } catch (err: unknown) {
+      setResult({ success: false, message: (err instanceof Error ? err.message : 'Terjadi kesalahan.') || t('bcast_sys_error') });
     } finally {
       setLoading(false);
     }
@@ -55,20 +54,19 @@ export default function BroadcastEmailPage() {
     e.preventDefault();
     setResult(null);
 
-    if (!newUserEmail.trim() || !newUserPassword.trim()) {
+    if (!newUserEmail.trim()) {
       return setResult({ success: false, message: t('bcast_fill_account') });
     }
 
     setLoading(true);
     try {
-      const res = await sendNewAccountEmail(newUserEmail.trim(), newUserPassword.trim());
-      setResult({ success: res.success, message: res.success ? res.message : (res.error || t('bcast_sent_fail')) });
+      const res = await sendNewAccountEmail(newUserEmail.trim());
+      setResult({ success: res.success, message: res.success ? (res.message || t('bcast_sent_ok')) : (res.error || t('bcast_sent_fail')) });
       if (res.success) {
          setNewUserEmail('');
-         setNewUserPassword('');
       }
-    } catch (err: any) {
-       setResult({ success: false, message: err.message || t('bcast_sys_error') });
+    } catch (err: unknown) {
+       setResult({ success: false, message: (err instanceof Error ? err.message : 'Terjadi kesalahan.') || t('bcast_sys_error') });
     } finally {
        setLoading(false);
     }
@@ -226,34 +224,17 @@ export default function BroadcastEmailPage() {
                       />
                    </div>
 
-                   {/* Password Input */}
-                   <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         {t('bcast_new_pass')} <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        value={newUserPassword}
-                        onChange={(e) => setNewUserPassword(e.target.value)}
-                        placeholder={t('bcast_new_pass_ph')}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50 text-sm placeholder:text-slate-400 font-mono"
-                        required
-                      />
-                   </div>
-
                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                       <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t('bcast_template_title')}</h4>
                       <div className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-mono whitespace-pre-wrap">
 {`Halo Kak,
 
 Terima kasih telah melakukan pembelian akses Trenova Intelligence.
-Berikut adalah detail login akun Anda:
+Tautan pengaturan kata sandi akan dikirim secara aman ke email Anda:
 
 Email: ${newUserEmail || '[Email Pelanggan]'}
-Password: ${newUserPassword || '[Password Akses]'}
 
-Silakan login melalui tautan berikut:
-https://trenova-intelligence.vercel.app/login`}
+Gunakan tautan dalam email untuk mengatur kata sandi dan masuk ke Trenova.`}
                       </div>
                    </div>
 

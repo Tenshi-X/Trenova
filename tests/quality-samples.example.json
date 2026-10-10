@@ -1,0 +1,12 @@
+{
+  "instructions": "Replace null values with reviewer scores (0–5) and actual Gemini usage, provide at least five captured pairs. This template is not evaluation evidence.",
+  "samples": [
+    {
+      "id": "BTC-1h-example",
+      "reviewer": "",
+      "oldScores": { "dataFaithfulness": null, "reasonClarity": null, "setupUsefulness": null, "waitConditions": null },
+      "newScores": { "dataFaithfulness": null, "reasonClarity": null, "setupUsefulness": null, "waitConditions": null },
+      "newUsage": { "input": null, "candidate": null, "thinking": null }
+    }
+  ]
+}

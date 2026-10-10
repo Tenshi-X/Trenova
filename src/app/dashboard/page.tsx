@@ -1,170 +1,39 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import { checkUsageLimit, incrementUsage, saveAnalysis, getUserUsage, searchTVSymbols } from './actions';
+import { getUserUsage, searchTVSymbols } from './actions';
 import { Lock, ArrowRight } from 'lucide-react';
 import CoinSelector, { Coin } from '@/components/CoinSelector';
 import CoinGeckoChart from '@/components/CoinGeckoChart';
 import TradingViewWidget from '@/components/TradingViewWidget';
 import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
-import AnalysisVisualizer from '@/components/AnalysisVisualizer';
+import AnalysisResultV2 from '@/components/AnalysisResultV2';
+import type { AnalysisV2 } from '@/lib/analysis/core';
+import { getPreferences, savePreferences, type UserPreset } from './preferences/actions';
 import LiveMarketTable from '@/components/LiveMarketTable';
 import CryptoNews from '@/components/CryptoNews';
 import { useLanguage } from '@/context/LanguageContext';
 
 
 
-function buildEnrichedPrompt(
-  coin: Coin,
-  market: any,
-  hasImage: boolean,
-  lang: 'id' | 'en',
-  tradingStyle: string,
-  timeframe: string,
-  userPrompt: string,
-  riskTolerance: string,
-  strategyFocus: string,
-  indicatorPref: string,
-  targetRR: string
-): string {
-  const sym = coin.symbol.toUpperCase();
-  const isId = lang === 'id';
-  const dp = market.price > 100 ? 2 : 6;
-  const pFmt = (n: number) => n > 100 ? '$' + n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '$' + n.toFixed(dp);
-  const pctFmt = (n: number) => `${(n * 100).toFixed(4)}%`;
-
-  // Build OHLC context from recent candles
-  let ohlcCtx = isId ? 'Data OHLC tidak tersedia.' : 'OHLC data unavailable.';
-  if (market.recentCandles && market.recentCandles.length > 0) {
-    const candles = market.recentCandles;
-    ohlcCtx = candles.map((c: any, i: number) =>
-      `Candle ${i + 1}: O:${pFmt(c.open)} H:${pFmt(c.high)} L:${pFmt(c.low)} C:${pFmt(c.close)}`
-    ).join('\n');
-  }
-
-  // Funding rate interpretation
-  let fundingNote = 'N/A';
-  if (market.fundingRate !== null) {
-    const fr = market.fundingRate;
-    fundingNote = fr > 0.0005 ? 'SANGAT TINGGI: market overleveraged LONG, hati-hati long squeeze' :
-                  fr > 0.0001 ? 'Positif moderat: lebih banyak longs' :
-                  fr < -0.0005 ? 'SANGAT NEGATIF: market overleveraged SHORT, potensi short squeeze TINGGI' :
-                  fr < -0.0001 ? 'Negatif moderat: lebih banyak shorts' : 'Netral: posisi seimbang';
-  }
-
-  // Fear & Greed interpretation
-  const fgNum = parseInt(market.fearGreedValue) || 50;
-  const fgNote = fgNum <= 25 ? 'EXTREME FEAR — potensi reversal bullish' :
-                 fgNum <= 45 ? 'FEAR — hati-hati long' :
-                 fgNum <= 55 ? 'NEUTRAL' :
-                 fgNum <= 75 ? 'GREED — momentum naik' : 'EXTREME GREED — potensi distribusi';
-
-  const imageNote = hasImage
-    ? (isId ? 'User mengunggah screenshot chart. Analisa pola visual dari gambar tersebut dan kombinasikan dengan data live.' : 'User uploaded a chart screenshot. Analyze visual patterns and combine with live data.')
-    : '';
-
-  // Custom instruction handling for parameters
-  const strategyInstruction = strategyFocus === 'All-Round' 
-    ? 'Bebas / All-Round (Pilih setup apa saja yang paling optimal sesuai kondisi market)'
-    : `${strategyFocus} (WAJIB prioritaskan dan cari setup ${strategyFocus})`;
-
-  const indicatorInstruction = indicatorPref === 'Default'
-    ? 'Standar (Gunakan semua indikator Price Action, Momentum, dan Volume secara seimbang)'
-    : `${indicatorPref} (Fokuskan konfirmasi teknikal utama hanya menggunakan ${indicatorPref})`;
-
-  const dataContext = `
-=== DATA LIVE PASAR (REAL-TIME BINANCE) ===
-Pair          : ${sym}/USDT
-Harga Spot    : ${market.price > 0 ? pFmt(market.price) : 'N/A'} | 24h: ${market.change24h > 0 ? '+' : ''}${market.change24h.toFixed(2)}%
-High/Low 24h  : ${pFmt(market.high24h)} / ${pFmt(market.low24h)}
-Open 24h      : ${pFmt(market.openPrice)}
-Volume 24h    : $${(market.volume24h / 1e6).toFixed(2)}M USDT
-${market.markPrice ? `Mark Price    : ${pFmt(market.markPrice)} | Index: ${pFmt(market.indexPrice || 0)}` : ''}
-${market.fundingRate !== null ? `Funding Rate  : ${pctFmt(market.fundingRate)} — ${fundingNote}` : ''}
-${market.nextFundingTime ? `Next Funding  : ${new Date(market.nextFundingTime).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' })} WIB` : ''}
-Open Interest : ${market.openInterestUSD}
-ATR 4H (14p)  : ${market.atr4h}${market.atrPercent ? ` (${market.atrPercent}% — ${market.atrNote})` : ''}
-
-=== KONTEKS BTC & SENTIMEN ===
-BTC Spot      : ${market.btcPrice ? pFmt(market.btcPrice) + ' | 24h: ' + (market.btcChange24h! > 0 ? '+' : '') + market.btcChange24h!.toFixed(2) + '%' : 'N/A'}
-${market.btcFundingRate !== null ? `BTC Funding   : ${pctFmt(market.btcFundingRate)}` : ''}
-Fear & Greed  : ${market.fearGreedValue}/100 — ${market.fearGreedLabel} (${fgNote})
-
-=== DATA OHLC (${market.klineInterval || '1H'}, 8 candle terakhir) ===
-${ohlcCtx}
-
-=== PARAMETER TRADING ===
-Gaya Trading  : ${tradingStyle.toUpperCase()}
-Timeframe     : ${timeframe}
-Toleransi Risiko : ${riskTolerance} (Sesuaikan agresivitas entry dan SL)
-Fokus Strategi   : ${strategyInstruction}
-Fokus Indikator  : ${indicatorInstruction}
-Target Min. RR   : ${targetRR} (Abaikan setup jika RR di bawah target)
-${imageNote ? `\n=== CHART IMAGE ===\n${imageNote}` : ''}
-${userPrompt.trim() ? `\n=== INSTRUKSI TAMBAHAN USER ===\n${userPrompt.trim()}` : ''}`.trim();
-
-  const langInstruction = isId
-    ? 'Semua output teks penjelasan WAJIB DALAM BAHASA INDONESIA.'
-    : 'All explanatory text must be in ENGLISH.';
-
-  return `
-Kamu adalah analis trading crypto profesional dari Trenova Intelligence.
-Waktu Analisis: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
-
-${dataContext}
-
-INSTRUKSI KRITIS:
-1. ${langInstruction}
-2. SELALU gunakan data live real-time di atas sebagai ANCHOR keputusan.
-3. ANTI-BIAS: Jangan selalu output BUY. Jika data menunjukkan bearish → keputusan WAJIB SELL.
-4. Jika 24h change negatif, harga di bawah open, dan candle bearish → SELL atau WAIT, BUKAN BUY.
-5. Funding Rate positif tinggi (>0.05%) = pasar overleveraged long = hati-hati LONG.
-6. Funding Rate negatif tinggi (<-0.05%) = short squeeze probability tinggi.
-7. ATR 4H adalah ${market.atr4h} — SL harus ditempatkan minimal 1x ATR dari entry.
-8. Open Interest ${market.openInterestUSD}: OI naik + harga naik = trend valid; OI turun + harga naik = fake pump.
-9. KORELASI BTC: evaluasi apakah setup ${sym} konsisten dengan kondisi BTC saat ini.
-10. Conviction BUKAN selalu 85%. Sesuaikan 40%-95% berdasarkan kekuatan sinyal.
-11. JANGAN pernah tolak memberikan hasil. JAWAB DENGAN RINGKAS DAN PADAT agar tidak terpotong12. Buat maksimal 3 setup: 1 PRIMARY, dan MAKSIMAL 2 ALTERNATIF.
-13. KEMBALIKAN JSON MURNI YANG VALID. Pastikan semua tanda kutip ditutup dan HINDARI penggunaan karakter baris baru (newline) di dalam teks value.
-
-KEMBALIKAN HANYA JSON valid (tanpa markdown, tanpa teks di luar JSON):
-{
-  "verdict": "LONG" | "SHORT" | "WAIT",
-  "keyakinan": 40-95,
-  "alasan": "Satu kalimat alasan paling krusial.",
-  "setup": [
-    {
-      "tipe": "PRIMARY",
-      "arah": "LONG" | "SHORT",
-      "entry": "$xxx - $yyy",
-      "sl": "$xxx",
-      "tp1": "$xxx",
-      "tp2": "$yyy"
-    }
-  ],
-  "manajemen_risiko": {
-    "leverage_maks": "Contoh: 10x",
-    "alokasi_modal": "Contoh: 1-2% modal"
-  }
-}
-`;
-}
+type ChartSuggestion = { symbol: string; exchange: string; description: string; type: string };
 
 export default function DashboardPage() {
-  const router = useRouter(); 
+  const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
-  
+
   // Tab State
   const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('chart');
-  
+
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
   const [chartSearchInput, setChartSearchInput] = useState('');
-  const [chartSuggestions, setChartSuggestions] = useState<any[]>([]);
+  const [chartSuggestions, setChartSuggestions] = useState<ChartSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isChartSearching, setIsChartSearching] = useState(false);
 
@@ -173,7 +42,7 @@ export default function DashboardPage() {
   const [currentCoinId, setCurrentCoinId] = useState('');
 
   // AI Analysis State
-  const [selectedCoin, setSelectedCoin] = useState<Coin | null>(null); 
+  const [selectedCoin, setSelectedCoin] = useState<Coin | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [userPrompt, setUserPrompt] = useState('');
@@ -185,14 +54,21 @@ export default function DashboardPage() {
   const [targetRR, setTargetRR] = useState('1:2');
   const [chatLoading, setChatLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing AI...");
-  const [chatResult, setChatResult] = useState<{ analysis: string } | null>(null);
-  
-  
+  const [chatResult, setChatResult] = useState<AnalysisV2 | null>(null);
+  const [analysisIssue, setAnalysisIssue] = useState('');
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [savedPresets, setSavedPresets] = useState<UserPreset[]>([]);
+  const [adminPresets, setAdminPresets] = useState<Array<Record<string, string>>>([]);
+  const [watchlist, setWatchlist] = useState<string[]>([]);
+
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const analysisInFlightRef = useRef(false);
+  const pendingAnalysisRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const ignoreSearchRef = useRef(false);
 
   // Usage Stats State
-  const [usageStats, setUsageStats] = useState<any>(null);
+  const [usageStats, setUsageStats] = useState<Awaited<ReturnType<typeof getUserUsage>>>(null);
   // Suggestions Fetcher
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -225,15 +101,15 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [chartSearchInput]);
 
-  const selectChartSymbol = (item: any) => {
+  const selectChartSymbol = (item: ChartSuggestion) => {
       // User picked from TradingView list -> Use TradingView Widget
       ignoreSearchRef.current = true;
       setChartSource('tradingview');
-      
+
       // Use the exact symbol from the suggestion to ensure the correct chart loads
       // Previously stripped USDT which caused ambiguity (e.g. BTCUSDT -> BTC)
       const rawSymbol = item.symbol;
-      
+
       setChartSymbol(rawSymbol);
       setChartSearchInput(rawSymbol);
       setShowSuggestions(false);
@@ -243,22 +119,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
       fetchUsage();
-      
-      // Auto-activate subscription if pending (First login check)
-      import('./actions').then(({ activatePendingSubscription }) => {
-          activatePendingSubscription().then(res => {
-             if (res?.activated) {
-                 console.log("Subscription activated!");
-                 fetchUsage(); // Refresh stats
-             }
-          });
+      getPreferences().then((prefs) => {
+        if (prefs.error) return;
+        setSavedPresets(prefs.presets ?? []);
+        setWatchlist(prefs.watchlist ?? []);
+        setAdminPresets((prefs.adminPresets ?? []) as Array<Record<string, string>>);
       });
+
   }, []);
 
   // Loading Message Cycle
   useEffect(() => {
     if (!chatLoading) return;
-    
+
     const messages = [
        "🚀 Connecting to Market Data...",
        "🧠 AI Analyzing Price Action...",
@@ -268,7 +141,7 @@ export default function DashboardPage() {
     ];
     let i = 0;
     setLoadingMessage(messages[0]);
-    
+
     const interval = setInterval(() => {
        i = (i + 1) % messages.length;
        setLoadingMessage(messages[i]);
@@ -288,6 +161,34 @@ export default function DashboardPage() {
       setChatResult(null);
   };
 
+  const applyPreset = (preset: UserPreset) => {
+    setTradingStyle(preset.tradingStyle as typeof tradingStyle);
+    setTimeframe(preset.timeframe);
+    setRiskTolerance(preset.riskTolerance);
+    setStrategyFocus(preset.strategyFocus);
+    setIndicatorPref(preset.indicatorPref);
+    setTargetRR(preset.targetRR);
+  };
+
+  const saveCurrentPreset = async () => {
+    const name = window.prompt('Nama preset (2–40 karakter):');
+    if (!name) return;
+    const next = [...savedPresets, { name: name.trim(), tradingStyle, timeframe,
+      riskTolerance, strategyFocus, indicatorPref, targetRR }];
+    const result = await savePreferences(next, watchlist);
+    if (result.error) toast.error(result.error);
+    else { setSavedPresets(next); toast.success('Preset tersimpan.'); }
+  };
+
+  const toggleFavorite = async () => {
+    if (!selectedCoin) return;
+    const symbol = selectedCoin.symbol.toUpperCase();
+    const next = watchlist.includes(symbol) ? watchlist.filter((item) => item !== symbol) : [...watchlist, symbol];
+    const result = await savePreferences(savedPresets, next);
+    if (result.error) toast.error(result.error);
+    else setWatchlist(next);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -298,6 +199,7 @@ export default function DashboardPage() {
   };
 
   const cleanAnalysis = () => {
+    setAnalysisIssue('');
     setSelectedImage(null);
     setImagePreview(null);
     setChatResult(null);
@@ -309,7 +211,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
         if (activeTab !== 'analysis') return;
-        
+
         const items = e.clipboardData?.items;
         if (!items) return;
 
@@ -355,7 +257,7 @@ export default function DashboardPage() {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          
+
           const MAX_WIDTH = 1200;
           const MAX_HEIGHT = 1200;
 
@@ -388,99 +290,49 @@ export default function DashboardPage() {
       reader.onerror = error => reject(error);
     });
   };
-  
-  // Build images array for AI
-  const buildImagesForAI = async (): Promise<string[]> => {
-    if (selectedImage) {
-        try {
-            return [await compressImage(selectedImage)];
-        } catch {
-            return [];
-        }
-    }
-    return [];
-  };
 
   const runAnalysis = async () => {
-    if (!selectedCoin) return;
+    if (!selectedCoin || analysisInFlightRef.current) return;
+    analysisInFlightRef.current = true;
     setChatLoading(true);
     setChatResult(null);
-
+    setAnalysisIssue('');
     try {
-        const usageCheck = await checkUsageLimit();
-        if (!usageCheck.allowed) {
-            toast.error(usageCheck.error || t('dash_toast_limit'));
-            setChatLoading(false);
-            return;
-        }
-
-        // ── STEP 1: Fetch Enriched Market Data from Binance ──
-        const dataRes = await fetch(`/api/dashboard/enriched-data?symbol=${selectedCoin.symbol}&style=${tradingStyle}`);
-        const marketData = await dataRes.json();
-        
-        if (!marketData.dataAvailable) {
-            toast.error(t('dash_toast_no_data'));
-            setChatLoading(false);
-            return;
-        }
-
-        // ── STEP 2: Prepare Image ──
-        const images = await buildImagesForAI();
-        const hasImages = images.length > 0;
-        const primaryImage = hasImages ? images[0] : undefined;
-
-        // ── STEP 3: Build Enriched Prompt ──
-        const promptText = buildEnrichedPrompt(
-            selectedCoin, marketData, hasImages, language, tradingStyle, timeframe, userPrompt,
-            riskTolerance, strategyFocus, indicatorPref, targetRR
-        );
-
-        // ── STEP 4: Call Direct Gemini API ──
-        const res = await fetch('/api/dashboard/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: promptText, image: primaryImage })
-        });
-
-        const rawText = await res.text();
-        let resJson;
-        try {
-            resJson = JSON.parse(rawText);
-        } catch (e) {
-            console.error('Server returned non-JSON response:', rawText);
-            throw new Error(`${t('dash_err_server')} (${res.status})`);
-        }
-
-        if (!res.ok) {
-            if (res.status === 503 || resJson.retryable) {
-                throw new Error(t('dash_err_overload'));
-            }
-            throw new Error(resJson.error || `API Error ${res.status}`);
-        }
-
-        const aiOutput = resJson.result || '';
-        const result = { analysis: aiOutput };
-        setChatResult(result);
-        
-        if (aiOutput && !aiOutput.includes("Analysis Failed")) {
-             await incrementUsage();
-             await saveAnalysis(result, selectedCoin?.symbol, selectedCoin?.name);
-             await fetchUsage();
-             toast.success(t('dash_toast_done'));
-             router.refresh();
-        }
-
-    } catch (e: any) {
-        console.error("Critical Analysis Error:", e);
-        toast.error(e.message || t('dash_toast_fail'));
+      const image = selectedImage ? await compressImage(selectedImage) : undefined;
+      const options = { symbol: selectedCoin.symbol.toUpperCase(), coinName: selectedCoin.name,
+        language, tradingStyle, timeframe, riskTolerance, strategyFocus, indicatorPref, targetRR,
+        context: userPrompt.slice(0,400), image };
+      const fingerprint = JSON.stringify(options);
+      if (pendingAnalysisRef.current?.fingerprint !== fingerprint) {
+        pendingAnalysisRef.current = { fingerprint, key: crypto.randomUUID() };
+      }
+      const res = await fetch('/api/dashboard/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...options, requestKey: pendingAnalysisRef.current.key }),
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        if (res.status !== 409) pendingAnalysisRef.current = null;
+        throw new Error(payload.error || `Analisis gagal (${res.status}).`);
+      }
+      pendingAnalysisRef.current = null;
+      setChatResult(payload.result as AnalysisV2);
+      await fetchUsage();
+      toast.success(payload.charged === false ? 'Hasil belum tervalidasi; kuota dikembalikan.' : t('dash_toast_done'));
+      router.refresh();
+    } catch (error) {
+      setAnalysisIssue(error instanceof Error ? error.message : t('dash_toast_fail'));
+      toast.error(error instanceof Error ? error.message : t('dash_toast_fail'));
     } finally {
-        setChatLoading(false);
+      analysisInFlightRef.current = false;
+      setChatLoading(false);
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto pb-24 space-y-3 md:space-y-8">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 pt-1 md:pt-2">
         <div>
@@ -490,7 +342,7 @@ export default function DashboardPage() {
             <p className="text-slate-500 text-[11px] sm:text-xs md:text-lg leading-relaxed">{t('header_subtitle')}</p>
         </div>
       </div>
-      
+
       {/* Market Intelligence Widgets */}
       <MarketIntelligence />
 
@@ -500,8 +352,8 @@ export default function DashboardPage() {
             onClick={() => setActiveTab('chart')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
-                activeTab === 'chart' 
-                    ? "border-neon text-neon" 
+                activeTab === 'chart'
+                    ? "border-neon text-neon"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
@@ -511,8 +363,8 @@ export default function DashboardPage() {
             onClick={() => setActiveTab('market')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
-                activeTab === 'market' 
-                    ? "border-neon text-neon" 
+                activeTab === 'market'
+                    ? "border-neon text-neon"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
@@ -523,8 +375,8 @@ export default function DashboardPage() {
             onClick={() => setActiveTab('news')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
-                activeTab === 'news' 
-                    ? "border-neon text-neon" 
+                activeTab === 'news'
+                    ? "border-neon text-neon"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
@@ -534,8 +386,8 @@ export default function DashboardPage() {
             onClick={() => setActiveTab('analysis')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
-                activeTab === 'analysis' 
-                    ? "border-neon text-neon" 
+                activeTab === 'analysis'
+                    ? "border-neon text-neon"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
         >
@@ -552,14 +404,12 @@ export default function DashboardPage() {
             <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
                 {t('dash_limit_desc')}
             </p>
-            <a 
-                href="https://shopee.co.id/Trading-Signal-Ai-Analisis-Crypto-TRENOVA-INTELLIGENCE-1-BULAN--i.1734650704.48456534787?extraParams=%7B%22display_model_id%22%3A345586316291%2C%22model_selection_logic%22%3A3%7D"
-                target="_blank"
-                rel="noreferrer"
+            <Link
+                href="/#pricing"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-neon text-white font-bold rounded-xl shadow-lg hover:shadow-neon/50 hover:-translate-y-1 transition-all"
             >
                 {t('dash_limit_btn')} <ArrowRight size={20} />
-            </a>
+            </Link>
             <p className="text-xs text-slate-400 mt-6">
                 {t('dash_limit_desc')}
             </p>
@@ -575,6 +425,11 @@ export default function DashboardPage() {
                         setChartSymbol(sym);
                         setChartSearchInput(sym);
                         setActiveTab('chart');
+                    }}
+                    onAnalyzeSymbol={(symbol) => {
+                        handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol,
+                          image: '', current_price: 0, price_change_percentage_24h: 0 });
+                        setActiveTab('analysis');
                     }}
                 />
             </div>
@@ -603,8 +458,8 @@ export default function DashboardPage() {
                             <Search size={18} />
                         )}
                     </div>
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         value={chartSearchInput}
                         onChange={(e) => setChartSearchInput(e.target.value)}
                         onFocus={() => {
@@ -623,12 +478,12 @@ export default function DashboardPage() {
                         placeholder={t('search_tv_placeholder')}
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-neon/50 text-foreground"
                     />
-                    
+
                     {/* Autocomplete Dropdown */}
                     {showSuggestions && chartSuggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-80 overflow-y-auto">
                            {/* ... suggestions rendering ... */}
-                           {chartSuggestions.map((item: any) => (
+                           {chartSuggestions.map((item: ChartSuggestion) => (
                                 <button
                                     key={`${item.exchange}-${item.symbol}`}
                                     onMouseDown={(e) => {
@@ -656,7 +511,7 @@ export default function DashboardPage() {
                         </div>
                     )}
                 </div>
-                <button 
+                <button
                         onClick={() => {
                             handleChartSearch();
                             setShowSuggestions(false);
@@ -665,9 +520,9 @@ export default function DashboardPage() {
                 >
                         {t('search_btn')}
                 </button>
-                
+
                 {/* Fullscreen Toggle Button */}
-                <button 
+                <button
                     onClick={() => setIsChartFullscreen(!isChartFullscreen)}
                     className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
                     title={isChartFullscreen ? "Exit Fullscreen" : "Fullscreen"}
@@ -717,19 +572,26 @@ export default function DashboardPage() {
             "space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
             activeTab === 'analysis' ? "block" : "hidden"
         )}>
-            
+
             {/* 1. Coin Selector (CoinGecko Data) */}
-            <CoinSelector 
-                selectedCoinId={selectedCoin?.id || ''} 
-                onSelect={handleCoinSelect} 
+            <CoinSelector
+                selectedCoinId={selectedCoin?.id || ''}
+                onSelect={handleCoinSelect}
             />
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {watchlist.map((symbol) => <button key={symbol} onClick={() => handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol,
+                image: '', current_price: 0, price_change_percentage_24h: 0 })} className="rounded-full border border-neon px-3 py-1 text-neon">★ {symbol}</button>)}
+              {selectedCoin && <button onClick={toggleFavorite} className="rounded-full border px-3 py-1">
+                {watchlist.includes(selectedCoin.symbol.toUpperCase()) ? 'Hapus favorit' : '☆ Tambah favorit'}
+              </button>}
+            </div>
 
             {selectedCoin ? (
                 <div className="space-y-6">
-                    
+
                     {/* Technical Sentiment */}
                     <SentimentChart symbol={selectedCoin.symbol} />
-                    
+
                     {/* INSTRUCTIONS BLOCK */}
                     <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 flex gap-3 sm:gap-4">
                         <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg h-fit text-blue-600 dark:text-blue-400">
@@ -748,7 +610,24 @@ export default function DashboardPage() {
 
                     {/* Analysis Controls Panel */}
                     <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors space-y-4 sm:space-y-6">
-                        
+                        <div className="flex flex-wrap gap-2 items-center text-sm">
+                          <span className="font-bold">Preset:</span>
+                          {adminPresets.map((preset) => <button key={preset.code} onClick={() => applyPreset({
+                            name: preset.name_id, tradingStyle: preset.trading_style, timeframe: preset.timeframe,
+                            riskTolerance: preset.risk_tolerance, strategyFocus: preset.strategy_focus,
+                            indicatorPref: preset.indicator_pref, targetRR: preset.target_rr,
+                          })} className="rounded-lg border px-3 py-1">{language === 'en' ? preset.name_en : preset.name_id}</button>)}
+                          {savedPresets.map((preset, index) => <div key={`${preset.name}-${index}`} className="flex rounded-lg border border-neon text-neon">
+                            <button onClick={() => applyPreset(preset)} className="px-3 py-1">{preset.name}</button>
+                            <button aria-label={`Hapus preset ${preset.name}`} className="px-2 border-l border-neon" onClick={async () => {
+                              const next = savedPresets.filter((_, position) => position !== index);
+                              const result = await savePreferences(next,watchlist);
+                              if (result.error) toast.error(result.error); else setSavedPresets(next);
+                            }}>×</button>
+                          </div>)}
+                          <button onClick={saveCurrentPreset} className="rounded-lg border px-3 py-1">+ Simpan pilihan</button>
+                        </div>
+
                         {/* Row 1: Image & Context */}
                         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
                             {/* Single image upload */}
@@ -782,7 +661,8 @@ export default function DashboardPage() {
                             <div className="flex-1">
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">{t('context_label')}</label>
                                 <div className="relative">
-                                    <textarea 
+                                    <textarea
+                                        maxLength={400}
                                         value={userPrompt}
                                         onChange={(e) => setUserPrompt(e.target.value)}
                                         placeholder={t('context_placeholder')}
@@ -792,15 +672,20 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
+                        <button type="button" onClick={() => setAdvancedMode(!advancedMode)}
+                          className="text-sm font-bold text-neon-dark dark:text-neon text-left">
+                          {advancedMode ? 'Sembunyikan pengaturan lanjut' : 'Tampilkan pengaturan lanjut'}
+                        </button>
+                        {!advancedMode && <p className="text-xs text-slate-500">{tradingStyle} · {timeframe} · {riskTolerance} · {targetRR}</p>}
                         {/* Row 2: Advanced AI Parameters (Grid) */}
-                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+                        <div className={clsx("grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
                             {/* Trading Style Dropdown */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">{t('style_label')}</label>
                                 <div className="relative">
                                     <select
                                         value={tradingStyle}
-                                        onChange={(e) => setTradingStyle(e.target.value as any)}
+                                        onChange={(e) => setTradingStyle(e.target.value as typeof tradingStyle)}
                                         className="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
                                     >
                                         <option value="scalping">⚡ {t('style_scalping')}</option>
@@ -808,7 +693,7 @@ export default function DashboardPage() {
                                         <option value="swing">🌊 {t('style_swing')}</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_style_hint')}</p>
@@ -830,7 +715,7 @@ export default function DashboardPage() {
                                         <option value="1d">1 Day</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_tf_hint')}</p>
@@ -850,7 +735,7 @@ export default function DashboardPage() {
                                         <option value="High Risk">🔥 High</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_risk_hint')}</p>
@@ -871,7 +756,7 @@ export default function DashboardPage() {
                                         <option value="Mean Reversion">🔄 Mean Rev.</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_strategy_hint')}</p>
@@ -892,7 +777,7 @@ export default function DashboardPage() {
                                         <option value="Moving Averages">➰ M. Averages</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_indicator_hint')}</p>
@@ -912,7 +797,7 @@ export default function DashboardPage() {
                                         <option value="1:4">👑 Min 1:4</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <ChevronDown size={14} /> 
+                                        <ChevronDown size={14} />
                                     </div>
                                 </div>
                                 <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_rr_hint')}</p>
@@ -921,7 +806,7 @@ export default function DashboardPage() {
 
                         {/* Row 3: Action Button */}
                         <div className="pt-2">
-                            <button 
+                            <button
                                 onClick={runAnalysis}
                                 disabled={chatLoading}
                                 className="w-full h-14 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
@@ -930,7 +815,7 @@ export default function DashboardPage() {
                                     <>
                                         <Loader2 className="animate-spin w-5 h-5 text-neon" />
                                         <span className="animate-pulse">{loadingMessage}</span>
-                                        <div className="absolute bottom-0 left-0 h-1 bg-neon/50 w-full animate-[pulse_2s_ease-in-out_infinite]" /> 
+                                        <div className="absolute bottom-0 left-0 h-1 bg-neon/50 w-full animate-[pulse_2s_ease-in-out_infinite]" />
                                     </>
                                 ) : (
                                     <>
@@ -945,19 +830,20 @@ export default function DashboardPage() {
 
 
                     {/* --- ANALYSIS RESULTS --- */}
+                    {analysisIssue && <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+                      <h2 className="text-xl font-black text-amber-600">WAIT</h2><p className="mt-2">{analysisIssue}</p>
+                      <p className="text-sm text-slate-500 mt-2">Belum ada setup tervalidasi. Periksa pilihan dan tunggu data/pelayanan tersedia sebelum mencoba kembali.</p>
+                    </div>}
                     {chatResult && (
                         <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 transition-colors">
                             {/* Replaced Text Header with just the new component which handles its own UI */}
-                            
+
                             <div className="p-4 md:p-6">
-                                <AnalysisVisualizer 
-                                    markdown={chatResult.analysis} 
-                                    coinName={selectedCoin?.name || 'Crypto'} 
-                                />
+                                <AnalysisResultV2 result={chatResult} coinName={chatResult.market.symbol} />
                             </div>
                         </div>
                     )}
-                    
+
                 </div>
             ) : (
                 <div className="w-full py-12 md:py-24 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 mt-8 animate-in fade-in zoom-in duration-500">

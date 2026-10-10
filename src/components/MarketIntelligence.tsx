@@ -19,7 +19,7 @@ interface GlobalData {
   xrpChange24h: number;
   dogePrice: number;
   dogeChange24h: number;
-  avgFundingRate: number;
+  avgFundingRate: number | null;
   topGainer: { symbol: string; change: number; price: number; volume: number };
   topLoser: { symbol: string; change: number; price: number; volume: number };
   gainersCount: number;
@@ -47,11 +47,11 @@ const DEFAULT_WIDGETS = ['btc', 'eth', 'sol', 'volume', 'fng', 'gainer', 'moment
 
 export default function MarketIntelligence() {
     const [globalData, setGlobalData] = useState<GlobalData | null>(null);
-    const [fng, setFng] = useState<any>(null);
+    const [fng, setFng] = useState<{ value: string; value_classification: string } | null>(null);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [dataSource, setDataSource] = useState<string>('binance');
     const [isDegraded, setIsDegraded] = useState(false);
-    
+
     // Customization state
     const [selectedWidgets, setSelectedWidgets] = useState<string[]>(DEFAULT_WIDGETS);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -115,7 +115,7 @@ export default function MarketIntelligence() {
                 xrpChange24h: json.global?.xrpChange24h || 0,
                 dogePrice: json.global?.dogePrice || 0,
                 dogeChange24h: json.global?.dogeChange24h || 0,
-                avgFundingRate: json.global?.avgFundingRate || 0,
+                avgFundingRate: json.global?.avgFundingRate ?? null,
                 topGainer: json.global?.topGainer || { symbol: '—', change: 0, price: 0, volume: 0 },
                 topLoser: json.global?.topLoser || { symbol: '—', change: 0, price: 0, volume: 0 },
                 gainersCount: json.global?.gainersCount || 0,
@@ -229,7 +229,7 @@ export default function MarketIntelligence() {
                         {price ? `$${price.toLocaleString('en', { minimumFractionDigits: symbol === 'DOGE' || symbol === 'XRP' ? 4 : 2, maximumFractionDigits: symbol === 'DOGE' || symbol === 'XRP' ? 4 : 2 })}` : "—"}
                     </div>
                     <div className={clsx("text-xs font-bold w-fit mt-1 px-1.5 py-0.5 rounded tabular-nums", isUp ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500")}>
-                        {isUp ? '+' : ''}{change.toFixed(2)}%
+                        {price ? `${isUp ? '+' : ''}${change.toFixed(2)}%` : 'Tidak tersedia'}
                     </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-10 opacity-10 pointer-events-none">
@@ -249,7 +249,7 @@ export default function MarketIntelligence() {
             case 'bnb': return renderCoinWidget('BNB', '🔶', 'yellow', globalData?.bnbPrice || 0, globalData?.bnbChange24h || 0);
             case 'xrp': return renderCoinWidget('XRP', '✕', 'slate', globalData?.xrpPrice || 0, globalData?.xrpChange24h || 0);
             case 'doge': return renderCoinWidget('DOGE', 'Ð', 'yellow', globalData?.dogePrice || 0, globalData?.dogeChange24h || 0);
-            
+
             case 'volume':
                 return (
                     <div key={id} className={cardBase}>
@@ -446,16 +446,16 @@ export default function MarketIntelligence() {
                                 <span className="text-xs font-bold uppercase tracking-wider">Avg Funding</span>
                             </div>
                             <div className="flex items-end gap-1">
-                                <div className={clsx("text-xl font-black tabular-nums leading-tight", 
+                                <div className={clsx("text-xl font-black tabular-nums leading-tight",
                                     (globalData?.avgFundingRate || 0) > 0 ? "text-emerald-500" : "text-rose-500")}>
                                     {globalData?.avgFundingRate ? (globalData.avgFundingRate > 0 ? "+" : "") + globalData.avgFundingRate.toFixed(4) : "—"}%
                                 </div>
                             </div>
                             <div className="text-[10px] text-slate-400 mt-2 font-medium leading-snug">
-                                {(globalData?.avgFundingRate || 0) > 0.01 
-                                    ? "Market leans heavily LONG." 
-                                    : (globalData?.avgFundingRate || 0) < 0 
-                                    ? "Market leans heavily SHORT." 
+                                {globalData?.avgFundingRate == null ? 'Data funding tidak tersedia.' : (globalData.avgFundingRate || 0) > 0.01
+                                    ? "Market leans heavily LONG."
+                                    : (globalData?.avgFundingRate || 0) < 0
+                                    ? "Market leans heavily SHORT."
                                     : "Neutral leverage positioning."}
                             </div>
                         </div>
@@ -469,7 +469,7 @@ export default function MarketIntelligence() {
     return (
         <div className="relative">
             <div className="flex justify-end mb-2 absolute -top-8 right-0 z-10">
-                <button 
+                <button
                     onClick={() => {
                         setTempSelection(selectedWidgets);
                         setIsSettingsOpen(true);
@@ -501,7 +501,7 @@ export default function MarketIntelligence() {
                                 <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Customize</h3>
                                 <p className="text-xs text-slate-500">Select exactly 7 widgets to display on your dashboard.</p>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setIsSettingsOpen(false)}
                                 className="p-1.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                             >
@@ -511,7 +511,7 @@ export default function MarketIntelligence() {
                         <div className="p-4 overflow-y-auto flex-1">
                             <div className="flex justify-between items-center mb-3">
                                 <span className="text-sm font-bold text-slate-400">Available Widgets</span>
-                                <span className={clsx("text-xs font-bold px-2 py-0.5 rounded", 
+                                <span className={clsx("text-xs font-bold px-2 py-0.5 rounded",
                                     tempSelection.length === 7 ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500/20 text-amber-500"
                                 )}>
                                     {tempSelection.length} / 7 Selected
@@ -521,7 +521,7 @@ export default function MarketIntelligence() {
                                 {WIDGET_OPTIONS.map((widget) => {
                                     const isSelected = tempSelection.includes(widget.id);
                                     const isDisabled = !isSelected && tempSelection.length >= 7;
-                                    
+
                                     return (
                                         <button
                                             key={widget.id}
@@ -529,14 +529,14 @@ export default function MarketIntelligence() {
                                             disabled={isDisabled}
                                             className={clsx(
                                                 "flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
-                                                isSelected 
-                                                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
-                                                    : isDisabled 
-                                                        ? "border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed" 
+                                                isSelected
+                                                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                                    : isDisabled
+                                                        ? "border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed"
                                                         : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300"
                                             )}
                                         >
-                                            <div className={clsx("w-4 h-4 rounded flex items-center justify-center border", 
+                                            <div className={clsx("w-4 h-4 rounded flex items-center justify-center border",
                                                 isSelected ? "bg-emerald-500 border-emerald-500" : "border-slate-300 dark:border-slate-600"
                                             )}>
                                                 {isSelected && <Check size={12} className="text-white" />}
@@ -548,19 +548,19 @@ export default function MarketIntelligence() {
                             </div>
                         </div>
                         <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-2 shrink-0">
-                            <button 
+                            <button
                                 onClick={() => setIsSettingsOpen(false)}
                                 className="px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 onClick={handleSaveWidgets}
                                 disabled={tempSelection.length !== 7}
                                 className={clsx(
                                     "px-4 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2",
-                                    tempSelection.length === 7 
-                                        ? "bg-indigo-500 hover:bg-indigo-600 text-white shadow-md shadow-indigo-500/20" 
+                                    tempSelection.length === 7
+                                        ? "bg-indigo-500 hover:bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
                                         : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                 )}
                             >

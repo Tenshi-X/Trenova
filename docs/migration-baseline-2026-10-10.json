@@ -1,0 +1,16 @@
+{
+  "project_ref": "qhbebrgrtvjwoqobafot",
+  "source": "User-provided result of preflight_product_v2.sql",
+  "is_database_backup": false,
+  "baseline": {
+    "recorded_at": "2026-10-10 05:48:47.489164+00",
+    "auth_accounts": 44,
+    "profile_accounts": 15,
+    "premium_accounts": 0,
+    "total_remaining_quota": 465,
+    "profiles_with_future_expiry": 3,
+    "paid_profiles_without_expiry": 0,
+    "history_rows": 250,
+    "history_without_owner": 0
+  }
+}

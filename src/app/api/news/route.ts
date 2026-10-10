@@ -62,7 +62,8 @@ async function fetchAndParseRSS(
 
     const items = Array.isArray(channel.item) ? channel.item : [channel.item];
 
-    return items.map((item: any) => {
+    return items.map((item: { title?: unknown; link?: unknown; pubDate?: unknown; description?: string; 'content:encoded'?: string;
+      'media:content'?: { '@_url'?: string }; 'media:thumbnail'?: { '@_url'?: string }; enclosure?: { '@_url'?: string } }) => {
       // Extract thumbnail from media:content, media:thumbnail, or enclosure
       let thumbnail = '';
       if (item['media:content']?.['@_url']) {

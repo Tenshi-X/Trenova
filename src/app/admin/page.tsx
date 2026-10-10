@@ -47,8 +47,8 @@ export default function AdminPage() {
       if (!profileRes.success) throw new Error(profileRes.error || "Failed to fetch profiles");
 
       setProfiles(profileRes.profiles || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : 'Terjadi kesalahan.'));
     } finally {
       setLoading(false);
     }
@@ -83,8 +83,8 @@ export default function AdminPage() {
       setEditingProfileId(null);
       setFormData({ role: 'user', quota: 30, addAnalysisLimit: 0, analysisLimit: 150 });
 
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Error: ${(err instanceof Error ? err.message : 'Terjadi kesalahan.')}`);
     }
   };
 
@@ -94,14 +94,15 @@ export default function AdminPage() {
         role: profile.role, 
         quota: 0, // Default to 0 added
         addAnalysisLimit: 0,
-        analysisLimit: profile.analysis_limit || 150
+        analysisLimit: profile.analysis_limit ?? 0
     });
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this user from the App Profiles? (Auth account will remain)")) return;
-    await deleteUserProfile(id);
-    fetchData();
+    if (!confirm('Nonaktifkan akses akun ini? Akun dan riwayat tetap tersimpan.')) return;
+    const result = await deleteUserProfile(id);
+    if (!result.success) { setError(result.error || 'Akun gagal dinonaktifkan.'); return; }
+    await fetchData();
   };
 
   // Filter & Pagination Logic
@@ -166,6 +167,11 @@ export default function AdminPage() {
              </button>
         </div>
       </div>
+      <div className="flex flex-wrap gap-3 text-sm font-bold">
+        <Link href="/admin/catalog" className="rounded-lg border border-neon px-4 py-2 text-neon">Paket, preset & aktivasi</Link>
+        <Link href="/admin/insights" className="rounded-lg border border-neon px-4 py-2 text-neon">Biaya & laporan</Link>
+      </div>
+      {error && <p role="alert" className="rounded-lg bg-rose-500/10 p-3 text-rose-600">{error}</p>}
 
       {/* Activity Monitoring Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -203,7 +209,7 @@ export default function AdminPage() {
            <div className="text-3xl font-bold text-foreground overflow-hidden text-ellipsis whitespace-nowrap">
              {profiles.reduce((acc, curr) => acc + (curr.current_analysis_count || 0), 0)}
              <span className="text-lg text-slate-400 font-medium ml-2">
-                / {profiles.reduce((acc, curr) => acc + (curr.analysis_limit || 150), 0)}
+                / {profiles.reduce((acc, curr) => acc + (curr.analysis_limit ?? 0), 0)}
              </span>
            </div>
            <div className="text-sm text-slate-500 mt-1">{t('card_total_req_sub')}</div>
@@ -271,7 +277,7 @@ export default function AdminPage() {
                     const daysRemaining = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
                     const isExpired = daysRemaining <= 0;
 
-                    const limit = profile.analysis_limit ?? 150;
+                    const limit = profile.analysis_limit ?? 0;
                     const used = profile.current_analysis_count ?? 0;
                     const remaining = Math.max(0, limit - used);
 
@@ -284,6 +290,7 @@ export default function AdminPage() {
                             </div>
                             <div>
                                 <p className="font-medium text-foreground">{profile.email}</p>
+                                {profile.pending_plan_review && <p className="text-xs font-bold text-amber-600">Perlu verifikasi hak lama</p>}
                             </div>
                         </div>
                       </td>
@@ -334,7 +341,7 @@ export default function AdminPage() {
                                 <button 
                                     onClick={() => handleDelete(profile.id)}
                                     className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                                    title="Delete Profile"
+                                    title="Nonaktifkan akses"
                                 >
                                     <Trash2 size={16} />
                                 </button>
@@ -429,7 +436,6 @@ export default function AdminPage() {
                           >
                              <option value="user">User</option>
                              <option value="admin">Admin</option>
-                             <option value="premium">Premium</option>
                           </select>
                       </div>
 

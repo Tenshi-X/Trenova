@@ -46,14 +46,14 @@ export default function RegisterClient() {
       router.push('/dashboard');
       router.refresh();
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Register Error:", err);
       setLoading(false); 
       
-      if (err.message === 'fetch failed' || (err.name === 'AuthRetryableFetchError')) {
+      if (err instanceof Error && (err.message === 'fetch failed' || err.name === 'AuthRetryableFetchError')) {
            setError(t('auth_conn_error'));
       } else {
-           setError(err.message || 'Failed to register');
+           setError((err instanceof Error ? err.message : 'Terjadi kesalahan.') || 'Failed to register');
       }
     }
   };
@@ -71,10 +71,10 @@ export default function RegisterClient() {
       });
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google Auth Error:", err);
       setLoading(false);
-      setError(err.message || 'Failed to login with Google');
+      setError((err instanceof Error ? err.message : 'Terjadi kesalahan.') || 'Failed to login with Google');
     }
   };
 

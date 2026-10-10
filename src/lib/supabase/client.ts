@@ -3,11 +3,10 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-type SupabaseSchema = any;
 
-let client: SupabaseClient<SupabaseSchema> | null = null;
+let client: SupabaseClient | null = null;
 
-export function getSupabaseBrowserClient(): SupabaseClient<SupabaseSchema> {
+export function getSupabaseBrowserClient(): SupabaseClient {
   if (client) {
     return client;
   }
@@ -21,7 +20,7 @@ export function getSupabaseBrowserClient(): SupabaseClient<SupabaseSchema> {
     );
   }
 
-  client = createBrowserClient<SupabaseSchema>(supabaseUrl, supabaseAnonKey, {
+  client = createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       flowType: 'pkce',
     },

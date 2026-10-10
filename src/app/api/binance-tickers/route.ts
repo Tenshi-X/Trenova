@@ -24,8 +24,8 @@ async function fetchWithFallback(path: string, timeout = 10000): Promise<Respons
       });
       clearTimeout(timer);
       if (res.ok) return res;
-    } catch (err: any) {
-      console.warn(`${baseUrl}${path} failed: ${err.message}`);
+    } catch (err: unknown) {
+      console.warn(`${baseUrl}${path} failed: ${(err instanceof Error ? err.message : 'Terjadi kesalahan.')}`);
     }
   }
   throw new Error('All Binance API domains unreachable');

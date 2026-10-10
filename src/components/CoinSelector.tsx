@@ -107,7 +107,7 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                 
                 // Take top 50 results
                 const topCoins = searchData.coins.slice(0, 50);
-                const coinIds = topCoins.map((c: any) => c.id).join(',');
+                const coinIds = topCoins.map((c: { id: string }) => c.id).join(',');
 
                 if (coinIds) {
                     // B. Fetch Market Data for these IDs

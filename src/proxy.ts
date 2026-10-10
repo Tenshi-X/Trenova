@@ -16,8 +16,10 @@ export async function proxy(request: NextRequest) {
     console.error('Proxy: Missing Supabase Environment Variables');
     console.log('URL:', supabaseUrl ? 'Set' : 'Missing');
     console.log('Key:', supabaseAnonKey ? 'Set' : 'Missing');
-    // Allow the request to proceed without auth check if env vars are missing
-    return response;
+    const protectedPath = request.nextUrl.pathname.startsWith('/admin')
+      || request.nextUrl.pathname.startsWith('/dashboard')
+      || request.nextUrl.pathname.startsWith('/terminal');
+    return protectedPath ? NextResponse.redirect(new URL('/sign-in', request.url)) : response;
   }
 
   const supabase = createServerClient(
@@ -61,8 +63,9 @@ export async function proxy(request: NextRequest) {
     if (!user) {
         return NextResponse.redirect(new URL('/sign-in', request.url))
     }
-    const role = user.user_metadata.role;
-    if (role !== 'admin') {
+    const { data: profile } = await supabase.from('user_profiles')
+      .select('role').eq('id', user.id).maybeSingle();
+    if (profile?.role !== 'admin') {
         // Redirect non-admins to dashboard
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }

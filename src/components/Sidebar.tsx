@@ -15,7 +15,6 @@ import { useLanguage } from '@/context/LanguageContext';
  * Shows "Manajemen User" menu + logout.
  * 
  * Regular users have MobileDashboardSidebar in dashboard layout.
- * Premium users have no sidebar (everything is in terminal dashboard).
  */
 export default function Sidebar() {
   const pathname = usePathname();
@@ -47,6 +46,8 @@ export default function Sidebar() {
   // Admin-only nav items
   const navItems = [
     { name: t('admin_nav_users'), href: '/admin', icon: Users },
+    { name: 'Paket & preset', href: '/admin/catalog', icon: Shield },
+    { name: 'Biaya & laporan', href: '/admin/insights', icon: Shield },
     { name: t('admin_nav_broadcast'), href: '/admin/broadcast', icon: Mail },
     { name: t('admin_nav_feedback'), href: '/admin/feedback', icon: MessageSquare },
   ];

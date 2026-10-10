@@ -1,0 +1,248 @@
+[
+  {
+    "verification_report": {
+      "checks": {
+        "history_owners_valid": true,
+        "baseline_counts_match": true,
+        "premium_roles_retired": true,
+        "table_permissions_match": true,
+        "rpcs_restricted_to_server": true,
+        "profiles_have_auth_accounts": true,
+        "all_tables_exist_and_rls_enabled": true
+      },
+      "counts": {
+        "recorded_at": "2026-10-10T06:01:05.323662+00:00",
+        "history_rows": 250,
+        "auth_accounts": 44,
+        "premium_accounts": 0,
+        "profile_accounts": 15,
+        "auth_without_profile": 29,
+        "history_without_owner": 0,
+        "profiles_without_auth": 0,
+        "total_remaining_quota": 465,
+        "profiles_awaiting_review": 0,
+        "history_with_unknown_owner": 0,
+        "profiles_with_future_expiry": 3
+      },
+      "baseline": {
+        "history_rows": 250,
+        "auth_accounts": 44,
+        "profile_accounts": 15,
+        "total_remaining_quota": 465
+      },
+      "policies": [
+        {
+          "roles": [
+            "public"
+          ],
+          "table": "analysis_presets",
+          "using": "(enabled = true)",
+          "policy": "presets_public_read",
+          "command": "SELECT",
+          "with_check": null
+        },
+        {
+          "roles": [
+            "authenticated"
+          ],
+          "table": "analysis_results",
+          "using": "(user_id = ( SELECT auth.uid() AS uid))",
+          "policy": "analysis_owner_read",
+          "command": "SELECT",
+          "with_check": null
+        },
+        {
+          "roles": [
+            "public"
+          ],
+          "table": "plans",
+          "using": "(active = true)",
+          "policy": "plans_public_read",
+          "command": "SELECT",
+          "with_check": null
+        },
+        {
+          "roles": [
+            "authenticated"
+          ],
+          "table": "user_analysis_preferences",
+          "using": "(user_id = ( SELECT auth.uid() AS uid))",
+          "policy": "preferences_owner_read",
+          "command": "SELECT",
+          "with_check": null
+        },
+        {
+          "roles": [
+            "authenticated"
+          ],
+          "table": "user_profiles",
+          "using": "(id = ( SELECT auth.uid() AS uid))",
+          "policy": "user_profile_owner_read",
+          "command": "SELECT",
+          "with_check": null
+        }
+      ],
+      "rpc_checks": [
+        {
+          "signature": "public.activate_manual_order(uuid,uuid,text,text,integer)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.deactivate_user_v2(uuid,uuid)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.fail_analysis(uuid,uuid,text,integer,integer,integer,numeric)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.finish_analysis(uuid,uuid,jsonb,text,text,text,text,numeric,integer,integer,integer,numeric)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.get_admin_insights(uuid)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.provision_user_v2(uuid,uuid,text,integer,integer,integer)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.reserve_analysis(uuid,uuid)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        },
+        {
+          "signature": "public.verify_legacy_pending(uuid,uuid,text,integer)",
+          "function_exists": true,
+          "anon_can_execute": false,
+          "server_can_execute": true,
+          "authenticated_can_execute": false
+        }
+      ],
+      "table_checks": [
+        {
+          "table_name": "admin_audit_events",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": false
+        },
+        {
+          "table_name": "analysis_control",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": false
+        },
+        {
+          "table_name": "analysis_presets",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": true,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": true
+        },
+        {
+          "table_name": "analysis_reports",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": false
+        },
+        {
+          "table_name": "analysis_results",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": true
+        },
+        {
+          "table_name": "analysis_runs",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": false
+        },
+        {
+          "table_name": "manual_orders",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": false
+        },
+        {
+          "table_name": "plans",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": true,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": true
+        },
+        {
+          "table_name": "user_analysis_preferences",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": true
+        },
+        {
+          "table_name": "user_profiles",
+          "rls_enabled": true,
+          "table_exists": true,
+          "anon_can_read": false,
+          "server_has_access": true,
+          "browser_can_modify": false,
+          "authenticated_can_read": true
+        }
+      ],
+      "analysis_control": {
+        "enabled": false,
+        "updated_at": "2026-10-10T05:54:01.093599+00:00",
+        "max_cost_idr": 500,
+        "fx_safety_rate": 20000,
+        "disabled_reason": "Menunggu evaluasi kualitas dan biaya sebelum rilis.",
+        "rollout_percent": 0,
+        "evaluation_user_ids": [],
+        "quality_approved_at": null
+      },
+      "triggers_to_review": []
+    }
+  }
+]

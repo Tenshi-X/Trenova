@@ -13,7 +13,7 @@ interface DateFilterProps {
 }
 
 // Custom Input Component to mimic Material Design
-const CustomDateInput = forwardRef<HTMLButtonElement, any>(
+const CustomDateInput = forwardRef<HTMLButtonElement, { value?: string; onClick?: React.MouseEventHandler<HTMLButtonElement>; placeholder?: string; label: string; onClear?: () => void }>(
     ({ value, onClick, placeholder, label, onClear }, ref) => (
         <div className="relative group min-w-[140px]">
             <button

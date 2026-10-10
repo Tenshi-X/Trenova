@@ -9,30 +9,23 @@ const ThemeContext = createContext<{
   toggleTheme: () => void;
 }>({ theme: 'light', toggleTheme: () => {} });
 
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  localStorage.setItem('theme', theme);
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // Check local storage or system preference
-    const stored = localStorage.getItem('theme') as Theme;
-    if (stored) {
-      setTheme(stored);
-      applyTheme(stored);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-        applyTheme('dark');
-    }
+    queueMicrotask(() => {
+      const stored = localStorage.getItem('theme');
+      const selected: Theme = stored === 'dark' || stored === 'light' ? stored
+        : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      setTheme(selected);
+      applyTheme(selected);
+    });
   }, []);
-
-  const applyTheme = (t: Theme) => {
-    const root = window.document.documentElement;
-    if (t === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('theme', t);
-  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';

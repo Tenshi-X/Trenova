@@ -1,7 +1,6 @@
 'use server';
 
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   FEEDBACK_ATTACHMENT_BUCKET,
   FEEDBACK_STATUSES,
@@ -9,6 +8,7 @@ import {
   type FeedbackSubmission,
 } from '@/lib/feedback';
 import { runFeedbackHousekeeping, type HousekeepingResult } from '@/lib/feedback-housekeeping';
+import { getAdminContext } from '@/lib/authz';
 
 /**
  * Server actions panel admin untuk Feedback.
@@ -33,25 +33,9 @@ export type FeedbackListResult = {
 };
 
 async function assertAdmin(): Promise<AdminCheck> {
-  const supabase = await createSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return { ok: false, error: 'Sesi tidak ditemukan. Silakan login ulang.' };
-  if (user.user_metadata?.role === 'admin') return { ok: true, email: user.email ?? '' };
-
-  // Fallback: cek role di tabel user_profiles
-  const admin = createSupabaseAdminClient();
-  if (!admin) return { ok: false, error: 'Akun Anda tidak memiliki akses admin.' };
-
-  const { data: profile } = await admin
-    .from('user_profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (profile?.role !== 'admin') return { ok: false, error: 'Akun Anda tidak memiliki akses admin.' };
-
-  return { ok: true, email: user.email ?? '' };
+  const context = await getAdminContext();
+  return context ? { ok: true, email: context.user.email ?? '' }
+    : { ok: false, error: 'Akun Anda tidak memiliki akses admin.' };
 }
 
 export async function getFeedbackSubmissions(

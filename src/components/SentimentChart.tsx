@@ -12,7 +12,7 @@ interface SentimentChartProps {
 
 export default function SentimentChart({ symbol }: SentimentChartProps) {
     const { t, language } = useLanguage();
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<{ close: number; high: number; low: number }[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -28,10 +28,10 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
         // Degraded envelope: { data: [] } -> treat as failure so caller shows "Data unavailable"
         const arr = Array.isArray(raw) ? raw : raw?.data;
         if (!Array.isArray(arr) || !arr.length) throw new Error('Proxy degraded');
-        return arr.map((d: any[]) => ({
-            close: parseFloat(d[4]),
-            high: parseFloat(d[2]),
-            low: parseFloat(d[3])
+        return arr.map((d: (string | number)[]) => ({
+            close: Number(d[4]),
+            high: Number(d[2]),
+            low: Number(d[3])
         }));
     }, []);
 

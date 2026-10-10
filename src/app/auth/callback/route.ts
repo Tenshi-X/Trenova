@@ -1,12 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSiteUrl } from '@/lib/site-url'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const next = searchParams.get('next') === '/reset-password' ? '/reset-password' : null
   // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     const cookieStore = await cookies()
@@ -32,46 +33,39 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
       // Logic for role-based redirect and creating profile if needed
       const { data: { user } } = await supabase.auth.getUser()
-      const role = user?.user_metadata?.role || 'user'
+      let role = 'user'
       
       if (user) {
         // Ensure user_profile exists (especially for Google OAuth)
         const { createSupabaseAdminClient } = await import('@/lib/supabase/admin')
         const admin = createSupabaseAdminClient()
         if (admin) {
-          const { data: profile } = await admin.from('user_profiles').select('id').eq('id', user.id).single()
+          const { data: profile } = await admin.from('user_profiles').select('id,role').eq('id', user.id).single()
           if (!profile) {
             await admin.from('user_profiles').insert({
               id: user.id,
               email: user.email,
-              role: role,
+              role: 'user',
               analysis_limit: 0,
               current_analysis_count: 0
             })
-          }
+          } else role = profile.role === 'admin' ? 'admin' : 'user'
         }
       }
 
-      const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-      
-      // Determine base URL
-      let baseUrl = origin
-      if (forwardedHost) {
-        baseUrl = `https://${forwardedHost}`
-      } else if (isLocalEnv) {
-         // keep origin
-      }
+      const baseUrl = process.env.NODE_ENV === 'development' ? origin : getSiteUrl()
 
-      if (role === 'admin') {
+      if (next) {
+         return NextResponse.redirect(`${baseUrl}${next}`)
+      } else if (role === 'admin') {
          return NextResponse.redirect(`${baseUrl}/admin`)
       } else {
-         return NextResponse.redirect(`${baseUrl}/dashboard`)
+         return NextResponse.redirect(`${baseUrl}${next || '/dashboard'}`)
       }
     }
   }

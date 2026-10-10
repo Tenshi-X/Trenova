@@ -2,9 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { getUserUsage } from './actions';
-import DashboardBlockedView from './DashboardBlockedView';
+import { activatePendingSubscription, getUserUsage } from './actions';
 import DashboardChrome from './DashboardChrome';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardLayout({
   children,
@@ -13,6 +13,8 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/sign-in');
+  if (user) await activatePendingSubscription();
   const usageStats = await getUserUsage();
 
   let daysLeft = 0;
@@ -28,26 +30,19 @@ export default async function DashboardLayout({
 
     const { data: profile } = await clientToUse
       .from('user_profiles')
-      .select('subscription_end_at, role')
+      .select('subscription_end_at, role, pending_plan_review')
       .eq('id', user.id)
       .single();
 
     // Check admin status from profile role OR user metadata
-    isAdmin = profile?.role === 'admin' || user.user_metadata?.role === 'admin';
+    isAdmin = profile?.role === 'admin';
 
     // Admin → redirect to /admin panel
     if (isAdmin) {
-      const { redirect } = await import('next/navigation');
       redirect('/admin');
     }
 
-    // Premium → redirect to premium terminal
-    if (profile?.role === 'premium') {
-      const { redirect } = await import('next/navigation');
-      redirect('/terminal');
-    }
-
-    if (profile?.subscription_end_at) {
+    if (profile?.subscription_end_at && !profile.pending_plan_review) {
       const end = new Date(profile.subscription_end_at);
       const now = new Date();
       const diffTime = end.getTime() - now.getTime();
@@ -59,16 +54,9 @@ export default async function DashboardLayout({
     }
   }
 
-  const isNewAccount = user && !isAdmin && isExpired && daysLeft === 0;
-
-  // --- BLOCKING VIEW FOR EXPIRED USERS (admin bypasses this, translated client-side) ---
-  if (user && isExpired && !isAdmin) {
-    return <DashboardBlockedView isNewAccount={!!isNewAccount} userIdPrefix={user.id.slice(0, 8)} />;
-  }
-
   const tokenUsed = usageStats?.analysis?.used ?? 0;
-  const tokenLimit = usageStats?.analysis?.limit ?? 150;
-  const tokenRemaining = usageStats?.analysis?.remaining ?? 150;
+  const tokenLimit = usageStats?.analysis?.limit ?? 0;
+  const tokenRemaining = usageStats?.analysis?.remaining ?? 0;
 
   return (
     <DashboardChrome

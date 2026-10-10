@@ -61,7 +61,7 @@ export default function MarqueeTicker() {
                     const json = await res.json();
                     if (json.coins && json.coins.length > 0) {
                         // Take top 30 by volume
-                        const mapped: Coin[] = json.coins.slice(0, 30).map((c: any) => ({
+                        const mapped: Coin[] = json.coins.slice(0, 30).map((c: { symbol: string; price: number; priceChangePercent: number }) => ({
                             symbol: c.symbol,
                             current_price: c.price,
                             price_change_percentage_24h: c.priceChangePercent,
