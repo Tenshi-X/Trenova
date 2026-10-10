@@ -38,8 +38,10 @@ export default function LoginClient() {
         throw error;
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // The profile role is protected by RLS; route guards verify it again server-side.
+      const { data: profile } = await supabase.from('user_profiles')
+        .select('role').eq('id', data.user.id).maybeSingle();
+      router.replace(profile?.role === 'admin' ? '/admin' : '/dashboard');
       router.refresh();
       
     } catch (err: unknown) {

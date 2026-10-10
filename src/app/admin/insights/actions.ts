@@ -21,8 +21,8 @@ export async function updateAnalysisControl(enabled: boolean, rolloutPercent: nu
   const context = await getAdminContext();
   if (!context) return { error: 'Akses admin diperlukan.' };
   if (!Number.isInteger(rolloutPercent) || rolloutPercent < 0 || rolloutPercent > 100
-    || evaluationIds.length > 50 || evaluationIds.some((id) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
-    || (enabled && rolloutPercent > 0 && !qualityApproved)) return { error: 'Setujui evaluasi kualitas sebelum membuka rilis pengguna.' };
+    || evaluationIds.length > 50 || evaluationIds.some((id) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)))
+    return { error: 'Persentase rilis atau ID akun evaluasi tidak valid.' };
   const { error } = await context.admin.from('analysis_control').update({
     enabled, rollout_percent: rolloutPercent, evaluation_user_ids: evaluationIds,
     quality_approved_at: qualityApproved ? new Date().toISOString() : null,

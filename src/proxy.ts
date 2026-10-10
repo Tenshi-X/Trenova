@@ -80,7 +80,11 @@ export async function proxy(request: NextRequest) {
   
   // Redirect Login if already logged in
   if ((path === '/login' || path === '/sign-in') && user) {
-     return NextResponse.redirect(new URL('/dashboard', request.url))
+     const { data: profile } = await supabase.from('user_profiles')
+       .select('role').eq('id', user.id).maybeSingle();
+     const redirectResponse = NextResponse.redirect(new URL(profile?.role === 'admin' ? '/admin' : '/dashboard', request.url));
+     response.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie));
+     return redirectResponse;
   }
 
   return response

@@ -34,7 +34,7 @@ export default async function DashboardLayout({
       .eq('id', user.id)
       .single();
 
-    // Check admin status from profile role OR user metadata
+    // Admin permissions come only from the protected database profile.
     isAdmin = profile?.role === 'admin';
 
     // Admin → redirect to /admin panel

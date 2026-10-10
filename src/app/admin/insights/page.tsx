@@ -28,12 +28,12 @@ export default function InsightsPage() {
       setMessage(result.error || 'Pengaturan rilis tersimpan.'); load();
     }}>
       <h2 className="text-xl font-bold">Rilis analisis bertahap</h2>
-      <p className="text-sm text-slate-500">Aktifkan akun evaluasi dahulu. Buka rilis pengguna setelah contoh lama dan baru dinilai serta biaya setiap contoh memenuhi batas.</p>
+      <p className="text-sm text-slate-500">Gunakan 100% untuk membuka analisis bagi semua pengguna aktif. Persentase lebih kecil membatasi rilis; akun evaluasi selalu disertakan saat analisis aktif. Pantau kualitas dan biaya melalui laporan pemakaian.</p>
       <p className="text-sm">{data.control.disabled_reason || 'Analisis aktif'} · batas Rp500, kurs pengaman minimal Rp20.000/US$</p>
       <label className="flex gap-2"><input name="enabled" type="checkbox" defaultChecked={data.control.enabled} />Aktifkan analisis</label>
       <label className="block">Persentase pengguna (0–100)<input name="rollout" type="number" min="0" max="100" defaultValue={data.control.rollout_percent} className="ml-2 rounded border bg-transparent p-2" /></label>
       <label className="block">ID akun evaluasi<textarea name="evaluators" defaultValue={(data.control.evaluation_user_ids ?? []).join('\n')} className="block w-full rounded border bg-transparent p-2" /></label>
-      <label className="flex gap-2"><input name="quality" type="checkbox" />Contoh evaluasi menunjukkan kualitas membaik dan setiap contoh memenuhi batas biaya</label>
+      <label className="flex gap-2"><input name="quality" type="checkbox" defaultChecked={!!data.control.quality_approved_at} />Catat evaluasi kualitas dan biaya sudah selesai (opsional)</label>
       <button className="rounded-lg bg-neon px-4 py-2 font-bold text-white">Simpan rilis</button>
     </form>}
     <section><h2 className="text-xl font-bold mb-3">Laporan pengguna</h2>

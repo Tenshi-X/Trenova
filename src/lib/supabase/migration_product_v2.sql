@@ -83,9 +83,9 @@ CREATE INDEX IF NOT EXISTS analysis_runs_created_idx ON public.analysis_runs(cre
 
 CREATE TABLE IF NOT EXISTS public.analysis_control (
   singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
-  enabled boolean NOT NULL DEFAULT false,
+  enabled boolean NOT NULL DEFAULT true,
   disabled_reason text,
-  rollout_percent integer NOT NULL DEFAULT 0 CHECK (rollout_percent BETWEEN 0 AND 100),
+  rollout_percent integer NOT NULL DEFAULT 100 CHECK (rollout_percent BETWEEN 0 AND 100),
   evaluation_user_ids uuid[] NOT NULL DEFAULT '{}',
   quality_approved_at timestamptz,
   max_cost_idr integer NOT NULL DEFAULT 500,
@@ -93,11 +93,11 @@ CREATE TABLE IF NOT EXISTS public.analysis_control (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.analysis_control
-  ADD COLUMN IF NOT EXISTS rollout_percent integer NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS rollout_percent integer NOT NULL DEFAULT 100,
   ADD COLUMN IF NOT EXISTS evaluation_user_ids uuid[] NOT NULL DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS quality_approved_at timestamptz;
 INSERT INTO public.analysis_control(singleton,enabled,disabled_reason)
-VALUES (true,false,'Menunggu evaluasi kualitas dan biaya sebelum rilis.') ON CONFLICT DO NOTHING;
+VALUES (true,true,NULL) ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS public.plans (
   code text PRIMARY KEY,
