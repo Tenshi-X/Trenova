@@ -1,10 +1,12 @@
 import { calculateIndicators, candlesAreFresh, parseCandle, type Candle, type MarketSnapshot, type Timeframe } from './core';
 
-const SPOT_HOSTS = ['https://api.binance.com', 'https://api1.binance.com', 'https://api2.binance.com'];
+// Binance's dedicated public-data host also works when general API hosts are unreachable.
+// Keep the fallback budget below 8 seconds so the single Gemini call fits the route deadline.
+const SPOT_HOSTS = ['https://data-api.binance.vision', 'https://api.binance.com', 'https://api-gcp.binance.com'];
 
-async function fetchJson(url: string): Promise<unknown | null> {
+async function fetchJson(url: string, timeout = 5000): Promise<unknown | null> {
   try {
-    const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+    const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(timeout) });
     return response.ok ? await response.json() : null;
   } catch {
     return null;
@@ -13,7 +15,7 @@ async function fetchJson(url: string): Promise<unknown | null> {
 
 async function spot(path: string): Promise<unknown | null> {
   for (const host of SPOT_HOSTS) {
-    const data = await fetchJson(`${host}${path}`);
+    const data = await fetchJson(`${host}${path}`, 2500);
     if (data) return data;
   }
   return null;
@@ -40,7 +42,11 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
     fetchJson('https://api.alternative.me/fng/?limit=1'),
   ]);
   const ticker = object(rawTicker);
-  if (!ticker || !Array.isArray(rawCandles)) return null;
+  if (!ticker || !Array.isArray(rawCandles)) {
+    console.warn('Analysis market data unavailable', { symbol, timeframe,
+      tickerAvailable: !!ticker, candlesAvailable: Array.isArray(rawCandles) });
+    return null;
+  }
   const price = numberOrNull(ticker.lastPrice);
   const asOfMillis = numberOrNull(ticker.closeTime);
   if (!price || !asOfMillis || Date.now() - asOfMillis > 5 * 60_000 || asOfMillis > Date.now() + 60_000) return null;
