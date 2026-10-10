@@ -35,23 +35,32 @@ export async function getUserProfiles() {
     : { success: true, profiles: data as UserProfile[] };
 }
 
-export async function provisionUser(
-  userId: string, _email: string, role: string, days: number,
-  addAnalysisLimit: number, totalAnalysisLimit: number,
+export async function getUserProfile(userId: string) {
+  const context = await getAdminContext();
+  if (!context) return { success: false, error: 'Akses admin diperlukan.' };
+  const { data, error } = await context.admin.from('user_profiles').select('*').eq('id', userId).single();
+  return error ? { success: false, error: error.message }
+    : { success: true, profile: data as UserProfile };
+}
+
+export async function setUserEntitlement(
+  userId: string, role: string, subscriptionEndAt: string | null, remainingTokens: number,
 ) {
   const context = await getAdminContext();
   if (!context) return { success: false, error: 'Akses admin diperlukan.' };
-  if (!['user', 'admin'].includes(role) || !Number.isInteger(days) || days < 0 || days > 3650
-    || !Number.isInteger(addAnalysisLimit) || addAnalysisLimit < 0
-    || !Number.isInteger(totalAnalysisLimit) || totalAnalysisLimit < 0) {
+  if (!/^[0-9a-f-]{36}$/i.test(userId) || !['user', 'admin'].includes(role)
+    || (subscriptionEndAt !== null && (typeof subscriptionEndAt !== 'string'
+      || !Number.isFinite(new Date(subscriptionEndAt).getTime())))
+    || !Number.isInteger(remainingTokens) || remainingTokens < 0 || remainingTokens > 100000) {
     return { success: false, error: 'Peran, masa aktif, atau kuota tidak valid.' };
   }
-  const { error } = await context.admin.rpc('provision_user_v2', {
-    p_actor_id:context.user.id,p_user_id:userId,p_role:role,p_days:days,
-    p_add_quota:addAnalysisLimit,p_total_quota:totalAnalysisLimit,
+  const { error } = await context.admin.rpc('set_user_entitlement', {
+    p_actor_id:context.user.id,p_user_id:userId,p_role:role,
+    p_subscription_end_at:subscriptionEndAt,p_remaining_tokens:remainingTokens,
   });
   if (error) return { success:false,error:error.message };
   revalidatePath('/admin');
+  revalidatePath('/dashboard');
   return { success: true };
 }
 
@@ -81,7 +90,7 @@ export async function createAndProvisionUser(
   if (!getEmailCredentials()) return { success:false,error:'Layanan email belum dikonfigurasi.' };
   const existing = await context.admin.from('user_profiles').select('id').eq('email',cleanEmail).maybeSingle();
   if (existing.error) return { success:false,error:'Data akun belum dapat diperiksa.' };
-  if (existing.data) return { success:false,error:'Akun sudah ada. Gunakan aktivasi pesanan atau kirim tautan pengaturan kata sandi.' };
+  if (existing.data) return { success:false,error:'Akun sudah ada. Edit masa aktif dan token dari manajemen pengguna atau kirim tautan pengaturan kata sandi.' };
   const { data, error } = await context.admin.auth.admin.generateLink({
     type: 'invite', email: cleanEmail,
   });

@@ -685,9 +685,11 @@ body::after {
 <body>
 
 <div class="topbar">
-  <div class="tb-l"><span class="tb-brand">TRENOVA // TERMINAL</span><span class="tb-sep">│</span><span class="tb-sub">TRADE ANALYSIS SYSTEM</span></div>
+  <div class="tb-l"><span class="tb-brand">TRENOVA // TERMINAL</span><span class="tb-sep">│</span><span class="tb-sub">ARSIP — ANALISIS DI DASHBOARD</span></div>
   <div class="tb-r"><span class="tb-dot"></span><span id="clock">--:--:--</span> WIB</div>
 </div>
+
+<div style="padding:14px;color:var(--acc2);border-bottom:1px solid var(--brd2)">Terminal lama telah dihentikan. Gunakan <a href="/dashboard" style="color:inherit;text-decoration:underline">dashboard Trenova</a> untuk analisis AI.</div>
 
 <div class="menubar">
   <button class="mi active" onclick="switchTab('form',this)">F8  INPUT DATA</button>
@@ -809,10 +811,10 @@ body::after {
     </div>
   </div>
 
-  <button class="exec-btn" id="exec-btn" onclick="gen()" disabled>▶  EXECUTE — ANALISA TRADING PLAN</button>
+  <button class="exec-btn" id="exec-btn" onclick="gen()">▶  ANALISIS TERSEDIA DI DASHBOARD</button>
 
   <div class="out-panel" id="out-panel">
-    <div class="out-hdr"><span class="out-hdr-txt" id="out-hdr-txt">▶ SIAP DIANALISA — KLIK EXECUTE</span><span class="out-time" id="out-time"></span></div>
+    <div class="out-hdr"><span class="out-hdr-txt" id="out-hdr-txt">GUNAKAN DASHBOARD</span><span class="out-time" id="out-time"></span></div>
     <div id="out-dashboard" style="display:none;padding:14px;"></div>
     <div class="out-body" id="out-body" style="display:none;"></div>
     <div class="out-acts">
@@ -1740,177 +1742,25 @@ function up(){
   document.getElementById('s-sec').textContent = `${done}/5`;
   document.getElementById('s-files').textContent = `${total} / ${TOTAL}`;
 
-  const lev = document.getElementById('ip-lev').value;
-  const allOk = total === TOTAL && lev;
-  document.getElementById('exec-btn').disabled = !allOk;
-
   const st = document.getElementById('s-txt');
-  if(allOk){ st.textContent = 'READY TO EXECUTE'; st.className = 'sv gr'; }
-  else if(total === TOTAL && !lev){ st.textContent = 'ISI LEVERAGE DULU'; st.className = 'sv ac'; }
-  else { st.textContent = `${TOTAL - total} FILE KURANG`; st.className = 'sv ac'; }
+  st.textContent = 'TERMINAL DIHENTIKAN'; st.className = 'sv ac';
 
   updHC();
 }
 
 // ── GENERATE ──
 async function gen(){
-  const lev = document.getElementById('ip-lev').value;
-  const modal = document.getElementById('ip-modal').value;
-  const koin = (document.getElementById('koin-name').value || '').toUpperCase() || '???';
-  const now = new Date();
-  const ts = now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-  const ds = now.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
-
-  const btn = document.getElementById('exec-btn');
-  btn.disabled = true;
-  btn.textContent = '\u23f3  MENGANALISA... MOHON TUNGGU';
-
-  document.getElementById('out-panel').classList.add('show');
+  const panel = document.getElementById('out-panel');
+  panel.classList.add('show');
   document.getElementById('out-dashboard').style.display = 'none';
-  document.getElementById('out-body').style.display = 'block';
-  document.getElementById('out-body').textContent = 'Menghubungi server...\nMengirim ' + Object.keys(F).length + ' screenshot ke Claude AI...\nMohon tunggu 30-60 detik...';
-  document.getElementById('out-hdr-txt').textContent = '\u23f3 SEDANG DIANALISA...';
-  document.getElementById('out-time').textContent = ts;
-  document.getElementById('out-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
-
-  const SLOT_LABELS = {
-    'sl-1w':'Chart 1W Weekly','sl-1d':'Chart 1D Daily','sl-4h':'Chart 4H',
-    'sl-1h':'Chart 1H','sl-15m':'Chart 15M',
-    'sl-hm':'Liquidation Heatmap','sl-fr':'Funding Rate Current','sl-ls':'Long/Short Ratio Current',
-    'sl-frh1':'Funding Rate History 7D','sl-frh2':'Funding Rate History 30D',
-    'sl-lsh1':'L/S Ratio History 7D','sl-lsh2':'L/S Ratio History 30D',
-    'sl-liqh1':'Liquidation History 24H','sl-liqh2':'Liquidation History 7D',
-    'sl-vp1d':'Volume Profile 1D','sl-vp4h':'Volume Profile 4H',
-    'sl-btc1d':'BTC Chart 1D','sl-btc4h':'BTC Chart 4H','sl-btc1h':'BTC Chart 1H',
-    'sl-btcd1d':'BTC Dominance 1D','sl-btcd4h':'BTC Dominance 4H',
-    'sl-usdtd1d':'USDT Dominance 1D','sl-usdtd4h':'USDT Dominance 4H'
-  };
-
-  const slotOrder = [
-    'sl-1w','sl-1d','sl-4h','sl-1h','sl-15m',
-    'sl-hm','sl-fr','sl-ls',
-    'sl-frh1','sl-frh2','sl-lsh1','sl-lsh2','sl-liqh1','sl-liqh2','sl-vp1d','sl-vp4h',
-    'sl-btc1d','sl-btc4h','sl-btc1h',
-    'sl-btcd1d','sl-btcd4h','sl-usdtd1d','sl-usdtd4h'
-  ];
-
-  const slotList = slotOrder.filter(s => F[s]).map(s => '- ' + SLOT_LABELS[s]).join('\n');
-  const modalTxt = modal ? ', Modal: ' + modal + ' USDT' : '';
-
-  const promptText = [
-    'Kamu adalah analis trading crypto profesional dari Trenova Intelligence.',
-    '',
-    'Data: ' + Object.keys(F).length + ' screenshot koin ' + koin + ', Leverage: ' + lev + modalTxt + '.',
-    '',
-    'Screenshot: ' + slotList,
-    '',
-    'Analisa semua screenshot dan kembalikan HANYA JSON valid (tanpa teks lain, tanpa markdown, tanpa backtick) dengan struktur ini:',
-    '',
-    '{',
-    '  "koin": "' + koin + '",',
-    '  "waktu": "' + ds + ' ' + ts + '",',
-    '  "leverage": "' + lev + '",',
-    '  "modal": "' + (modal || '-') + '",',
-    '  "bias": {',
-    '    "arah": "BEARISH atau BULLISH atau SIDEWAYS",',
-    '    "kekuatan": "KUAT atau SEDANG atau LEMAH",',
-    '    "detail": [',
-    '      {"tf": "Weekly", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "Daily", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "4H/1H", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "BTC", "kondisi": "penjelasan singkat"},',
-    '      {"tf": "USDT.D", "kondisi": "penjelasan singkat"}',
-    '    ]',
-    '  },',
-    '  "sinyal": [',
-    '    {"nama": "CVD Divergence", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Funding Rate Ekstrem", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "OI Spike di Key Level", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "L/S Ratio Over-Long/Short", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Volume Climax", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Liquidity Sweep + Rejection", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Weekly Zone Test", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "USDT.D / BTC.D Signal", "on": true atau false, "catatan": "penjelasan singkat"},',
-    '    {"nama": "Liquidation Spike", "on": true atau false, "catatan": "penjelasan singkat"}',
-    '  ],',
-    '  "setup": [',
-    '    {',
-    '      "id": 1,',
-    '      "arah": "LONG atau SHORT atau SKIP",',
-    '      "keyakinan": angka 0-100,',
-    '      "sinyal_count": angka,',
-    '      "kenapa": ["alasan 1", "alasan 2", "alasan 3"],',
-    '      "entry": "harga atau range harga",',
-    '      "sl": "harga",',
-    '      "tp1": "harga",',
-    '      "tp2": "harga",',
-    '      "tp3": "harga",',
-    '      "rr": "1:X",',
-    '      "sizing": "X% modal",',
-    '      "kondisi_entry": ["kondisi 1", "kondisi 2"],',
-    '      "invalidasi": "kondisi yang membatalkan setup"',
-    '    }',
-    '  ],',
-    '  "squeeze": {',
-    '    "tipe": "LONG SQUEEZE atau SHORT SQUEEZE atau NONE",',
-    '    "probabilitas": "TINGGI atau SEDANG atau RENDAH",',
-    '    "catatan": "penjelasan singkat"',
-    '  },',
-    '  "catatan_tambahan": ["poin 1", "poin 2", "poin 3"]',
-    '}'
-  ].join('\n');
-
-  const images = [];
-  for(const sid of slotOrder){
-    if(!F[sid]) continue;
-    const imgData = F[sid].data;
-    const base64 = imgData.split(',')[1];
-    const mimeMatch = imgData.match(/data:([^;]+);/);
-    const mediaType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-    images.push({label:'[' + SLOT_LABELS[sid] + ']:', media_type:mediaType, data:base64});
-  }
-
-  try {
-    const response = await fetch('/api/terminal/analyze', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({prompt: promptText, images: images})
-    });
-
-    const result = await response.json();
-
-    if(result.result){
-      outTxt = result.result;
-      // Try parse as JSON and render dashboard
-      try {
-        const clean = outTxt.replace(/```json|```/g,'').trim();
-        const data = JSON.parse(clean);
-        renderDashboard(data);
-        document.getElementById('out-hdr-txt').textContent = '\u2705 ANALISA SELESAI';
-        showToast('\u2705 Analisa berhasil!');
-      } catch(e) {
-        // Fallback to raw text
-        document.getElementById('out-body').style.display = 'block';
-        document.getElementById('out-body').textContent = outTxt;
-        document.getElementById('out-hdr-txt').textContent = '\u2705 ANALISA SELESAI';
-        showToast('\u2705 Analisa selesai');
-      }
-    } else if(result.error){
-      document.getElementById('out-body').style.display = 'block';
-      document.getElementById('out-body').textContent = '\u274c Error: ' + result.error;
-      document.getElementById('out-hdr-txt').textContent = '\u274c ERROR';
-      showToast('\u274c ' + result.error);
-    }
-  } catch(err){
-    document.getElementById('out-body').style.display = 'block';
-    document.getElementById('out-body').textContent = '\u274c Tidak bisa terhubung ke server.\n\nPastikan CMD dengan trenova_server.py masih terbuka.\n\nError: ' + err.message;
-    document.getElementById('out-hdr-txt').textContent = '\u274c SERVER TIDAK AKTIF';
-    showToast('\u274c Server tidak aktif');
-  }
-
-  btn.disabled = false;
-  btn.textContent = '\u25b6  EXECUTE \u2014 ANALISA TRADING PLAN';
-  document.getElementById('out-time').textContent = ts;
+  const output = document.getElementById('out-body');
+  output.style.display = 'block';
+  output.textContent = 'Terminal ini telah dihentikan. Buka dashboard Trenova untuk analisis AI.';
+  const link = document.createElement('a');
+  link.href = '/dashboard'; link.textContent = 'Buka dashboard';
+  output.appendChild(document.createElement('br')); output.appendChild(link);
+  document.getElementById('out-hdr-txt').textContent = 'GUNAKAN DASHBOARD';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
 function renderDashboard(d){

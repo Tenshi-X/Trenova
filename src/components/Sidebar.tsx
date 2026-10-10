@@ -46,7 +46,6 @@ export default function Sidebar() {
   // Admin-only nav items
   const navItems = [
     { name: t('admin_nav_users'), href: '/admin', icon: Users },
-    { name: 'Paket & preset', href: '/admin/catalog', icon: Shield },
     { name: 'Biaya & laporan', href: '/admin/insights', icon: Shield },
     { name: t('admin_nav_broadcast'), href: '/admin/broadcast', icon: Mail },
     { name: t('admin_nav_feedback'), href: '/admin/feedback', icon: MessageSquare },

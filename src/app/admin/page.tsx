@@ -2,15 +2,16 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Database, Shield, Edit, Trash2, Save, 
-  UserPlus, RefreshCw, Trash, Activity,
-  Search, ChevronLeft, ChevronRight, ChevronDown, LogOut
+  UserPlus, RefreshCw, Activity,
+  Search, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import clsx from 'clsx';
-import { getUserProfiles, provisionUser, deleteUserProfile, UserProfile } from './actions';
+import { getUserProfiles, getUserProfile, setUserEntitlement, deleteUserProfile, UserProfile } from './actions';
+import { toJakartaDateTimeInput, fromJakartaDateTimeInput } from '@/lib/entitlements';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/context/LanguageContext';
@@ -24,13 +25,17 @@ export default function AdminPage() {
 
   // Edit State
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editReady, setEditReady] = useState(false);
+  const [editError, setEditError] = useState('');
+  const editRequestRef = useRef(0);
   
   // Form State
   const [formData, setFormData] = useState({
     role: 'user',
-    quota: 30,
-    addAnalysisLimit: 0,
-    analysisLimit: 150
+    subscriptionEndAt: '',
+    remainingTokens: 0,
   });
 
   // Pagination & Search State
@@ -59,20 +64,13 @@ export default function AdminPage() {
   }, []);
 
   const handleSaveChanges = async () => {
-    if (!editingProfileId) return;
-    
-    const targetEmail = profiles.find(p => p.id === editingProfileId)?.email;
-    if (!targetEmail) return;
-
+    if (!editingProfileId || !editReady || editLoading || editSaving) return;
+    setEditSaving(true);
+    setEditError('');
     try {
-      // Re-using provisionUser for updates as it handles upsert/update logic
-      const res = await provisionUser(
-          editingProfileId, 
-          targetEmail, 
-          formData.role, 
-          formData.quota,
-          formData.addAnalysisLimit,
-          formData.analysisLimit
+      const res = await setUserEntitlement(
+          editingProfileId, formData.role,
+          fromJakartaDateTimeInput(formData.subscriptionEndAt), formData.remainingTokens
       );
       if (!res.success) throw new Error(res.error);
       
@@ -81,21 +79,35 @@ export default function AdminPage() {
       
       // Reset State
       setEditingProfileId(null);
-      setFormData({ role: 'user', quota: 30, addAnalysisLimit: 0, analysisLimit: 150 });
+      setFormData({ role: 'user', subscriptionEndAt: '', remainingTokens: 0 });
 
     } catch (err: unknown) {
-      alert(`Error: ${(err instanceof Error ? err.message : 'Terjadi kesalahan.')}`);
+      setEditError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+    } finally {
+      setEditSaving(false);
     }
   };
 
-  const startEdit = (profile: UserProfile) => {
+  const startEdit = async (profile: UserProfile) => {
+    const requestId = ++editRequestRef.current;
     setEditingProfileId(profile.id);
-    setFormData({ 
-        role: profile.role, 
-        quota: 0, // Default to 0 added
-        addAnalysisLimit: 0,
-        analysisLimit: profile.analysis_limit ?? 0
-    });
+    setEditLoading(true);
+    setEditReady(false);
+    setEditError('');
+    try {
+      const result = await getUserProfile(profile.id);
+      if (requestId !== editRequestRef.current) return;
+      if (!result.success || !result.profile) throw new Error(result.error || 'Profil gagal dimuat.');
+      const latest = result.profile;
+      setProfiles((prior) => prior.map((item) => item.id === latest.id ? latest : item));
+      setFormData({ role: latest.role, subscriptionEndAt: toJakartaDateTimeInput(latest.subscription_end_at),
+        remainingTokens: Math.max(0, (latest.analysis_limit ?? 0) - (latest.current_analysis_count ?? 0)) });
+      setEditReady(true);
+    } catch (err) {
+      if (requestId === editRequestRef.current) setEditError(err instanceof Error ? err.message : 'Profil gagal dimuat.');
+    } finally {
+      if (requestId === editRequestRef.current) setEditLoading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -168,7 +180,6 @@ export default function AdminPage() {
         </div>
       </div>
       <div className="flex flex-wrap gap-3 text-sm font-bold">
-        <Link href="/admin/catalog" className="rounded-lg border border-neon px-4 py-2 text-neon">Paket, preset & aktivasi</Link>
         <Link href="/admin/insights" className="rounded-lg border border-neon px-4 py-2 text-neon">Biaya & laporan</Link>
       </div>
       {error && <p role="alert" className="rounded-lg bg-rose-500/10 p-3 text-rose-600">{error}</p>}
@@ -415,7 +426,7 @@ export default function AdminPage() {
 
       {/* MODAL FOR EDITING */}
       {editingProfileId && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-label={t('modal_title')} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 border border-slate-200 dark:border-slate-800">
                   <div className="p-6 border-b border-slate-100 dark:border-slate-800">
                       <h3 className="text-lg font-bold text-foreground">
@@ -426,10 +437,13 @@ export default function AdminPage() {
                       </p>
                   </div>
                   
-                  <div className="p-6 space-y-4">
+                  {editError && <p role="alert" className="px-6 pt-4 text-sm text-rose-600">{editError}</p>}
+                  {editLoading && <p className="px-6 pt-4 text-sm text-slate-500">{t('admin_loading_profile')}</p>}
+                  <fieldset disabled={!editReady || editLoading || editSaving} className="p-6 space-y-4 disabled:opacity-60">
                       <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">{t('modal_role')}</label>
+                          <label htmlFor="admin-role" className="text-sm font-semibold text-foreground">{t('modal_role')}</label>
                           <select 
+                             id="admin-role"
                              value={formData.role}
                              onChange={e => setFormData({...formData, role: e.target.value})}
                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
@@ -440,53 +454,46 @@ export default function AdminPage() {
                       </div>
 
                       <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">{t('modal_add_sub')}</label>
+                          <label htmlFor="admin-expiry" className="text-sm font-semibold text-foreground">{t('modal_expiry')}</label>
                           <input 
-                             type="number"
-                             value={formData.quota}
-                             onChange={e => setFormData({...formData, quota: Number(e.target.value)})}
+                             id="admin-expiry" type="datetime-local" step="1"
+                             value={formData.subscriptionEndAt}
+                             onChange={e => setFormData({...formData, subscriptionEndAt: e.target.value})}
                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
-                          <p className="text-xs text-slate-400">{t('modal_add_sub_desc')}</p>
+                          <p className="text-xs text-slate-400">{t('modal_expiry_hint')}</p>
                       </div>
 
                       <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">{t('modal_add_limit')}</label>
+                          <label htmlFor="admin-tokens" className="text-sm font-semibold text-foreground">{t('modal_remaining_tokens')}</label>
                           <input 
-                              type="number"
-                              value={formData.addAnalysisLimit}
-                              onChange={e => setFormData({...formData, addAnalysisLimit: Number(e.target.value)})}
+                              id="admin-tokens" type="number" min="0" max="100000" step="1"
+                              value={formData.remainingTokens}
+                              onChange={e => setFormData({...formData, remainingTokens: Number(e.target.value)})}
                               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
                           />
-                          <p className="text-xs text-slate-400">{t('modal_add_limit_desc')}</p>
+                          <p className="text-xs text-slate-400">{t('modal_remaining_tokens_hint')}</p>
                       </div>
-
-                      <div className="space-y-2">
-                          <label className="text-sm font-semibold text-foreground">{t('modal_limit')}</label>
-                          <input 
-                              type="number"
-                              value={formData.analysisLimit}
-                              onChange={e => setFormData({...formData, analysisLimit: Number(e.target.value)})}
-                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50"
-                          />
-                      </div>
-                  </div>
+                  </fieldset>
 
                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-3 bg-slate-50 dark:bg-slate-900/50">
                       <button 
                          onClick={() => {
+                             ++editRequestRef.current;
                              setEditingProfileId(null);
                          }}
+                         disabled={editSaving}
                          className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-semibold hover:bg-white dark:hover:bg-slate-800 transition-colors"
                       >
                          {t('btn_cancel')}
                       </button>
                       <button 
                          onClick={handleSaveChanges}
+                         disabled={!editReady || editLoading || editSaving}
                          className="flex-1 py-2.5 rounded-lg bg-neon text-white font-bold hover:bg-neon-dim shadow-md transition-colors flex items-center justify-center gap-2"
                       >
                          <Save size={18} />
-                         {t('btn_save_changes')}
+                         {editSaving ? t('admin_saving_profile') : t('btn_save_changes')}
                       </button>
                   </div>
               </div>

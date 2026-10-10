@@ -1,8 +1,10 @@
 'use client';
 
 import type { AnalysisV2 } from '@/lib/analysis/core';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function AnalysisResultV2({ result, coinName }: { result: AnalysisV2; coinName: string }) {
+  const { t } = useLanguage();
   const price = (value: number) => `$${value.toLocaleString('en-US', { maximumFractionDigits: 8 })}`;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
   return <div className="space-y-5 text-foreground">
@@ -18,6 +20,12 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
       </div>}
     </div>
     <p className="leading-relaxed">{result.reason}</p>
+    {result.parameters && <p className="text-xs text-slate-500">{t('ai_market_type')}: {result.parameters.marketType} · {t('ai_direction_label')}: {result.parameters.directionPreference === 'auto' ? t('ai_direction_auto') : result.parameters.directionPreference.toUpperCase()}</p>}
+    {result.market.confirmation && <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm">
+      <strong>{t('ai_confirmation_label')} · {result.market.confirmation.timeframe}</strong>
+      <p>{result.market.confirmation.trend === 'bullish' ? t('ai_trend_bullish') : result.market.confirmation.trend === 'bearish' ? t('ai_trend_bearish') : t('ai_trend_neutral')} · RSI {result.market.confirmation.rsi.toFixed(1)} · EMA20 {price(result.market.confirmation.ema20)}</p>
+      <p className="text-xs text-slate-500">{new Date(result.market.confirmation.asOf).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</p>
+    </div>}
     {result.verdict === 'WAIT' && <p className="rounded-xl bg-amber-500/10 p-4 text-amber-700 dark:text-amber-300">Tunggu: {result.wait_for || 'Konfirmasi pasar yang lebih jelas.'}</p>}
     {result.setups.map((setup, index) => <div key={index} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 space-y-2">
       <strong>{setup.direction} · Setup {index + 1}</strong>

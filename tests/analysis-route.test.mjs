@@ -16,7 +16,7 @@ const market = { symbol: 'BTC', asOf: new Date().toISOString(), price: 100, chan
   btcChange24h: 2, fundingRate: null, openInterestUsd: null, fearGreed: null, timeframe: '1h',
   atr: 2, rsi: 60, ema20: 98, volumeRatio: 1.2, recentCandles: [] };
 
-function route({ loggedIn = true, active = true, existingRun = null, snapshot = market,
+function route({ loggedIn = true, active = true, existingRun = null, snapshot = market, confirmation = null, providerStatus = 200,
   providerUsage = { promptTokenCount: 500, candidatesTokenCount: 200, thoughtsTokenCount: 512 },
   output = JSON.stringify({ verdict: 'WAIT', reason: 'Belum ada konfirmasi entry.', wait_for: 'Tunggu breakout.', setups: [] }) } = {}) {
   const calls = [];
@@ -42,14 +42,15 @@ function route({ loggedIn = true, active = true, existingRun = null, snapshot = 
   const localRequire = (name) => {
     if (name === '@/lib/authz') return { getSessionProfile: async () => context, isActiveSubscriber: (profile) => new Date(profile.subscription_end_at) > new Date() };
     if (name === '@/lib/analysis/core') return core;
-    if (name === '@/lib/analysis/market') return { getMarketSnapshot: async () => snapshot };
+    if (name === '@/lib/analysis/market') return { getMarketSnapshot: async () => snapshot ? { ...snapshot } : null,
+      getTrendConfirmation: async () => confirmation };
     return require(name);
   };
   const mockFetch = async (_url, options) => {
     calls.push('gemini');
     providerBodies.push(JSON.parse(options.body));
     return Response.json({ candidates: [{ content: { parts: [{ text: output }] } }],
-      usageMetadata: providerUsage });
+      usageMetadata: providerUsage }, { status: providerStatus });
   };
   const compiledModule = { exports: {} };
   new Function('require', 'module', 'exports', 'fetch', compiled)(localRequire, compiledModule, compiledModule.exports, mockFetch);
@@ -119,6 +120,39 @@ test('unavailable market is rejected before reserving or calling Gemini', async 
   assert.equal((await handler(request())).status, 422);
   assert.deepEqual(calls, []);
 });
+
+test('missing higher timeframe data and spot/short conflict are rejected without consuming a credit', async () => {
+  const missing = route();
+  assert.equal((await missing.handler(request({ ...input, higherTimeframeConfirmation: true }))).status, 422);
+  assert.deepEqual(missing.calls, []);
+  const invalid = route();
+  assert.equal((await invalid.handler(request({ ...input, marketType: 'spot', directionPreference: 'short' }))).status, 400);
+  assert.deepEqual(invalid.calls, []);
+});
+
+test('confirmation comes from the market provider and is persisted in a validated result', () => withProviderKey(async () => {
+  const confirmation = { timeframe: '4h', asOf: market.asOf, close: 100, ema20: 98, rsi: 60, trend: 'bullish' };
+  const { handler, calls, providerBodies } = route({ confirmation });
+  const payload = await (await handler(request({ ...input, higherTimeframeConfirmation: true }))).json();
+  assert.equal(payload.charged, true); assert.deepEqual(payload.result.market.confirmation, confirmation);
+  assert.ok(providerBodies[0].contents[0].parts[0].text.includes('"trend":"bullish"'));
+  assert.deepEqual(calls, ['reserve_analysis', 'gemini', 'finish_analysis']);
+}));
+
+test('provider failure refunds the reserved credit', () => withProviderKey(async () => {
+  const { handler, calls } = route({ providerStatus: 503 });
+  assert.equal((await handler(request())).status, 502);
+  assert.deepEqual(calls, ['reserve_analysis', 'gemini', 'fail_analysis']);
+}));
+
+test('a forbidden model direction returns WAIT and refunds rather than saving the trade', () => withProviderKey(async () => {
+  for (const options of [{ marketType: 'spot' }, { directionPreference: 'long' }]) {
+    const { handler, calls } = route({ output: JSON.stringify({ verdict: 'SHORT' }) });
+    const payload = await (await handler(request({ ...input, ...options }))).json();
+    assert.equal(payload.result.verdict, 'WAIT'); assert.equal(payload.charged, false);
+    assert.deepEqual(calls, ['reserve_analysis', 'gemini', 'fail_analysis']);
+  }
+}));
 
 test('actual token overrun pauses future analyses and refunds without retry', () => withProviderKey(async () => {
   const { handler, calls } = route({ providerUsage: {

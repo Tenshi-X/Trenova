@@ -789,7 +789,7 @@ body::before {
   <div class="sb-sep"></div>
   <div class="sbi">PAIRS <span id="sb-pairs">35</span></div>
   <div class="sb-sep"></div>
-  <div class="sbi">AI <span>claude-sonnet-4</span></div>
+  <div class="sbi">AI <span>Dashboard</span></div>
   <div style="margin-left:auto" class="sbi">JOURNAL <span id="sb-j">0 trades</span></div>
 </div>
 
@@ -1999,14 +1999,8 @@ function renderAI(pb,p) {
     </div>
     <div id="ai3-chat" class="ai-chat">
       <div class="ai-msg bot">
-        <div class="ai-lbl bot">TRENOVA AI v6 · BLOOMBERG PRO · READY</div>
-        Selamat datang! Aku <strong style="color:var(--a)">Trenova AI Analyst v6</strong> — powered by Claude, dengan konteks market data real-time.<br><br>
-        <strong style="color:var(--g)">Smart Money Concepts:</strong> BOS, CHoCH, OB, FVG, Liquidity<br>
-        <strong style="color:var(--a)">Technical Analysis:</strong> Multi-TF, indikator, key levels<br>
-        <strong style="color:var(--c)">Derivatives:</strong> Funding, OI, L/S ratio, liquidations<br>
-        <strong style="color:var(--t)">Macro:</strong> DXY, Fed, halving cycles, on-chain<br>
-        <strong style="color:var(--p)">Risk Management:</strong> Sizing, leverage, trade planning<br><br>
-        Pilih pair di atas dan mulai tanya.
+        <div class="ai-lbl bot">TRENOVA v6 · PROTOTIPE DIHENTIKAN</div>
+        Analisis AI pada prototipe ini telah dihentikan. Buka <a href="/dashboard" style="color:var(--a)">dashboard Trenova</a> untuk menggunakan analisis Gemini.
       </div>
     </div>
     <div id="ai3-presets" class="scroll" style="display:none">
@@ -2043,63 +2037,8 @@ function aiTab3(btn,n){btn.closest('.ptabs').querySelectorAll('.ptab').forEach(b
 function qP3(msg){const p=panels['ai'];if(!p){op('ai');setTimeout(()=>qP3(msg),400);return;}if($('ai3-presets'))$('ai3-presets').style.display='none';if($('ai3-chat'))$('ai3-chat').style.display='';const tabs=p.el.querySelectorAll('.ptab');if(tabs[0])tabs[0].click();setTimeout(()=>{const i=$('ai3-input');if(i)i.value=msg;sendAI3();},100);}
 
 async function sendAI3(){
-  const input=$('ai3-input'); const msg=input?.value?.trim(); if(!msg)return;
-  input.value='';
-  const chat=$('ai3-chat'); if(!chat)return;
-  chat.innerHTML+=`<div class="ai-msg user"><div class="ai-lbl usr">YOU · ${T.aiPair}</div>${esc(msg)}</div>`;
-  const lid='l'+Date.now();
-  chat.innerHTML+=`<div id="${lid}" class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span style="font-size:7px;color:var(--d);margin-left:5px">Analyzing live market data...</span></div>`;
-  chat.scrollTop=chat.scrollHeight;
-  const btn=$('ai3-send'); if(btn)btn.disabled=true;
-  const sym=T.aiPair.split('/')[0], d=T.prices[sym]||{p:0,c:0};
-  const h=new Date().getUTCHours();
-  const ctx=`=== TRENOVA v6 LIVE MARKET DATA (${T.dataSource}) ===
-Pair: ${T.aiPair} | Price: ${fp(sym,d.p)} | 24H Change: ${fc(d.c)} | Vol: ${fv(d.v)}
-BTC Dominance: ${T.dom.toFixed(1)}% | Fear & Greed: ${T.fg.v.toFixed(0)} (${T.fg.v>75?'Extreme Greed':T.fg.v>55?'Greed':T.fg.v>45?'Neutral':T.fg.v>25?'Fear':'Extreme Fear'})
-Alt Season Index: ${T.alt.toFixed(0)}/100 | Total Market Cap: $${T.mcap.toFixed(2)}T
-BTC Open Interest: $${T.oi.toFixed(1)}B | BTC Funding: ${(T.fund*100).toFixed(4)}%
-L/S Ratio: ${T.lsr.toFixed(3)} | Stablecoin Supply: $${T.stable}B
-ETH Gas: ${T.gas.toFixed(0)} GWEI | DXY: ${T.dxy.toFixed(2)} | Gold: $${T.gold}
-Active Session: ${h<8?'ASIA (0-8 UTC)':h<16?'LONDON (8-16 UTC)':'NEW YORK (13-22 UTC)'}
-=== END DATA ===`;
-  T.aiHist.push({role:'user', content:`${ctx}\n\nPertanyaan trader: ${msg}`});
-  if(T.aiHist.length>12) T.aiHist=T.aiHist.slice(-12);
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1000,
-        system:`Kamu adalah professional crypto futures trading analyst untuk Trenova Terminal v6 Bloomberg Pro — platform trading terminal untuk retail trader Indonesia yang serius.
-
-Keahlianmu:
-- Smart Money Concepts (SMC): BOS/CHoCH, Order Blocks, FVG, Liquidity (Equal Highs/Lows, Inducement, Raids)
-- Technical Analysis: Multi-TF, RSI, MACD, EMA 20/50/200, Volume, Bollinger Bands
-- Derivatives: Funding rates, Open Interest, Long/Short Ratios, Liquidation levels
-- Macro: Fed policy, DXY correlation, BTC halving cycles, on-chain metrics
-- Risk Management: Position sizing, leverage guidelines, trade planning
-
-Aturan respons:
-- Bahasa Indonesia kecuali diminta lain
-- Concise, data-driven, actionable — langsung ke poin
-- SELALU sertakan risk management di setiap trade suggestion
-- Berikan level spesifik (entry, SL, TP) saat suggest setup
-- Gunakan emoji untuk kejelasan visual: ✅❌⚠️📊📈📉🎯💡🔴🟢
-- Max 350 kata kecuali deep analysis diminta
-- Sesekali ingatkan pentingnya manajemen risiko dan psikologi trading`,
-        messages: T.aiHist,
-      })
-    });
-    const data=await res.json();
-    $(lid)?.remove();
-    const text=data?.content?.[0]?.text||'Maaf, tidak bisa mendapatkan analisa.';
-    T.aiHist.push({role:'assistant',content:text});
-    chat.innerHTML+=`<div class="ai-msg bot"><div class="ai-lbl bot">TRENOVA AI v6 · ${T.aiPair}</div>${esc(text).replace(/\n/g,'<br>')}</div>`;
-  } catch(e) {
-    $(lid)?.remove();
-    chat.innerHTML+=`<div class="ai-msg bot"><div class="ai-lbl bot">TRENOVA AI</div>⚠️ Koneksi AI tidak tersedia saat ini. Pastikan API key dikonfigurasi di proxy server Trenova Terminal.</div>`;
-  }
-  chat.scrollTop=chat.scrollHeight;
-  if(btn)btn.disabled=false;
+  const chat = $('ai3-chat');
+  if (chat) chat.innerHTML += '<div class="ai-msg bot"><div class="ai-lbl bot">TRENOVA AI</div>Analisis AI tersedia di <a href="/dashboard">dashboard Trenova</a>.</div>';
 }
 
 // ═══ DROPDOWN NAV ═══

@@ -6,8 +6,9 @@ import {
   RESPONSE_SCHEMA, buildPrompt, estimateInputUpperBound, parseAnalysisInput,
   safeWaitAnalysis, validateModelAnalysis, worstCaseCostIdr,
   isRolloutAllowed,
+  CONFIRMATION_TIMEFRAME,
 } from '@/lib/analysis/core';
-import { getMarketSnapshot } from '@/lib/analysis/market';
+import { getMarketSnapshot, getTrendConfirmation } from '@/lib/analysis/market';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -105,8 +106,15 @@ export async function POST(request: Request) {
   try { imageData = await prepareImage(input.image); }
   catch (error) { return jsonError(error instanceof Error ? error.message : 'Gambar tidak valid.', 400); }
 
-  const market = await getMarketSnapshot(input.symbol, input.timeframe);
+  const [market, confirmation] = await Promise.all([
+    getMarketSnapshot(input.symbol, input.timeframe),
+    input.higherTimeframeConfirmation ? getTrendConfirmation(input.symbol, CONFIRMATION_TIMEFRAME[input.timeframe]) : null,
+  ]);
   if (!market) return jsonError('Data pasar tidak lengkap atau sudah kedaluwarsa. Coba lagi nanti.', 422);
+  if (input.higherTimeframeConfirmation && !confirmation) {
+    return jsonError('Data konfirmasi timeframe lebih tinggi tidak tersedia atau kedaluwarsa. Coba lagi nanti atau nonaktifkan konfirmasi.', 422);
+  }
+  if (confirmation) market.confirmation = confirmation;
   const prompt = buildPrompt(input, market);
   const upperInput = estimateInputUpperBound(prompt, !!imageData);
   const maxCost = Math.min(500, Number(control.max_cost_idr));

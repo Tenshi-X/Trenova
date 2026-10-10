@@ -13,7 +13,7 @@ import TradingViewWidget from '@/components/TradingViewWidget';
 import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisResultV2 from '@/components/AnalysisResultV2';
-import type { AnalysisV2 } from '@/lib/analysis/core';
+import { CONFIRMATION_TIMEFRAME, type AnalysisInput, type AnalysisV2, type Timeframe } from '@/lib/analysis/core';
 import { getPreferences, savePreferences, type UserPreset } from './preferences/actions';
 import LiveMarketTable from '@/components/LiveMarketTable';
 import CryptoNews from '@/components/CryptoNews';
@@ -52,6 +52,9 @@ export default function DashboardPage() {
   const [strategyFocus, setStrategyFocus] = useState('All-Round');
   const [indicatorPref, setIndicatorPref] = useState('Default');
   const [targetRR, setTargetRR] = useState('1:2');
+  const [marketType, setMarketType] = useState<AnalysisInput['marketType']>('futures');
+  const [directionPreference, setDirectionPreference] = useState<AnalysisInput['directionPreference']>('auto');
+  const [higherTimeframeConfirmation, setHigherTimeframeConfirmation] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Initializing AI...");
   const [chatResult, setChatResult] = useState<AnalysisV2 | null>(null);
@@ -168,13 +171,16 @@ export default function DashboardPage() {
     setStrategyFocus(preset.strategyFocus);
     setIndicatorPref(preset.indicatorPref);
     setTargetRR(preset.targetRR);
+    setMarketType(preset.marketType ?? 'futures');
+    setDirectionPreference(preset.marketType === 'spot' && preset.directionPreference === 'short' ? 'auto' : preset.directionPreference ?? 'auto');
+    setHigherTimeframeConfirmation(preset.higherTimeframeConfirmation ?? false);
   };
 
   const saveCurrentPreset = async () => {
     const name = window.prompt('Nama preset (2–40 karakter):');
     if (!name) return;
     const next = [...savedPresets, { name: name.trim(), tradingStyle, timeframe,
-      riskTolerance, strategyFocus, indicatorPref, targetRR }];
+      riskTolerance, strategyFocus, indicatorPref, targetRR, marketType, directionPreference, higherTimeframeConfirmation }];
     const result = await savePreferences(next, watchlist);
     if (result.error) toast.error(result.error);
     else { setSavedPresets(next); toast.success('Preset tersimpan.'); }
@@ -301,6 +307,7 @@ export default function DashboardPage() {
       const image = selectedImage ? await compressImage(selectedImage) : undefined;
       const options = { symbol: selectedCoin.symbol.toUpperCase(), coinName: selectedCoin.name,
         language, tradingStyle, timeframe, riskTolerance, strategyFocus, indicatorPref, targetRR,
+        marketType, directionPreference, higherTimeframeConfirmation,
         context: userPrompt.slice(0,400), image };
       const fingerprint = JSON.stringify(options);
       if (pendingAnalysisRef.current?.fingerprint !== fingerprint) {
@@ -676,9 +683,39 @@ export default function DashboardPage() {
                           className="text-sm font-bold text-neon-dark dark:text-neon text-left">
                           {advancedMode ? 'Sembunyikan pengaturan lanjut' : 'Tampilkan pengaturan lanjut'}
                         </button>
-                        {!advancedMode && <p className="text-xs text-slate-500">{tradingStyle} · {timeframe} · {riskTolerance} · {targetRR}</p>}
+                        {!advancedMode && <p className="text-xs text-slate-500">{tradingStyle} · {timeframe} · {riskTolerance} · {targetRR} · {marketType} · {directionPreference === 'auto' ? t('ai_direction_auto') : directionPreference.toUpperCase()}{higherTimeframeConfirmation ? ` · ${t('ai_confirmation_label')} ${CONFIRMATION_TIMEFRAME[timeframe as Timeframe]}` : ''}</p>}
                         {/* Row 2: Advanced AI Parameters (Grid) */}
-                        <div className={clsx("grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
+                        <div className={clsx("grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
+                            <div>
+                              <label htmlFor="ai-market-type" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_market_type')}</label>
+                              <select id="ai-market-type" value={marketType} onChange={(e) => {
+                                const next = e.target.value as AnalysisInput['marketType'];
+                                setMarketType(next);
+                                if (next === 'spot' && directionPreference === 'short') setDirectionPreference('auto');
+                              }} className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm font-bold">
+                                <option value="futures">Futures</option><option value="spot">Spot</option>
+                              </select>
+                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_market_type_hint')}</p>
+                            </div>
+                            <div>
+                              <label htmlFor="ai-direction" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_direction_label')}</label>
+                              <select id="ai-direction" value={directionPreference} onChange={(e) => setDirectionPreference(e.target.value as AnalysisInput['directionPreference'])}
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm font-bold">
+                                <option value="auto">{t('ai_direction_auto')}</option>
+                                <option value="long">{t('ai_direction_long')}</option>
+                                <option value="short" disabled={marketType === 'spot'}>{t('ai_direction_short')}</option>
+                              </select>
+                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_direction_hint')}</p>
+                            </div>
+                            <div>
+                              <label htmlFor="ai-confirmation" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_confirmation_label')}</label>
+                              <select id="ai-confirmation" value={higherTimeframeConfirmation ? 'on' : 'off'} onChange={(e) => setHigherTimeframeConfirmation(e.target.value === 'on')}
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm font-bold">
+                                <option value="off">{t('ai_confirmation_off')}</option>
+                                <option value="on">{t('ai_confirmation_on')} · {CONFIRMATION_TIMEFRAME[timeframe as Timeframe]}</option>
+                              </select>
+                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_confirmation_hint')}</p>
+                            </div>
                             {/* Trading Style Dropdown */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 pl-1">{t('style_label')}</label>

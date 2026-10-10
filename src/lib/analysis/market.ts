@@ -1,4 +1,5 @@
-import { calculateIndicators, candlesAreFresh, parseCandle, type Candle, type MarketSnapshot, type Timeframe } from './core';
+import { calculateIndicators, candlesAreFresh, parseCandle, type Candle, type MarketSnapshot, type Timeframe,
+  type CandleTimeframe, type TrendConfirmation } from './core';
 
 // Binance's dedicated public-data host also works when general API hosts are unreachable.
 // Keep the fallback budget below 8 seconds so the single Gemini call fits the route deadline.
@@ -29,6 +30,20 @@ function object(value: unknown): Record<string, unknown> | null {
 function numberOrNull(value: unknown): number | null {
   const number = Number(value);
   return value === null || value === undefined || !Number.isFinite(number) ? null : number;
+}
+
+export async function getTrendConfirmation(symbol: string, timeframe: CandleTimeframe): Promise<TrendConfirmation | null> {
+  const raw = await spot(`/api/v3/klines?symbol=${symbol}USDT&interval=${timeframe}&limit=60`);
+  if (!Array.isArray(raw)) return null;
+  const candles = raw.map(parseCandle).filter((item): item is Candle => item !== null && item.closeTime <= Date.now());
+  if (!candlesAreFresh(candles, timeframe)) return null;
+  const indicators = calculateIndicators(candles);
+  if (!indicators) return null;
+  const last = candles[candles.length - 1];
+  return { timeframe, asOf: new Date(last.closeTime).toISOString(), close: last.close,
+    ema20: indicators.ema20, rsi: indicators.rsi,
+    trend: last.close > indicators.ema20 && indicators.rsi > 50 ? 'bullish'
+      : last.close < indicators.ema20 && indicators.rsi < 50 ? 'bearish' : 'neutral' };
 }
 
 export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): Promise<MarketSnapshot | null> {

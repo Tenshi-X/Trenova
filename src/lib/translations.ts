@@ -1,4 +1,29 @@
 export type TranslationKey = 
+  | 'admin_loading_profile'
+  | 'admin_saving_profile'
+  | 'modal_expiry'
+  | 'modal_expiry_hint'
+  | 'modal_remaining_tokens'
+  | 'modal_remaining_tokens_hint'
+  | 'bcast_account_email'
+  | 'bcast_recipient_email'
+  | 'bcast_recipient_email_hint'
+  | 'bcast_account_template_hint'
+  | 'bcast_reset_link_preview'
+  | 'ai_market_type'
+  | 'ai_market_type_hint'
+  | 'ai_direction_label'
+  | 'ai_direction_auto'
+  | 'ai_direction_long'
+  | 'ai_direction_short'
+  | 'ai_direction_hint'
+  | 'ai_confirmation_label'
+  | 'ai_confirmation_off'
+  | 'ai_confirmation_on'
+  | 'ai_confirmation_hint'
+  | 'ai_trend_bullish'
+  | 'ai_trend_bearish'
+  | 'ai_trend_neutral'
   | 'nav_dashboard'
   | 'nav_market'
   | 'nav_news'
@@ -583,6 +608,31 @@ export type TranslationKey =
 
 export const translations: Record<'en' | 'id', Record<TranslationKey, string>> = {
   en: {
+    admin_loading_profile: 'Loading current account settings…',
+    admin_saving_profile: 'Saving…',
+    modal_expiry: 'Access expires at (Jakarta / WIB)',
+    modal_expiry_hint: 'Replaces the current expiry. Leave empty for no active access.',
+    modal_remaining_tokens: 'Remaining tokens',
+    modal_remaining_tokens_hint: 'Replaces the number of tokens available to this customer. Past usage is kept.',
+    bcast_account_email: 'Trenova account email',
+    bcast_recipient_email: 'Recipient email',
+    bcast_recipient_email_hint: 'The recipient receives the password setup link for the account above. These addresses may differ.',
+    bcast_account_template_hint: 'Use {{account_email}} for the login email. Keep {{reset_link}} in the message; the secure link is added when sending.',
+    bcast_reset_link_preview: '[Secure password setup link will be added when sending]',
+    ai_market_type: 'Market type',
+    ai_market_type_hint: 'Spot allows buy setups; futures allows long and short setups.',
+    ai_direction_label: 'Trade direction',
+    ai_direction_auto: 'Automatic',
+    ai_direction_long: 'Long only',
+    ai_direction_short: 'Short only',
+    ai_direction_hint: 'Restricts eligible setups. WAIT remains possible when the evidence is insufficient.',
+    ai_confirmation_label: 'Higher timeframe confirmation',
+    ai_confirmation_off: 'Off',
+    ai_confirmation_on: 'On',
+    ai_confirmation_hint: 'Uses closed candles from the higher timeframe. Conflicting or neutral trends result in WAIT.',
+    ai_trend_bullish: 'Bullish trend',
+    ai_trend_bearish: 'Bearish trend',
+    ai_trend_neutral: 'Neutral trend',
     nav_dashboard: 'Dashboard',
     nav_market: 'Market',
     nav_news: 'News',
@@ -734,7 +784,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_comp_val_3_m: '✗',
     lp_comp_val_3_s: '✗',
     lp_comp_val_3_t: '✓ Gemini AI',
-    lp_comp_val_3_p: '✓ Claude AI',
+    lp_comp_val_3_p: '✓ Gemini AI',
     lp_comp_val_4_m: 'Manual calculation',
     lp_comp_val_4_s: '✗',
     lp_comp_val_4_t: '✗',
@@ -759,7 +809,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     plan_st_label: 'Standard Plan',
     plan_st_desc: 'Gemini AI · 1 Timeframe · No Auto Risk Management',
     plan_pr_label: 'Premium Plan',
-    plan_pr_desc: 'Claude AI · Up to 15 Timeframes · Auto Risk Management',
+    plan_pr_desc: 'Gemini AI · Up to 15 Timeframes · Auto Risk Management',
     plan_token_gen: 'generate',
     plan_period: 'Validity 30 Days',
     plan_btn_pr: 'Get Premium',
@@ -1084,7 +1134,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_feat1_title: 'MULTI-TIMEFRAME SYSTEM',
     lp_feat1_desc: 'Upload screenshots from up to 15 slots — 1W, 3D, 1D, 4H, 1H, 15M, and more. Multi-timeframe analysis structured like institutional desk trading.',
     lp_feat2_title: 'AI-POWERED ANALYSIS',
-    lp_feat2_desc: 'Claude AI reads all screenshots and produces deep technical analysis — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest in one output.',
+    lp_feat2_desc: 'Gemini AI reads all screenshots and produces deep technical analysis — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest in one output.',
     lp_feat3_title: 'RISK MANAGEMENT ENGINE',
     lp_feat3_desc: 'Input leverage and capital — the terminal automatically calculates entry range, stop loss, take profit, and maximum loss precisely based on real-time market conditions.',
     lp_feat4_title: 'STRUCTURED OUTPUT',
@@ -1118,7 +1168,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_how2_title: 'Input Trading Parameters',
     lp_how2_desc: 'Enter the leverage you use and the capital allocated for this trade. The terminal will automatically adjust risk management calculations — entry zone, stop loss, take profit, and maximum drawdown.',
     lp_how3_title: 'AI Analyze & Generate Output',
-    lp_how3_desc: 'Click GENERATE. Claude AI will read all screenshots simultaneously — analyzing EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest — then produce a complete structured analysis.',
+    lp_how3_desc: 'Click GENERATE. Gemini AI will read all screenshots simultaneously — analyzing EMA confluence, RSI divergence, MACD signal, CVD, funding rate, and open interest — then produce a complete structured analysis.',
     lp_how4_title: 'Copy Output & Execute',
     lp_how4_desc: 'Analysis output is one-click copy — complete with entry range, stop loss, take profit, risk/reward ratio, and win probability. Save to history for long-term performance tracking. Execute trades with full confidence.',
     lp_proof_pill: 'REAL TRACK RECORD',
@@ -1192,6 +1242,31 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_cred_quote_author: 'Founder Trenova Intelligence',
   },
   id: {
+    admin_loading_profile: 'Memuat pengaturan akun terbaru…',
+    admin_saving_profile: 'Menyimpan…',
+    modal_expiry: 'Akses berakhir pada (Jakarta / WIB)',
+    modal_expiry_hint: 'Mengganti tanggal berakhir saat ini. Kosongkan jika akun tidak memiliki akses aktif.',
+    modal_remaining_tokens: 'Sisa token',
+    modal_remaining_tokens_hint: 'Mengganti jumlah token yang dapat dipakai pelanggan. Pemakaian sebelumnya tetap tercatat.',
+    bcast_account_email: 'Email akun Trenova',
+    bcast_recipient_email: 'Email penerima',
+    bcast_recipient_email_hint: 'Penerima mendapat tautan pengaturan kata sandi untuk akun di atas. Kedua alamat boleh berbeda.',
+    bcast_account_template_hint: 'Gunakan {{account_email}} untuk email login. Pertahankan {{reset_link}} di isi pesan; tautan aman dibuat saat pengiriman.',
+    bcast_reset_link_preview: '[Tautan aman pengaturan kata sandi dibuat saat pengiriman]',
+    ai_market_type: 'Jenis pasar',
+    ai_market_type_hint: 'Spot mengizinkan setup beli; futures mengizinkan setup long dan short.',
+    ai_direction_label: 'Arah transaksi',
+    ai_direction_auto: 'Otomatis',
+    ai_direction_long: 'Hanya long',
+    ai_direction_short: 'Hanya short',
+    ai_direction_hint: 'Membatasi arah setup. Hasil tetap dapat WAIT jika bukti belum cukup.',
+    ai_confirmation_label: 'Konfirmasi timeframe lebih tinggi',
+    ai_confirmation_off: 'Nonaktif',
+    ai_confirmation_on: 'Aktif',
+    ai_confirmation_hint: 'Memakai candle tertutup dari timeframe lebih tinggi. Tren berlawanan atau netral menghasilkan WAIT.',
+    ai_trend_bullish: 'Tren bullish',
+    ai_trend_bearish: 'Tren bearish',
+    ai_trend_neutral: 'Tren netral',
     nav_dashboard: 'Dasbor',
     nav_market: 'Pasar',
     nav_news: 'Berita',
@@ -1350,7 +1425,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_comp_val_3_m: '✗',
     lp_comp_val_3_s: '✗',
     lp_comp_val_3_t: '✓ Gemini AI',
-    lp_comp_val_3_p: '✓ Claude AI',
+    lp_comp_val_3_p: '✓ Gemini AI',
     lp_comp_val_4_m: 'Manual hitung',
     lp_comp_val_4_s: '✗',
     lp_comp_val_4_t: '✗',
@@ -1375,7 +1450,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     plan_st_label: 'Standard Plan',
     plan_st_desc: 'Gemini AI · 1 Timeframe · Tanpa Risk Management Otomatis',
     plan_pr_label: 'Premium Plan',
-    plan_pr_desc: 'Claude AI · Hingga 15 Timeframe · Risk Management Otomatis',
+    plan_pr_desc: 'Gemini AI · Hingga 15 Timeframe · Risk Management Otomatis',
     plan_token_gen: 'Generate',
     plan_period: 'Masa Aktif 30 Hari',
     plan_btn_pr: 'Dapatkan Premium',
@@ -1531,7 +1606,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_feat1_title: 'MULTI-TIMEFRAME SYSTEM',
     lp_feat1_desc: 'Upload screenshot dari hingga 15 slot berbeda — 1W, 3D, 1D, 4H, 1H, 15M, dan lebih. Analisa multi-timeframe yang terstruktur seperti desk trading institusional.',
     lp_feat2_title: 'AI-POWERED ANALYSIS',
-    lp_feat2_desc: 'Claude AI membaca seluruh screenshot dan menghasilkan analisa teknikal mendalam — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, dan open interest dalam satu output.',
+    lp_feat2_desc: 'Gemini AI membaca seluruh screenshot dan menghasilkan analisa teknikal mendalam — EMA confluence, RSI divergence, MACD signal, CVD, funding rate, dan open interest dalam satu output.',
     lp_feat3_title: 'RISK MANAGEMENT ENGINE',
     lp_feat3_desc: 'Input leverage dan modal — terminal otomatis menghitung entry range, stop loss, take profit, dan maksimum kerugian yang presisi berdasarkan kondisi pasar real-time.',
     lp_feat4_title: 'STRUCTURED OUTPUT',
@@ -1565,7 +1640,7 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     lp_how2_title: 'Input Parameter Trading',
     lp_how2_desc: 'Masukkan leverage yang kamu gunakan dan besarnya modal yang dialokasikan untuk trade ini. Terminal akan menyesuaikan kalkulasi risk management secara otomatis — entry zone, stop loss, take profit, dan maximum drawdown.',
     lp_how3_title: 'AI Analisa & Generate Output',
-    lp_how3_desc: 'Klik tombol GENERATE. Claude AI akan membaca seluruh screenshot secara bersamaan — menganalisa confluence EMA, divergence RSI, sinyal MACD, CVD, funding rate, dan open interest — lalu menghasilkan analisa terstruktur lengkap.',
+    lp_how3_desc: 'Klik tombol GENERATE. Gemini AI akan membaca seluruh screenshot secara bersamaan — menganalisa confluence EMA, divergence RSI, sinyal MACD, CVD, funding rate, dan open interest — lalu menghasilkan analisa terstruktur lengkap.',
     lp_how4_title: 'Copy Output & Execute',
     lp_how4_desc: 'Output analisa siap satu klik copy — lengkap dengan entry range, stop loss, take profit, risk/reward ratio, dan win probability. Simpan ke history untuk tracking performa jangka panjang. Execute trade dengan konfiden penuh.',
     lp_proof_header: 'TRACK RECORD NYATA',

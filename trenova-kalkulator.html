@@ -156,7 +156,7 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 <div id="page-pricing" class="page active">
   <div class="sec-label">// Parameter Dasar</div>
   <div class="input-card">
-    <div class="field-row"><div class="field-label">Cost per Analisa (USD)<span>biaya API Anthropic per analisa</span></div><input type="number" class="field-input" id="costUsd" value="0.14" step="0.01" min="0.01" oninput="recalcAll()"><div class="field-val" id="lbl-cost-idr">—</div></div>
+    <div class="field-row"><div class="field-label">Cost per Analisa (USD)<span>estimasi biaya API Gemini per analisa</span></div><input type="number" class="field-input" id="costUsd" value="0.14" step="0.01" min="0.01" oninput="recalcAll()"><div class="field-val" id="lbl-cost-idr">—</div></div>
     <div class="field-row"><div class="field-label">Kurs USD / IDR<span>update sesuai kurs hari ini</span></div><input type="number" class="field-input" id="kurs" value="16000" step="100" min="10000" oninput="recalcAll()"><div class="field-val" id="lbl-kurs">Rp 16.000</div></div>
     <div class="field-row"><div class="field-label">Jumlah Analisa / Paket<span>analisa per paket yang dijual</span></div><input type="number" class="field-input" id="qty" value="30" step="1" min="1" oninput="recalcAll()"><div class="field-val" id="lbl-qty">30x</div></div>
     <div class="field-row"><div class="field-label">Harga Jual Paket (Rp)<span>harga ke pembeli</span></div><input type="number" class="field-input" id="price" value="130000" step="1000" min="1000" oninput="recalcAll()"><div class="field-val" id="lbl-price">Rp 130.000</div></div>
@@ -203,9 +203,9 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 
 <!-- TOPUP -->
 <div id="page-topup" class="page">
-  <div class="sec-label">// Kalkulator Topup Anthropic</div>
+  <div class="sec-label">// Kalkulator Anggaran API</div>
   <div class="input-card">
-    <div class="field-row"><div class="field-label">Topup per sekali (USD)<span>minimum topup Anthropic = $5</span></div><input type="number" class="field-input" id="topupAmt" value="5" step="5" min="5" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-usd">$5</div></div>
+    <div class="field-row"><div class="field-label">Topup per sekali (USD)<span>anggaran API yang ingin dialokasikan</span></div><input type="number" class="field-input" id="topupAmt" value="5" step="5" min="5" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-usd">$5</div></div>
     <div class="field-row"><div class="field-label">Estimasi user / bulan<span>sama dengan di halaman Pricing</span></div><input type="number" class="field-input" id="topupUsers" value="20" step="1" min="1" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-users">20 user</div></div>
     <div class="field-row"><div class="field-label">Analisa per paket<span>sama dengan di halaman Pricing</span></div><input type="number" class="field-input" id="topupQty" value="30" step="1" min="1" oninput="recalcTopup()"><div class="field-val" id="lbl-topup-qty">30x</div></div>
   </div>

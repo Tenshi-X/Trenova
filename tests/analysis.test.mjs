@@ -4,6 +4,7 @@ import {
   MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, buildPrompt, estimateInputUpperBound,
   parseAnalysisInput, validateModelAnalysis, worstCaseCostIdr,
   TIMEFRAMES, TIMEFRAME_MILLIS, candlesAreFresh,
+  CONFIRMATION_TIMEFRAME,
 } from '../src/lib/analysis/core.ts';
 import { evaluateSetupOutcome } from '../src/lib/analysis/outcome.ts';
 
@@ -86,4 +87,49 @@ test('full timestamped snapshot plus one image fits the compact default prompt',
   const snapshot = { ...market, recentCandles: Array(4).fill(market.recentCandles[0]),
     sourceTimes: Object.fromEntries(['candles','btc','funding','openInterest','sentiment'].map((key) => [key,market.asOf])) };
   assert.ok(estimateInputUpperBound(buildPrompt(input,snapshot),true) <= MAX_INPUT_TOKENS);
+});
+
+test('new parameters preserve old defaults and reject incompatible or malformed choices', () => {
+  assert.equal(input.marketType, 'futures'); assert.equal(input.directionPreference, 'auto');
+  assert.equal(input.higherTimeframeConfirmation, false);
+  for (const fields of [{ marketType: 'other' }, { directionPreference: 'buy' },
+    { marketType: 'spot', directionPreference: 'short' }, { higherTimeframeConfirmation: 'on' }]) {
+    assert.equal(parseAnalysisInput({ ...input, ...fields }), null);
+  }
+});
+
+test('spot and direction preferences restrict validated setups while WAIT remains valid', () => {
+  const short = { verdict: 'SHORT', reason: 'Momentum lemah pada snapshot.', wait_for: '', setups: [
+    { direction: 'SHORT', entryLow: 99, entryHigh: 100, stopLoss: 102, takeProfit1: 93, takeProfit2: 90 },
+  ] };
+  const long = { verdict: 'LONG', reason: 'Ada peluang pantulan teknikal.', wait_for: '', setups: [
+    { direction: 'LONG', entryLow: 99, entryHigh: 100, stopLoss: 97, takeProfit1: 106, takeProfit2: 110 },
+  ] };
+  for (const fields of [{ marketType: 'spot' }, { directionPreference: 'long' }]) {
+    assert.throws(() => validateModelAnalysis(short, { ...input, ...fields }, market), /disallowed_direction/);
+    assert.doesNotThrow(() => validateModelAnalysis(long, { ...input, ...fields }, market));
+  }
+  assert.throws(() => validateModelAnalysis(long, { ...input, directionPreference: 'short' }, market), /disallowed_direction/);
+  assert.doesNotThrow(() => validateModelAnalysis({ verdict: 'WAIT', reason: 'Belum ada konfirmasi.',
+    wait_for: 'Tunggu candle.', setups: [] }, { ...input, marketType: 'spot', directionPreference: 'long' }, market));
+});
+
+test('higher timeframe confirmation requires actual aligned trend data and still fits the image budget', () => {
+  const choices = { ...input, higherTimeframeConfirmation: true };
+  const raw = { verdict: 'SHORT', reason: 'Momentum lemah pada snapshot.', wait_for: '', setups: [
+    { direction: 'SHORT', entryLow: 99, entryHigh: 100, stopLoss: 102, takeProfit1: 93, takeProfit2: 90 },
+  ] };
+  const snapshot = { ...market, confirmation: { timeframe: CONFIRMATION_TIMEFRAME[input.timeframe],
+    asOf: market.asOf, close: 99, ema20: 102, rsi: 42, trend: 'bearish' },
+    recentCandles: Array(4).fill(market.recentCandles[0]),
+    sourceTimes: Object.fromEntries(['candles','btc','funding','openInterest','sentiment'].map((key) => [key,market.asOf])) };
+  assert.doesNotThrow(() => validateModelAnalysis(raw, choices, snapshot));
+  assert.throws(() => validateModelAnalysis(raw, choices, market), /missing_confirmation/);
+  for (const trend of ['bullish', 'neutral']) {
+    assert.throws(() => validateModelAnalysis(raw, choices, { ...snapshot,
+      confirmation: { ...snapshot.confirmation, trend } }), /unconfirmed_direction/);
+  }
+  const prompt = buildPrompt(choices, snapshot);
+  assert.ok(prompt.includes('"trend":"bearish"'));
+  assert.ok(estimateInputUpperBound(prompt, true) <= MAX_INPUT_TOKENS);
 });

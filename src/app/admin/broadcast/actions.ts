@@ -2,6 +2,7 @@
 
 import { getAdminContext } from '@/lib/authz';
 import { getSiteUrl } from '@/lib/site-url';
+import { parseAccountEmailInput, renderAccountEmail, type AccountEmailInput } from '@/lib/account-email';
 
 import {
   EMAIL_FOOTER_ATTACHMENT,
@@ -79,7 +80,7 @@ export async function sendBroadcastEmail(
   }
 }
 
-export async function sendNewAccountEmail(email: string) {
+export async function sendNewAccountEmail(options: AccountEmailInput) {
   try {
     const context = await getAdminContext();
     if (!context) return { success: false, error: 'Akses admin diperlukan.' };
@@ -87,32 +88,25 @@ export async function sendNewAccountEmail(email: string) {
       return { success: false, error: "Server configuration error: EMAIL_USER or EMAIL_APP_PASSWORD is not set." };
     }
 
-    if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) {
-      return { success: false, error: 'Alamat email tidak valid.' };
+    const input = parseAccountEmailInput(options);
+    if (!input) {
+      return { success: false, error: 'Periksa email akun, email penerima, subjek, dan isi pesan. Isi pesan wajib memuat {{reset_link}}.' };
     }
 
     const { data: linkData, error: linkError } = await context.admin.auth.admin.generateLink({
-      type: 'recovery', email,
+      type: 'recovery', email: input.accountEmail,
     });
     if (linkError || !linkData.properties?.hashed_token) {
       return { success: false, error: linkError?.message || 'Tautan tidak dapat dibuat.' };
     }
 
-    const safeEmail = email.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char] || char));
     const recoveryUrl = `${getSiteUrl()}/auth/confirm?type=recovery&token_hash=${encodeURIComponent(linkData.properties.hashed_token)}`;
-    const subject = "Atur Kata Sandi Akun Trenova Anda";
-    const htmlContent = `Halo Kak,<br/><br/>
-Terima kasih telah melakukan pembelian akses Trenova Intelligence.<br/>
-Berikut adalah detail login akun Anda:<br/><br/>
-    <b>Email:</b> ${safeEmail}<br/><br/>
-    Buat kata sandi Anda melalui tautan aman berikut:<br/>
-    <a href="${recoveryUrl}" style="color: #0066cc; text-decoration: none; font-weight: bold;">Atur kata sandi</a><br/><br/>
-    Abaikan pesan ini jika Anda tidak meminta akses.`;
+    const htmlContent = renderAccountEmail(input, recoveryUrl);
 
     // Reuse the shared Trenova email service (src/lib/email.ts)
     const result = await sendTrenovaEmail({
-      to: email,
-      subject: subject,
+      to: input.recipientEmail,
+      subject: input.subject,
       htmlContent,
       convertNewlines: false, // htmlContent is already formatted HTML
     });
@@ -122,11 +116,11 @@ Berikut adalah detail login akun Anda:<br/><br/>
       return { success: false, error: result.message };
     }
     await context.admin.from('admin_audit_events').insert({ actor_id: context.user.id,
-      action: 'send_password_link', target: email, details: {} });
+      action: 'send_password_link', target: input.accountEmail, details: { recipient_email: input.recipientEmail } });
 
     return {
       success: true,
-      message: `Berhasil mengirim detail akun ke ${email}`,
+      message: `Berhasil mengirim detail akun ${input.accountEmail} ke ${input.recipientEmail}`,
     };
   } catch (error: unknown) {
     console.error("Error sending new account email:", error);

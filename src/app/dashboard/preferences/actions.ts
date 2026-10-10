@@ -1,10 +1,11 @@
 'use server';
 
 import { getSessionProfile } from '@/lib/authz';
-import { STYLES, TIMEFRAMES, RISKS, STRATEGIES, INDICATORS, TARGET_RRS } from '@/lib/analysis/core';
+import { STYLES, TIMEFRAMES, RISKS, STRATEGIES, INDICATORS, TARGET_RRS, MARKET_TYPES, DIRECTIONS, type AnalysisInput } from '@/lib/analysis/core';
 
 export type UserPreset = { name: string; tradingStyle: string; timeframe: string; riskTolerance: string;
-  strategyFocus: string; indicatorPref: string; targetRR: string };
+  strategyFocus: string; indicatorPref: string; targetRR: string }
+  & Partial<Pick<AnalysisInput, 'marketType' | 'directionPreference' | 'higherTimeframeConfirmation'>>;
 
 export async function getPreferences() {
   const context = await getSessionProfile();
@@ -27,7 +28,11 @@ function validPreset(preset: UserPreset) {
     && RISKS.includes(preset.riskTolerance as typeof RISKS[number])
     && STRATEGIES.includes(preset.strategyFocus as typeof STRATEGIES[number])
     && INDICATORS.includes(preset.indicatorPref as typeof INDICATORS[number])
-    && TARGET_RRS.includes(preset.targetRR as typeof TARGET_RRS[number]);
+    && TARGET_RRS.includes(preset.targetRR as typeof TARGET_RRS[number])
+    && (preset.marketType === undefined || MARKET_TYPES.includes(preset.marketType))
+    && (preset.directionPreference === undefined || DIRECTIONS.includes(preset.directionPreference))
+    && (preset.higherTimeframeConfirmation === undefined || typeof preset.higherTimeframeConfirmation === 'boolean')
+    && !(preset.marketType === 'spot' && preset.directionPreference === 'short');
 }
 
 export async function savePreferences(presets: UserPreset[], watchlist: string[]) {

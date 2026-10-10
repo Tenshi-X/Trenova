@@ -10,6 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import clsx from 'clsx';
+import { DEFAULT_ACCOUNT_SUBJECT, DEFAULT_ACCOUNT_CONTENT } from '@/lib/account-email';
 
 export default function BroadcastEmailPage() {
   const { t } = useLanguage();
@@ -25,6 +26,9 @@ export default function BroadcastEmailPage() {
 
   // New Account state
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [accountSubject, setAccountSubject] = useState(DEFAULT_ACCOUNT_SUBJECT);
+  const [accountContent, setAccountContent] = useState(DEFAULT_ACCOUNT_CONTENT);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -60,10 +64,12 @@ export default function BroadcastEmailPage() {
 
     setLoading(true);
     try {
-      const res = await sendNewAccountEmail(newUserEmail.trim());
+      const res = await sendNewAccountEmail({ accountEmail: newUserEmail, recipientEmail,
+        subject: accountSubject, content: accountContent });
       setResult({ success: res.success, message: res.success ? (res.message || t('bcast_sent_ok')) : (res.error || t('bcast_sent_fail')) });
       if (res.success) {
          setNewUserEmail('');
+         setRecipientEmail('');
       }
     } catch (err: unknown) {
        setResult({ success: false, message: (err instanceof Error ? err.message : 'Terjadi kesalahan.') || t('bcast_sys_error') });
@@ -211,30 +217,44 @@ export default function BroadcastEmailPage() {
                    
                    {/* Email Input */}
                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                         {t('bcast_new_email')} <span className="text-red-500">*</span>
+                      <label htmlFor="account-email" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                         {t('bcast_account_email')} <span className="text-red-500">*</span>
                       </label>
                       <input 
-                        type="email"
+                        id="account-email" type="email" maxLength={254}
                         value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        onChange={(e) => {
+                          if (!recipientEmail || recipientEmail === newUserEmail) setRecipientEmail(e.target.value);
+                          setNewUserEmail(e.target.value);
+                        }}
                         placeholder="email.pelanggan@gmail.com"
                         className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-neon/50 text-sm placeholder:text-slate-400"
                         required
                       />
                    </div>
 
+                   <div className="space-y-2">
+                     <label htmlFor="account-recipient" className="block text-sm font-semibold">{t('bcast_recipient_email')}</label>
+                     <input id="account-recipient" type="email" required maxLength={254} value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)}
+                       className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3" />
+                     <p className="text-xs text-slate-500">{t('bcast_recipient_email_hint')}</p>
+                   </div>
+                   <div className="space-y-2">
+                     <label htmlFor="account-subject" className="block text-sm font-semibold">{t('bcast_subject')}</label>
+                     <input id="account-subject" required maxLength={180} value={accountSubject} onChange={(e) => setAccountSubject(e.target.value)}
+                       className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3" />
+                   </div>
+                   <div className="space-y-2">
+                     <label htmlFor="account-content" className="block text-sm font-semibold">{t('bcast_content')}</label>
+                     <textarea id="account-content" required rows={10} maxLength={10000} value={accountContent} onChange={(e) => setAccountContent(e.target.value)}
+                       className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 text-sm" />
+                     <p className="text-xs text-slate-500">{t('bcast_account_template_hint')}</p>
+                   </div>
                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                       <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">{t('bcast_template_title')}</h4>
                       <div className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-mono whitespace-pre-wrap">
-{`Halo Kak,
-
-Terima kasih telah melakukan pembelian akses Trenova Intelligence.
-Tautan pengaturan kata sandi akan dikirim secara aman ke email Anda:
-
-Email: ${newUserEmail || '[Email Pelanggan]'}
-
-Gunakan tautan dalam email untuk mengatur kata sandi dan masuk ke Trenova.`}
+{accountContent.replace(/\{\{account_email\}\}/g, () => newUserEmail || '[Email akun]')
+  .replace(/\{\{reset_link\}\}/g, () => t('bcast_reset_link_preview'))}
                       </div>
                    </div>
 

@@ -86,3 +86,16 @@ test('provider outages return no snapshot and record diagnostics instead of maki
     symbol: 'BTC', timeframe: '1d', tickerAvailable: false, candlesAvailable: false,
   });
 });
+
+test('confirmation supports higher timeframes including weekly and only uses complete closed candles', async () => {
+  for (const timeframe of [...new Set(Object.values(core.CONFIRMATION_TIMEFRAME))]) {
+    const provider = marketModule();
+    const confirmation = await provider.getTrendConfirmation('BTC', timeframe);
+    assert.ok(confirmation); assert.equal(confirmation.timeframe, timeframe);
+    assert.equal(confirmation.trend, 'neutral');
+    assert.ok(new Date(confirmation.asOf).getTime() <= Date.now());
+  }
+  for (const options of [{ missingCandle: true }, { allBlocked: true }]) {
+    assert.equal(await marketModule(options).getTrendConfirmation('BTC', '4h'), null);
+  }
+});
