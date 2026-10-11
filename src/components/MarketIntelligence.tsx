@@ -212,7 +212,7 @@ export default function MarketIntelligence() {
         });
     };
 
-    const cardBase = "bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between overflow-hidden relative h-36";
+    const cardBase = "terminal-market-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between overflow-hidden relative h-36";
 
     // Helper for rendering Coin Price Widgets
     const renderCoinWidget = (symbol: string, icon: string, color: string, price: number, change: number) => {
@@ -278,7 +278,7 @@ export default function MarketIntelligence() {
                 );
             case 'fng':
                 return (
-                    <div key={id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between h-36">
+                    <div key={id} className="terminal-market-card bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between h-36">
                         <div className="flex-1">
                             <div className="flex items-center gap-2 text-slate-500 mb-1">
                                 <Skull size={14} className={clsx(
@@ -468,7 +468,7 @@ export default function MarketIntelligence() {
 
     return (
         <div className="relative">
-            <div className="flex justify-end mb-2 absolute -top-8 right-0 z-10">
+            <div className="terminal-market-toolbar flex justify-end mb-2 absolute -top-8 right-0 z-10">
                 <button
                     onClick={() => {
                         setTempSelection(selectedWidgets);
@@ -481,12 +481,12 @@ export default function MarketIntelligence() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-3">
+            <div className="terminal-market-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-3">
                 {selectedWidgets.map(id => renderWidget(id))}
             </div>
 
             {lastUpdated ? (
-                <div className="mb-6 text-[10px] text-slate-400 flex items-center gap-1">
+                <div className="terminal-market-status mb-6 text-[10px] text-slate-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                     Live · Updated {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {dataSource}{isDegraded ? ' (cached)' : ''} /10s · FNG /5min
                 </div>

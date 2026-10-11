@@ -41,3 +41,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useTheme = () => useContext(ThemeContext);
+
+// Give embedded charts a local theme without changing the saved site preference.
+export function TerminalThemeProvider({ children }: { children: React.ReactNode }) {
+  return <ThemeContext.Provider value={{ theme: 'dark', toggleTheme: () => {} }}>{children}</ThemeContext.Provider>;
+}

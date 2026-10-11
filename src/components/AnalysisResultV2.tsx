@@ -2,29 +2,35 @@
 
 import type { AnalysisV2 } from '@/lib/analysis/core';
 import { useLanguage } from '@/context/LanguageContext';
+import AnalysisStoryExport from '@/components/AnalysisStoryExport';
+import AnalysisPlanMap from '@/components/AnalysisPlanMap';
 
 export default function AnalysisResultV2({ result, coinName }: { result: AnalysisV2; coinName: string }) {
   const { language, t } = useLanguage();
   const copy = (id: string, en: string) => language === 'id' ? id : en;
   const price = (value: number) => value.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' USDT';
-  const conditional = result.setups.length > 0 && (result.verdict === 'WAIT' || result.setups.every(setup => setup.execution === 'CONDITIONAL'));
+  const conditional = result.setups.length > 0 && (result.verdict === 'WAIT' || result.setups[0].execution === 'CONDITIONAL');
   const title = conditional ? copy('Rencana ' + result.setups[0].direction, result.setups[0].direction + ' plan') : result.verdict;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
   const insights = result.insights;
   const source = result.provenance?.kind;
-  return <div className="space-y-5 text-foreground">
+  return <div className="terminal-result space-y-5 text-foreground">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p className="text-xs text-slate-500">{coinName} · {result.market.timeframe} · {new Date(result.market.asOf).toLocaleString(language === 'id' ? 'id-ID' : 'en-US', { timeZone: 'Asia/Jakarta' })} WIB</p>
-        <h2 className={'mt-1 text-3xl font-black ' + tone}>{title}</h2>
+        <h2 className={'terminal-result-title mt-1 text-3xl font-black ' + tone}>{title}</h2>
         {conditional && <p className="mt-1 text-sm text-amber-600 dark:text-amber-300">{copy('Entry setelah pemicu terpenuhi', 'Enter after the trigger is confirmed')}</p>}
       </div>
+      <div className="flex flex-wrap items-center gap-4">
       {result.verdict !== 'WAIT' && !conditional && <div className="text-right">
         <p className="text-xs text-slate-500">{copy('Kekuatan setup', 'Setup strength')}</p>
         <p className="text-2xl font-black">{result.signal_strength}/100</p>
         <p className="text-xs text-slate-500">{copy('Bukan peluang keberhasilan', 'Not a success probability')}</p>
       </div>}
+      <AnalysisStoryExport result={result} />
+      </div>
     </div>
+    <AnalysisPlanMap result={result} language={language} />
     {source && <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm leading-relaxed">
       <p className="font-semibold">{source === 'technical' ? copy('Rencana teknikal otomatis', 'Automatic technical plan')
         : source === 'ai_adjusted' ? copy('Analisis AI dengan penyesuaian', 'AI analysis with adjustments') : copy('Analisis AI', 'AI analysis')}</p>
@@ -55,7 +61,7 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
         <div className="grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
           {[[copy('Zona Entry', 'Entry zone'), setup.entryLow.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' – ' + price(setup.entryHigh)],
             ['SL · Stop Loss', price(setup.stopLoss)], ['TP1 · Take Profit', price(setup.takeProfit1)],
-            ['TP2 · Take Profit', price(setup.takeProfit2)]].map(([label, value]) => <div key={label} className="min-w-0 rounded-xl bg-slate-50 dark:bg-slate-950 p-3">
+            ['TP2 · Take Profit', price(setup.takeProfit2)]].map(([label, value]) => <div key={label} className="terminal-level min-w-0 rounded-xl bg-slate-50 dark:bg-slate-950 p-3">
               <p className="text-xs text-slate-500">{label}</p><p className="mt-1 break-words font-bold tabular-nums">{value}</p>
             </div>)}
         </div>

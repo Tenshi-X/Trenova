@@ -408,24 +408,33 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pb-24 space-y-3 md:space-y-8">
+    <div className="terminal-workspace mx-auto pb-8 space-y-4">
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 pt-1 md:pt-2">
+      <div className="terminal-workspace-heading">
         <div>
-            <h1 className="text-lg sm:text-xl md:text-3xl lg:text-4xl font-black text-foreground mb-0.5 md:mb-2 flex items-center gap-2 md:gap-3">
-                <Sparkles className="text-neon w-5 h-5 md:w-8 md:h-8 shrink-0" fill="currentColor" /> {t('header_title')}
-            </h1>
-            <p className="text-slate-500 text-[11px] sm:text-xs md:text-lg leading-relaxed">{t('header_subtitle')}</p>
+            <h1>{t('header_title')}</h1>
+            <p>{t('header_subtitle')}</p>
         </div>
+        <span className="terminal-section-code">WORKSPACE / 01</span>
       </div>
 
       {/* Market Intelligence Widgets */}
-      <MarketIntelligence />
+      <div className="terminal-market-strip"><MarketIntelligence /></div>
 
       {/* Tabs */}
-      <div className="flex gap-0.5 sm:gap-1 border-b border-slate-200 dark:border-slate-800 mb-4 md:mb-6 overflow-x-auto no-scrollbar -mx-1 px-1">
+      <div className="terminal-tabs flex overflow-x-auto no-scrollbar" role="tablist" aria-label={copy('Panel terminal', 'Terminal panels')}
+        onKeyDown={event => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const panels = ['chart', 'market', 'news', 'analysis'] as const;
+          const index = panels.indexOf(activeTab);
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (index + (event.key === 'ArrowRight' ? 1 : 3)) % 4;
+          setActiveTab(panels[next]);
+          event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+        }}>
         <button
+            id="terminal-tab-chart" role="tab" aria-controls="terminal-panel-chart" tabIndex={activeTab === 'chart' ? 0 : -1} aria-selected={activeTab === 'chart'}
             onClick={() => setActiveTab('chart')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
@@ -437,6 +446,7 @@ export default function DashboardPage() {
             <BarChart3 size={15} /> {t('tab_chart')}
         </button>
         <button
+            id="terminal-tab-market" role="tab" aria-controls="terminal-panel-market" tabIndex={activeTab === 'market' ? 0 : -1} aria-selected={activeTab === 'market'}
             onClick={() => setActiveTab('market')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
@@ -449,6 +459,7 @@ export default function DashboardPage() {
             <span className="text-[8px] sm:text-[9px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
+            id="terminal-tab-news" role="tab" aria-controls="terminal-panel-news" tabIndex={activeTab === 'news' ? 0 : -1} aria-selected={activeTab === 'news'}
             onClick={() => setActiveTab('news')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
@@ -460,6 +471,7 @@ export default function DashboardPage() {
             <Newspaper size={15} /> {t('nav_news')}
         </button>
         <button
+            id="terminal-tab-analysis" role="tab" aria-controls="terminal-panel-analysis" tabIndex={activeTab === 'analysis' ? 0 : -1} aria-selected={activeTab === 'analysis'}
             onClick={() => setActiveTab('analysis')}
             className={clsx(
                 "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
@@ -496,7 +508,7 @@ export default function DashboardPage() {
 
         {/* --- LIVE MARKET TAB --- */}
         {activeTab === 'market' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
+            <div id="terminal-panel-market" role="tabpanel" aria-labelledby="terminal-tab-market" className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
                 <LiveMarketTable
                     onSelectSymbol={(sym) => {
                         ignoreSearchRef.current = true;
@@ -512,13 +524,13 @@ export default function DashboardPage() {
 
         {/* --- NEWS TAB --- */}
         {activeTab === 'news' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div id="terminal-panel-news" role="tabpanel" aria-labelledby="terminal-tab-news" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <CryptoNews />
             </div>
         )}
 
         {/* --- CHART TAB --- */}
-        <div className={clsx(
+        <div id="terminal-panel-chart" role="tabpanel" aria-labelledby="terminal-tab-chart" className={clsx(
             "space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
             activeTab === 'chart' ? "block" : "hidden",
             isChartFullscreen && "fixed inset-0 z-[200] bg-white dark:bg-slate-950 p-4 md:p-6 overflow-y-auto flex flex-col"
@@ -643,8 +655,8 @@ export default function DashboardPage() {
         </div>
 
         {/* --- ANALYSIS TAB --- */}
-        <div className={clsx(
-            "ux-panel space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
+        <div id="terminal-panel-analysis" role="tabpanel" aria-labelledby="terminal-tab-analysis" className={clsx(
+            "ux-panel terminal-analysis-tab space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500",
             activeTab === 'analysis' ? "block" : "hidden"
         )}>
 
@@ -669,29 +681,29 @@ export default function DashboardPage() {
             </div>
 
             {selectedCoin ? (
-                <div className="space-y-6">
-
-                    {/* Technical Sentiment */}
-                    <SentimentChart symbol={selectedCoin.symbol} />
+                <div className="terminal-analysis-grid">
+                  <div className="terminal-input-panel space-y-4">
+                    <h2 className="terminal-panel-heading">{copy('Input Analisis', 'Analysis Input')} · {selectedCoin.symbol.toUpperCase()}/USDT</h2>
 
                     {/* INSTRUCTIONS BLOCK */}
-                    <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 flex gap-3 sm:gap-4">
-                        <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg h-fit text-blue-600 dark:text-blue-400">
-                            <FileText size={24} />
+                    <details className="border border-slate-700 p-3 text-sm">
+                      <summary className="cursor-pointer text-neon font-semibold">{t('ai_instr_title')}</summary>
+                      <div className="mt-3 flex gap-3">
+                        <div className="text-neon">
+                            <FileText size={18} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="font-bold text-lg text-blue-900 dark:text-blue-200">{t('ai_instr_title')}</h3>
-                            <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                            <ul className="text-xs text-slate-400 space-y-1">
                                 <li>{t('ai_instr_1')}</li>
                                 <li>{t('ai_instr_2')}</li>
                                 <li>{t('ai_instr_3')}</li>
                             </ul>
                         </div>
-                    </div>
-
+                      </div>
+                    </details>
 
                     {/* Analysis Controls Panel */}
-                    <fieldset disabled={chatLoading} className="min-w-0 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors space-y-4 sm:space-y-6">
+                    <fieldset disabled={chatLoading} className="terminal-controls min-w-0 space-y-4">
                         <div className="flex flex-wrap gap-2 items-center text-sm">
                           <span className="font-bold">Preset:</span>
                           {adminPresets.map((preset) => <button type="button" key={preset.code} aria-pressed={activePresetName === preset.name_id} onClick={() => applyPreset({
@@ -722,7 +734,7 @@ export default function DashboardPage() {
                         </form>}
 
                         {/* Row 1: Image & Context */}
-                        <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+                        <div className="terminal-upload-context flex flex-col gap-3">
                             {/* Single image upload */}
                             <div className="flex-1 lg:max-w-xs">
                                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">
@@ -777,7 +789,7 @@ export default function DashboardPage() {
                         </button>
                         {!advancedMode && <p className="text-xs text-slate-500">{tradingStyle} · {timeframe} · {riskTolerance} · {targetRR} · {marketType} · {directionPreference === 'auto' ? t('ai_direction_auto') : directionPreference.toUpperCase()}{higherTimeframeConfirmation ? ` · ${t('ai_confirmation_label')} ${CONFIRMATION_TIMEFRAME[timeframe as Timeframe]}` : ''}</p>}
                         {/* Row 2: Advanced AI Parameters (Grid) */}
-                        <div id="advanced-analysis-settings" onChange={() => setActivePresetName('')} className={clsx("grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
+                        <div id="advanced-analysis-settings" onChange={() => setActivePresetName('')} className={clsx("grid grid-cols-2 gap-3", !advancedMode && 'hidden')}>
                             <div>
                               <label htmlFor="ai-market-type" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_market_type')}</label>
                               <select id="ai-market-type" value={marketType} onChange={(e) => {
@@ -939,7 +951,7 @@ export default function DashboardPage() {
                                 onClick={runAnalysis}
                                 disabled={chatLoading || !!preferenceAction}
                                 aria-busy={chatLoading}
-                                className="w-full h-14 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
+                                className="terminal-run-button w-full h-12 font-bold disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all group relative overflow-hidden"
                             >
                                 {chatLoading ? (
                                     <>
@@ -959,10 +971,15 @@ export default function DashboardPage() {
                               '1 credit for 1 saved report. If AI is unavailable, you still receive an automatic technical plan with Entry, SL and TP. Opening history uses no credit.')}</p>
                         </div>
                     </fieldset>
-
-
-
+                  </div>
+                  <div className="min-w-0 space-y-4">
                     {/* --- ANALYSIS RESULTS --- */}
+                    {!chatResult && !chatLoading && !analysisIssue && <div className="terminal-result-empty">
+                      <BarChart3 size={36} className="text-neon" aria-hidden="true" />
+                      <h2>{copy('Rencana berikutnya dimulai di sini.', 'Your next plan starts here.')}</h2>
+                      <p>{copy('Atur pilihan di panel input, lalu jalankan analisis untuk melihat Entry, SL, TP dan pertimbangan pasar.', 'Choose your settings in the input panel, then run an analysis for Entry, SL, TP and market reasoning.')}</p>
+                      <div className="terminal-empty-levels" aria-hidden="true">{['ENTRY', 'STOP LOSS', 'TAKE PROFIT 1', 'TAKE PROFIT 2'].map(label => <div key={label}>{label}<strong>—</strong></div>)}</div>
+                    </div>}
                     {chatLoading && <div role="status" aria-live="polite" className="rounded-2xl border border-neon/30 bg-neon/5 p-5 space-y-3">
                       <p className="flex items-center gap-2 font-semibold text-neon"><Loader2 size={18} className="animate-spin" />{loadingMessage}</p>
                       <p className="text-sm text-slate-500">{copy('Pilihan dikunci selama analisis berjalan. Hasil akan muncul di bawah setelah selesai.', 'Selections are locked while analysis runs. Your result will appear below when ready.')}</p>
@@ -974,7 +991,7 @@ export default function DashboardPage() {
                       <button type="button" disabled={chatLoading} onClick={runAnalysis} className="ux-button mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-500/40 px-4 py-2 text-sm font-semibold"><RefreshCw size={16} />{copy('Coba lagi', 'Try again')}</button>
                     </div>}
                     {chatResult && (
-                        <div ref={resultRef} tabIndex={-1} role="region" aria-label={copy('Hasil analisis AI', 'AI analysis result')} className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 transition-colors">
+                        <div ref={resultRef} tabIndex={-1} role="region" aria-label={copy('Hasil analisis AI', 'AI analysis result')} className="terminal-result-panel overflow-hidden">
                             {/* Replaced Text Header with just the new component which handles its own UI */}
 
                             <div className="p-4 md:p-6">
@@ -982,7 +999,8 @@ export default function DashboardPage() {
                             </div>
                         </div>
                     )}
-
+                    <SentimentChart symbol={selectedCoin.symbol} />
+                  </div>
                 </div>
             ) : (
                 <div className="w-full py-12 md:py-24 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 mt-8 animate-in fade-in zoom-in duration-500">

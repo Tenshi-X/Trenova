@@ -14,6 +14,22 @@ const source = readFileSync(new URL('../src/components/AnalysisResultV2.tsx', im
 const compiled = ts.transpileModule(source, { compilerOptions: {
   module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX,
 } }).outputText;
+const componentCache = new Map();
+function requireComponent(name, language) {
+  if (name === '@/context/LanguageContext') return { useLanguage: () => ({ language, t: key => translations[language][key] }) };
+  if (!name.startsWith('@/')) return require(name);
+  const key = `${name}-${language}`;
+  if (componentCache.has(key)) return componentCache.get(key);
+  const extension = name.startsWith('@/components/') ? '.tsx' : '.ts';
+  const source = readFileSync(new URL(`../src/${name.slice(2)}${extension}`, import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: {
+    module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2017,
+  } }).outputText;
+  const mod = { exports: {} };
+  new Function('require', 'module', 'exports', compiled)(dependency => requireComponent(dependency, language), mod, mod.exports);
+  componentCache.set(key, mod.exports);
+  return mod.exports;
+}
 const input = parseAnalysisInput({ requestKey: '11111111-1111-4111-8111-111111111111', symbol: 'BTC',
   language: 'id', tradingStyle: 'intraday', timeframe: '1h', riskTolerance: 'Medium Risk',
   strategyFocus: 'All-Round', indicatorPref: 'Default', targetRR: '1:2' });
@@ -23,8 +39,7 @@ const market = { symbol: 'BTC', asOf: '2026-10-11T00:00:00Z', price: 100, change
 
 export function renderAnalysis(result, language = 'id') {
   const mod = { exports: {} };
-  new Function('require', 'module', 'exports', compiled)(name => name === '@/context/LanguageContext'
-    ? { useLanguage: () => ({ language, t: key => translations[language][key] }) } : require(name), mod, mod.exports);
+  new Function('require', 'module', 'exports', compiled)(name => requireComponent(name, language), mod, mod.exports);
   return renderToStaticMarkup(React.createElement(mod.exports.default, { result, coinName: 'Bitcoin' }));
 }
 

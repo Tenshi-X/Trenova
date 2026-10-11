@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { activatePendingSubscription, getUserUsage } from './actions';
 import DashboardChrome from './DashboardChrome';
 import { redirect } from 'next/navigation';
+import './terminal.css';
 
 export default async function DashboardLayout({
   children,
