@@ -11,11 +11,8 @@ export default function TerminalHero() {
     <section className="relative pt-20 pb-20 px-6 overflow-hidden bg-slate-950 font-mono text-slate-300">
       {/* Grid background */}
       <div className="absolute inset-0 z-0 opacity-10">
-        <div className="w-full h-full [background-image:linear-gradient(rgba(16,185,129,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,.06)_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="w-full h-full [background-image:linear-gradient(rgba(212,168,67,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(212,168,67,.06)_1px,transparent_1px)] [background-size:40px_40px]" />
       </div>
-      {/* Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(16,185,129,.08)_0%,transparent_70%)] z-0" />
-
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-12">
           {/* Hero Left */}
@@ -24,10 +21,10 @@ export default function TerminalHero() {
               {t('lp_hero_pill')}
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-4 leading-[1.1]" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white mb-4 leading-[1.1]">
               {t('lp_hero_title_prefix')}<span className="text-slate-600">{'//'}</span><wbr /><span className="text-neon">{t('lp_hero_title_accent')}</span>
             </h1>
-            <p className="text-lg text-white mb-2 leading-relaxed max-w-2xl" style={{ fontFamily: "'Syne', sans-serif" }}>
+            <p className="text-lg text-white mb-2 leading-relaxed max-w-2xl">
               {t('lp_hero_subtitle_1')}<br />{t('lp_hero_subtitle_2')}
             </p>
             <p className="text-[13px] text-slate-500 mb-8 leading-[1.8] max-w-xl">
@@ -41,13 +38,13 @@ export default function TerminalHero() {
             </div>
 
             <div className="flex flex-col sm:flex-row flex-wrap items-center gap-3 md:gap-4 mb-10">
-              <Link href="#pricing" className="w-full sm:w-auto px-6 py-3.5 bg-neon text-slate-950 rounded font-bold text-[12px] md:text-[13px] uppercase tracking-[0.1em] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 hover:bg-emerald-400">
+              <Link href="#pricing" className="w-full sm:w-auto px-6 py-3.5 bg-neon text-slate-950 rounded font-bold text-[12px] md:text-[13px] uppercase tracking-[0.1em] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 hover:bg-neon-dark">
                 {t('lp_hero_btn_start')} <ArrowRight size={16} />
               </Link>
               <Link href="#how" className="w-full sm:w-auto px-6 py-3.5 bg-transparent border border-slate-700 text-slate-300 rounded font-bold text-[12px] md:text-[13px] uppercase tracking-[0.1em] hover:border-neon hover:text-neon transition-all flex items-center justify-center gap-2 group">
                 <Play size={14} className="fill-current" /> {t('lp_hero_btn_how')}
               </Link>
-              <Link href="/sign-in" className="w-full sm:w-auto px-6 py-3.5 bg-neon/10 border border-neon/30 text-neon rounded font-bold text-[12px] md:text-[13px] uppercase tracking-[0.1em] hover:bg-neon hover:text-slate-950 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.15)] group">
+              <Link href="/sign-in" className="w-full sm:w-auto px-6 py-3.5 bg-neon/10 border border-neon/30 text-neon rounded font-bold text-[12px] md:text-[13px] uppercase tracking-[0.1em] hover:bg-neon hover:text-slate-950 transition-all flex items-center justify-center gap-2  group">
                 <LogIn size={14} /> {t('nav_login')}
               </Link>
             </div>
@@ -79,7 +76,7 @@ export default function TerminalHero() {
               <div className="text-lg font-bold text-emerald-400">+78.4%</div>
             </div>
             <div className="bg-slate-900 rounded border border-slate-800 shadow-2xl overflow-hidden relative">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,.03)_0%,transparent_70%)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,168,67,.03)_0%,transparent_70%)] pointer-events-none" />
               <div className="bg-slate-950 px-4 py-2.5 flex items-center justify-between border-b border-slate-800">
                 <div className="text-[10px] font-bold text-neon tracking-[0.08em]">TRENOVA//TERMINAL <span className="text-slate-600 font-normal text-[9px]">v2.0</span></div>
                 <div className="flex gap-1.5">
@@ -103,10 +100,10 @@ export default function TerminalHero() {
                   </div>
                   <svg width="100%" height="50" viewBox="0 0 400 50" preserveAspectRatio="none" className="block">
                     <defs>
-                      <linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4caf7d" stopOpacity="0.3" /><stop offset="100%" stopColor="#4caf7d" stopOpacity="0" /></linearGradient>
+                      <linearGradient id="cG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#68ce98" stopOpacity="0.3" /><stop offset="100%" stopColor="#68ce98" stopOpacity="0" /></linearGradient>
                     </defs>
                     <path d="M0,40 L40,36 L80,38 L100,24 L140,20 L180,22 L200,12 L240,14 L280,8 L320,11 L360,6 L400,4 L400,50 L0,50 Z" fill="url(#cG)" opacity="0.5" />
-                    <path d="M0,40 L40,36 L80,38 L100,24 L140,20 L180,22 L200,12 L240,14 L280,8 L320,11 L360,6 L400,4" fill="none" stroke="#4caf7d" strokeWidth="1.5" />
+                    <path d="M0,40 L40,36 L80,38 L100,24 L140,20 L180,22 L200,12 L240,14 L280,8 L320,11 L360,6 L400,4" fill="none" stroke="#68ce98" strokeWidth="1.5" />
                   </svg>
                 </div>
                 <div className="flex gap-px">

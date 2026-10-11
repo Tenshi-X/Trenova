@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Send, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function FeedbackPage() {
@@ -30,7 +29,7 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-neon selection:text-white pb-20 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-mono selection:bg-neon selection:text-slate-950 pb-20 transition-colors duration-300">
       
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 py-4 transition-colors duration-300">
@@ -42,17 +41,12 @@ export default function FeedbackPage() {
             <span className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-foreground dark:group-hover:text-white transition-colors text-sm md:text-base">{t('btn_back_home')}</span>
           </Link>
           <div className="flex items-center gap-4">
-             <div className="hidden sm:flex items-center gap-2">
+             <div className="flex items-center gap-2">
                 <LanguageSwitcher />
-                <ThemeToggle />
              </div>
              <div className="flex items-center gap-2">
                 <img src="/app-logo.png" alt="Trenova Logo" className="w-8 h-8 rounded-lg shadow-md object-contain bg-white dark:bg-slate-800" />
                 <span className="font-bold tracking-tight text-foreground hidden sm:block">TRENOVA</span>
-             </div>
-              {/* Mobile Toggle */}
-             <div className="sm:hidden flex items-center gap-2">
-                <ThemeToggle />
              </div>
           </div>
         </div>
@@ -61,7 +55,7 @@ export default function FeedbackPage() {
       <div className="container mx-auto px-6 max-w-2xl pt-32">
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100 dark:border-slate-800 transition-colors duration-300">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neon/10 text-neon text-xs font-bold uppercase tracking-wider mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-neon/30 bg-neon/10 text-neon text-xs font-bold uppercase tracking-wider mb-6">
               <MessageSquare size={14} />
               {t('feedback_pill')}
             </div>
@@ -124,7 +118,7 @@ export default function FeedbackPage() {
 
             <button
               type="submit"
-              className="w-full py-4 bg-neon text-white rounded-xl font-bold text-lg shadow-xl shadow-neon/30 hover:shadow-neon/50 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 bg-neon hover:bg-neon-dark text-slate-950 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2"
             >
               <Send size={20} />
               {t('feedback_send_btn')}

@@ -1,16 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import AppShell from "@/components/AppShell";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { Toaster } from "sonner";
 import MetaPixel from "@/components/MetaPixel";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -77,10 +72,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="id" className="dark">
       <body
         suppressHydrationWarning={true}
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex bg-background text-foreground overflow-hidden`}
+        className={`${geistMono.variable} antialiased min-h-screen flex bg-background text-foreground overflow-hidden`}
       >
         <LanguageProvider>
           <AppShell>

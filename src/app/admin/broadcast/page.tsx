@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { Mail, Send, ChevronLeft, CheckCircle2, AlertCircle, UserPlus } from 'lucide-react';
 import { sendBroadcastEmail, sendNewAccountEmail } from './actions';
 import { useLanguage } from '@/context/LanguageContext';
-import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import clsx from 'clsx';
 import { DEFAULT_ACCOUNT_SUBJECT, DEFAULT_ACCOUNT_CONTENT } from '@/lib/account-email';
@@ -79,7 +78,7 @@ export default function BroadcastEmailPage() {
   };
 
   return (
-    <div className="space-y-8 font-sans pb-20 p-6 md:p-8 pt-10">
+    <div className="admin-workspace space-y-6 pb-16 p-4 md:p-6">
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -92,7 +91,6 @@ export default function BroadcastEmailPage() {
         <div className="flex gap-2 sm:gap-4 items-center flex-wrap">
              <div className="flex items-center gap-2 mr-0 sm:mr-2 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-4">
                 <LanguageSwitcher />
-                <ThemeToggle />
              </div>
              <Link 
                 href="/admin"
@@ -199,10 +197,10 @@ export default function BroadcastEmailPage() {
                        <button 
                           type="submit"
                           disabled={loading}
-                          className="bg-neon text-white px-6 py-3 rounded-xl font-bold hover:bg-neon-dim shadow-md shadow-neon/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="bg-neon text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-neon-dark shadow-md shadow-neon/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                        >
                           {loading ? (
-                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span className="w-5 h-5 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin"></span>
                           ) : (
                             <Send size={18} />
                           )}
@@ -262,10 +260,10 @@ export default function BroadcastEmailPage() {
                        <button 
                           type="submit"
                           disabled={loading}
-                          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                          className="bg-neon text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-neon-dark transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                        >
                           {loading ? (
-                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span className="w-5 h-5 border-2 border-slate-950/30 border-t-slate-950 rounded-full animate-spin"></span>
                           ) : (
                             <Send size={18} />
                           )}

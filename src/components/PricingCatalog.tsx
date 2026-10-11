@@ -23,7 +23,7 @@ export default function PricingCatalog() {
       <h3 className="text-xl font-black text-foreground">{language === 'en' ? plan.title_en : plan.title_id}</h3>
       <p className="text-sm text-slate-500">{plan.duration_days} hari · {plan.analysis_quota ? `${plan.analysis_quota} analisis` : 'Perpanjang akses'}</p>
       <strong className="text-2xl text-foreground">Rp{plan.price_idr.toLocaleString('id-ID')}</strong>
-      <a href={plan.checkout_url} target="_blank" rel="noopener noreferrer" className="mt-auto rounded-xl bg-neon px-4 py-3 text-center font-bold text-white">Beli di toko</a>
+      <a href={plan.checkout_url} target="_blank" rel="noopener noreferrer" className="mt-auto rounded-xl bg-neon hover:bg-neon-dark px-4 py-3 text-center font-bold text-slate-950">Beli di toko</a>
     </article>)}
   </div>;
 }

@@ -102,7 +102,7 @@ export default function InsightsPage() {
   const audit = data && 'audit' in data ? data.audit ?? [] : [];
   const control = data && 'control' in data ? data.control : null;
 
-  return <main className="ux-panel max-w-6xl mx-auto p-4 sm:p-6 space-y-6 text-foreground">
+  return <main className="admin-workspace ux-panel max-w-6xl mx-auto p-4 sm:p-6 space-y-6 text-foreground">
     <Link href="/admin" className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-neon text-sm hover:bg-neon/10"><ArrowLeft size={16} />Panel admin</Link>
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div><h1 className="text-2xl sm:text-3xl font-black">Biaya & laporan</h1><p className="mt-1 text-sm text-slate-500">Pantau pemakaian, atur rilis analisis, dan tindak lanjuti laporan pengguna.</p></div>
@@ -135,7 +135,7 @@ export default function InsightsPage() {
       <p className="text-sm text-slate-500">Gunakan 100% untuk membuka analisis bagi semua pengguna aktif. Persentase lebih kecil membatasi rilis; akun evaluasi selalu disertakan saat analisis aktif.</p>
       <p className="rounded-lg bg-slate-50 dark:bg-slate-950 p-3 text-sm">{control.disabled_reason || 'Analisis aktif'} · batas Rp500, kurs pengaman minimal Rp20.000/US$</p>
       <fieldset disabled={saving} className="space-y-4 disabled:opacity-60">
-        <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 p-3 hover:border-neon transition-colors"><input name="enabled" type="checkbox" defaultChecked={control.enabled} className="h-4 w-4 accent-teal-600" />Aktifkan analisis</label>
+        <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-800 p-3 hover:border-neon transition-colors"><input name="enabled" type="checkbox" defaultChecked={control.enabled} className="h-4 w-4 accent-neon" />Aktifkan analisis</label>
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="block text-sm font-medium">Persentase pengguna (0–100)
             <input name="rollout" type="number" required min="0" max="100" step="1" defaultValue={control.rollout_percent} className="mt-2 block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-3" />
@@ -144,10 +144,10 @@ export default function InsightsPage() {
             <textarea name="evaluators" rows={3} defaultValue={(control.evaluation_user_ids ?? []).join('\n')} placeholder="Pisahkan ID akun dengan koma atau baris baru" className="mt-2 block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-3 text-sm" />
           </label>
         </div>
-        <label className="flex items-start gap-3 text-sm"><input name="quality" type="checkbox" defaultChecked={!!control.quality_approved_at} className="mt-0.5 h-4 w-4 accent-teal-600" />Catat evaluasi kualitas dan biaya sudah selesai (opsional)</label>
+        <label className="flex items-start gap-3 text-sm"><input name="quality" type="checkbox" defaultChecked={!!control.quality_approved_at} className="mt-0.5 h-4 w-4 accent-neon" />Catat evaluasi kualitas dan biaya sudah selesai (opsional)</label>
       </fieldset>
       <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
-        <button type="submit" disabled={saving || loading} className="inline-flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 font-bold text-white dark:text-slate-950 shadow-sm hover:bg-neon-dim hover:shadow-md">
+        <button type="submit" disabled={saving || loading} className="inline-flex items-center gap-2 rounded-xl bg-neon px-5 py-2.5 font-bold text-slate-950 shadow-sm hover:bg-neon-dim hover:shadow-md">
           {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}{saving ? 'Menyimpan…' : 'Simpan rilis'}
         </button>
         {dirty && !saving && <span className="text-xs text-amber-600 dark:text-amber-400">Ada perubahan belum disimpan</span>}
@@ -160,7 +160,7 @@ export default function InsightsPage() {
       </div>
       {!visibleReports.length && <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 py-10 text-center text-slate-500"><ClipboardList size={28} className="mx-auto mb-3 opacity-50" /><p className="text-sm">{reports.length ? 'Tidak ada laporan dengan status ini.' : 'Belum ada laporan pengguna.'}</p></div>}
       <div className="space-y-3">{visibleReports.map(report => <div key={report.id} aria-busy={!!busyReports[report.id]} className="rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col sm:flex-row items-start justify-between gap-4 text-sm hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : report.status === 'reviewed' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>{statusLabels[report.status as ReportStatus] ?? report.status}</span><span className="text-xs text-slate-500">{new Date(report.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</span></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className={`rounded px-2.5 py-1 text-xs font-bold ${report.status === 'resolved' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : report.status === 'reviewed' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>{statusLabels[report.status as ReportStatus] ?? report.status}</span><span className="text-xs text-slate-500">{new Date(report.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB</span></div>
           <p className="mt-3 break-words whitespace-pre-wrap">{report.reason}</p><p className="mt-2 text-xs text-slate-500 break-all">Analisis {report.analysis_id}</p>
         </div>
         <div className="flex flex-wrap shrink-0 gap-2">{(['reviewed', 'resolved'] as const).map(status => <button type="button" key={status} onClick={() => void changeStatus(report.id, status)}

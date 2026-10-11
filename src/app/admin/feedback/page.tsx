@@ -180,7 +180,7 @@ export default function AdminFeedbackPage() {
   };
 
   return (
-    <div className="space-y-8 font-sans pb-20 p-6 md:p-8 pt-10">
+    <div className="admin-workspace space-y-6 pb-16 p-4 md:p-6">
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -203,7 +203,7 @@ export default function AdminFeedbackPage() {
           <button
             onClick={handleHousekeeping}
             disabled={isHousekeeping}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neon text-white font-bold text-sm shadow-md shadow-neon/20 hover:bg-neon-dim transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-neon text-slate-950 font-bold text-sm shadow-md shadow-neon/20 hover:bg-neon-dim transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isHousekeeping ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
             {isHousekeeping ? t('bcast_sending') : t('afb_cleanup')}
@@ -348,7 +348,7 @@ export default function AdminFeedbackPage() {
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span
                         className={clsx(
-                          'px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                          'px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider',
                           CATEGORY_BADGE
                         )}
                       >
@@ -356,7 +356,7 @@ export default function AdminFeedbackPage() {
                       </span>
                       <span
                         className={clsx(
-                          'px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider',
+                          'px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider',
                           STATUS_BADGE[status]
                         )}
                       >

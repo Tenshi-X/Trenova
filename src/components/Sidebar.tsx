@@ -121,19 +121,23 @@ export default function Sidebar() {
           "px-3 pb-4 transition-all duration-500 overflow-hidden",
           "md:max-h-0 md:opacity-0 md:group-hover:max-h-20 md:group-hover:opacity-100"
         )}>
-          <div className="bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2.5 flex items-center gap-2">
-            <Shield size={14} className="text-amber-600 dark:text-amber-400" />
-            <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">{t('admin_role')}</span>
+          <div className="bg-neon/10 border border-neon/30 rounded-xl px-3 py-2.5 flex items-center gap-2">
+            <Shield size={14} className="text-neon" />
+            <span className="text-[10px] font-bold text-neon uppercase tracking-wider">{t('admin_role')}</span>
           </div>
         </div>
 
         <nav className="flex-1 px-3 space-y-2 overflow-y-auto overflow-x-hidden">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+            const isActive = pathname === item.href || (item.href === '/admin'
+              ? pathname?.startsWith('/admin/users/')
+              : pathname?.startsWith(item.href + '/'));
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
+                title={item.name}
                 className={clsx(
                   'flex items-center h-12 px-3 rounded-xl transition-all duration-300 relative overflow-hidden group/item shrink-0',
                   isActive
@@ -195,7 +199,7 @@ export default function Sidebar() {
                   "flex items-center px-3 py-3 h-10 text-xs text-slate-400 whitespace-nowrap overflow-hidden transition-all",
                   "justify-start md:justify-center md:group-hover:justify-start"
               )}>
-                <div className="w-2 h-2 shrink-0 rounded-full bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20" />
+                <div className="w-2 h-2 shrink-0 rounded-full bg-neon ring-4 ring-neon/10" />
                 <span className={clsx(
                     "ml-3 transition-opacity duration-500 delay-100",
                     isMobileOpen ? "opacity-100" : "opacity-0",

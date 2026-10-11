@@ -12,7 +12,7 @@ export default function TerminalCredibility() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
             {t('lp_cred_pill')}
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {t('lp_cred_title')}<br /><span className="text-neon">{t('lp_cred_title_accent')}</span>
           </h2>
         </div>
@@ -26,7 +26,7 @@ export default function TerminalCredibility() {
                 <div className="absolute -bottom-1 -right-1 w-[18px] h-[18px] bg-emerald-500 text-slate-950 text-[10px] font-bold rounded-full flex items-center justify-center">✓</div>
               </div>
               <div>
-                <div className="text-lg font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>{t('lp_cred_brand')}</div>
+                <div className="text-lg font-bold text-white">{t('lp_cred_brand')}</div>
                 <div className="text-[11px] text-neon/70 tracking-[0.06em] mb-1">{t('lp_cred_brand_sub')}</div>
                 <div className="text-[10px] text-slate-600">
                   {t('lp_cred_ig_label')} <a href="https://www.instagram.com/tradewithtrenovaterminal.ai?igsh=dDQ5ODM5cDFsdHIw" className="text-neon hover:underline" target="_blank" rel="noopener noreferrer">@tradewithtrenovaterminal.ai</a>

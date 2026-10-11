@@ -12,7 +12,6 @@ import {
 import clsx from 'clsx';
 import { getUserProfiles, getUserProfile, setUserEntitlement, deleteUserProfile, UserProfile } from './actions';
 import { toJakartaDateTimeInput, fromJakartaDateTimeInput } from '@/lib/entitlements';
-import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/context/LanguageContext';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -136,7 +135,7 @@ export default function AdminPage() {
   }, [searchQuery, itemsPerPage]);
 
   return (
-    <div className="space-y-8 font-sans pb-20 p-6 md:p-8 pt-10">
+    <div className="admin-workspace space-y-6 pb-16 p-4 md:p-6">
       
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -149,11 +148,10 @@ export default function AdminPage() {
         <div className="flex gap-2 sm:gap-4 items-center flex-wrap">
              <div className="flex items-center gap-2 mr-0 sm:mr-2 border-r border-slate-200 dark:border-slate-800 pr-2 sm:pr-4">
                 <LanguageSwitcher />
-                <ThemeToggle />
              </div>
              <Link 
                 href="/admin/users/create"
-                className="bg-neon hover:bg-neon-dim text-white px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 font-semibold shadow-md transition-all hover:-translate-y-0.5 text-sm"
+                className="bg-neon hover:bg-neon-dark text-slate-950 px-3 sm:px-4 py-2 rounded-lg flex items-center gap-2 font-semibold shadow-md transition-all hover:-translate-y-0.5 text-sm"
              >
                 <UserPlus size={18} />
                 <span className="hidden sm:inline">{t('btn_create_auth')}</span>
@@ -182,13 +180,13 @@ export default function AdminPage() {
       <div className="flex flex-wrap gap-3 text-sm font-bold">
         <Link href="/admin/insights" className="rounded-lg border border-neon px-4 py-2 text-neon">Biaya & laporan</Link>
       </div>
-      {error && <p role="alert" className="rounded-lg bg-rose-500/10 p-3 text-rose-600">{error}</p>}
+      {error && <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-rose-300">{error}</p>}
 
       {/* Activity Monitoring Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl text-blue-600 dark:text-blue-400">
+              <div className="p-3 bg-neon/10 border border-neon/20 rounded-xl text-neon">
                  <Database size={24} />
               </div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('card_total_users')}</span>
@@ -212,7 +210,7 @@ export default function AdminPage() {
 
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600 dark:text-purple-400">
+              <div className="p-3 bg-neon/10 border border-neon/20 rounded-xl text-neon">
                  <RefreshCw size={24} />
               </div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('card_total_req')}</span>
@@ -308,8 +306,8 @@ export default function AdminPage() {
                       <td className="px-6 py-4">
                          <span className={clsx(
                               "px-2.5 py-1 rounded text-xs font-medium border uppercase",
-                              profile.role === 'admin' ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" :
-                              "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                              profile.role === 'admin' ? "bg-neon/10 text-neon border-neon/30" :
+                              "bg-slate-800 text-slate-300 border-slate-700"
                             )}>
                               {profile.role}
                          </span>
@@ -402,7 +400,7 @@ export default function AdminPage() {
                                    className={clsx(
                                        "w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors",
                                        currentPage === page
-                                           ? "bg-neon text-white shadow-md"
+                                           ? "bg-neon text-slate-950 shadow-md"
                                            : "text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800"
                                    )}
                                >
@@ -490,7 +488,7 @@ export default function AdminPage() {
                       <button 
                          onClick={handleSaveChanges}
                          disabled={!editReady || editLoading || editSaving}
-                         className="flex-1 py-2.5 rounded-lg bg-neon text-white font-bold hover:bg-neon-dim shadow-md transition-colors flex items-center justify-center gap-2"
+                         className="flex-1 py-2.5 rounded-lg bg-neon text-slate-950 font-bold hover:bg-neon-dark shadow-md transition-colors flex items-center justify-center gap-2"
                       >
                          <Save size={18} />
                          {editSaving ? t('admin_saving_profile') : t('btn_save_changes')}

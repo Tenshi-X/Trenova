@@ -2,7 +2,6 @@
 
 import { Clock, AlertTriangle, Zap } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { TerminalThemeProvider } from '@/components/ThemeProvider';
 import MobileDashboardSidebar from './MobileDashboardSidebar';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -18,7 +17,7 @@ export default function DashboardChrome({ children, daysLeft, isExpired, tokenRe
   showSubBadge: boolean;
 }) {
   const { language, t } = useLanguage();
-  return <TerminalThemeProvider>
+  return (
     <div className="terminal-dashboard dark">
       <header className="terminal-topbar">
         <div className="terminal-brand">
@@ -41,5 +40,5 @@ export default function DashboardChrome({ children, daysLeft, isExpired, tokenRe
       <main className="terminal-main">{children}</main>
       <footer className="terminal-footer">{'TRENOVA // TRADING INTELLIGENCE'} <span>{language === 'id' ? 'Data pasar · Analisis · Rencana transaksi' : 'Market data · Analysis · Trade plans'}</span></footer>
     </div>
-  </TerminalThemeProvider>;
+  );
 }

@@ -24,7 +24,7 @@ export default function ResetPasswordPage() {
       <p className="text-sm text-slate-400">Gunakan minimal 12 karakter.</p>
       <input type="password" minLength={12} required value={password} onChange={(event) => setPassword(event.target.value)}
         autoComplete="new-password" className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3" />
-      <button disabled={busy} className="w-full rounded-lg bg-neon p-3 font-bold text-white disabled:opacity-50">Simpan kata sandi</button>
+      <button disabled={busy} className="w-full rounded-lg bg-neon hover:bg-neon-dark p-3 font-bold text-slate-950 disabled:opacity-50">Simpan kata sandi</button>
       {message && <p role="status" className="text-sm">{message}</p>}
     </form>
   </main>;

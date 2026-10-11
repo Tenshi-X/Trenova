@@ -25,7 +25,7 @@ export default function CreateUserPage() {
     router.refresh();
   };
 
-  return <main className="max-w-xl mx-auto p-6 space-y-6">
+  return <main className="admin-workspace max-w-xl mx-auto p-6 space-y-6">
     <Link href="/admin" className="text-sm text-slate-500 hover:underline">← Kembali ke admin</Link>
     <div>
       <h1 className="text-2xl font-bold">Undang pengguna</h1>
@@ -48,8 +48,8 @@ export default function CreateUserPage() {
           <input className="mt-1 w-full p-3 rounded-lg border bg-transparent" type="number" min="0" value={quota} onChange={e => setQuota(Number(e.target.value))} />
         </label>
       </div>
-      {message && <p role="alert" className="text-sm text-rose-600">{message}</p>}
-      <button disabled={busy} className="w-full p-3 rounded-lg bg-emerald-600 text-white font-semibold disabled:opacity-50">
+      {message && <p role="alert" className="text-sm text-rose-300">{message}</p>}
+      <button disabled={busy} className="w-full p-3 rounded-lg bg-neon hover:bg-neon-dark text-slate-950 font-semibold disabled:opacity-50">
         {busy ? 'Mengirim undangan…' : 'Kirim undangan'}
       </button>
     </form>

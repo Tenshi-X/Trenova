@@ -5,7 +5,6 @@ import { Menu, X, Lock, CheckCircle2, ArrowRight, LogIn, MessageCircle } from 'l
 import { useState, useEffect } from 'react';
 
 import { useLanguage } from '@/context/LanguageContext';
-import ThemeToggle from '@/components/ThemeToggle';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import MarqueeTicker from '@/components/MarqueeTicker';
 
@@ -22,16 +21,19 @@ import TerminalFooter from '@/components/TerminalFooter';
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
+    const scrollContainer = document.getElementById('app-scroll');
+    const handleContainerScroll = () => setScrolled((scrollContainer?.scrollTop ?? 0) > 50);
+    scrollContainer?.addEventListener('scroll', handleContainerScroll);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => { window.removeEventListener('scroll', handleScroll); scrollContainer?.removeEventListener('scroll', handleContainerScroll); };
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 selection:bg-neon selection:text-white pb-0">
+    <div className="min-h-screen bg-slate-950 selection:bg-neon selection:text-slate-950 pb-0">
 
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-slate-950 border-b border-slate-800 shadow-sm ${scrolled ? 'py-4' : 'py-5'}`}>
@@ -39,7 +41,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3 justify-start relative z-50">
             <img src="/app-logo.png" alt="Trenova Logo" className="w-8 h-8 object-contain" />
-            <span className="text-xl font-bold tracking-tight text-white font-mono uppercase">TRENOVA</span>
+            <span className="site-brand text-sm sm:text-lg">TRENOVA <span className="hidden sm:inline">{'//'} TERMINAL</span></span>
           </div>
 
           <div className="flex items-center gap-4 justify-end">
@@ -49,7 +51,6 @@ export default function LandingPage() {
 
             <div className="hidden md:flex items-center gap-3 mr-2 border-r border-slate-800 pr-4">
                <LanguageSwitcher />
-               <ThemeToggle />
             </div>
 
             <Link href="/login" className="hidden sm:flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-neon transition-colors font-mono">
@@ -57,14 +58,15 @@ export default function LandingPage() {
               {t('nav_login')}
             </Link>
 
-            <Link href="/register" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-emerald-400 transition-all shadow-neon/20 font-mono">
+            <Link href="/register" className="hidden sm:block bg-neon text-slate-950 px-5 py-2.5 rounded text-sm font-bold hover:bg-neon-dark transition-all shadow-neon/20 font-mono">
               &gt; {t('nav_mobile_cta')}
             </Link>
 
              <div className="md:hidden flex items-center gap-2 relative z-50">
                <LanguageSwitcher />
-               <ThemeToggle />
                <button
+                  aria-label={mobileMenuOpen ? (language === 'id' ? 'Tutup menu' : 'Close menu') : (language === 'id' ? 'Buka menu' : 'Open menu')}
+                  aria-expanded={mobileMenuOpen}
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="p-2 ml-2 text-slate-400 hover:bg-slate-800 rounded transition-colors"
                >
@@ -119,11 +121,11 @@ export default function LandingPage() {
       <section id="pricing" className="py-24 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
          <div className="container mx-auto px-6 max-w-6xl">
             <div className="text-center mb-16 max-w-3xl mx-auto">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-6">
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded border border-neon/30 bg-neon/10 text-neon text-xs font-bold uppercase tracking-wider mb-6">
                   <Lock size={14} />
                   {t('pricing_pill')}
                </div>
-               <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">{t('pricing_title')}</h2>
+               <h2 className="text-3xl md:text-4xl font-bold text-foreground uppercase mb-6">{t('pricing_title')}</h2>
                <p className="text-slate-500 dark:text-slate-400 text-lg">{t('pricing_desc')}</p>
             </div>
 
@@ -139,11 +141,11 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
                {/* Product 1 */}
-               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+               <div className="bg-white dark:bg-card border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
                   <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                   <div className="mb-6 relative z-10">
                      <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod1_title')}</h3>
-                     <p className="text-emerald-500 font-semibold text-sm mt-1">{t('plan_prod1_sub')}</p>
+                     <p className="text-neon font-semibold text-sm mt-1">{t('plan_prod1_sub')}</p>
                   </div>
                   <div className="mb-8 space-y-4 flex-grow text-sm relative z-10">
                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-3">
@@ -176,9 +178,9 @@ export default function LandingPage() {
                </div>
 
                {/* Product 2 */}
-               <div className="bg-slate-50 dark:bg-[#0f172a] border border-neon/50 dark:border-neon rounded-3xl p-6 hover:shadow-2xl hover:shadow-neon/20 transition-all duration-300 flex flex-col relative transform lg:-translate-y-4 shadow-xl group">
+               <div className="bg-slate-50 dark:bg-card border border-neon/50 dark:border-neon rounded-3xl p-6 hover:shadow-2xl hover:shadow-neon/20 transition-all duration-300 flex flex-col relative transform  shadow-xl group">
                   <div className="absolute inset-0 bg-gradient-to-b from-neon/5 to-transparent rounded-3xl pointer-events-none"></div>
-                  <div className="absolute top-0 right-0 bg-neon text-white text-[11px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
+                  <div className="absolute top-0 right-0 bg-neon text-slate-950 text-[11px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
                      POPULAR
                   </div>
                   <div className="mb-6 pt-2 relative z-10">
@@ -208,7 +210,7 @@ export default function LandingPage() {
                         href="https://s.shopee.co.id/70F6J5qP1j"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-3.5 bg-neon hover:bg-neon-dim text-white rounded-xl font-bold transition-all text-center text-sm flex items-center justify-center gap-2 shadow-lg shadow-neon/30 active:scale-95"
+                        className="w-full py-3.5 bg-neon hover:bg-neon-dark text-slate-950 rounded-xl font-bold transition-all text-center text-sm flex items-center justify-center gap-2 shadow-lg shadow-neon/30 active:scale-95"
                      >
                         {t('plan_btn')} <ArrowRight size={18} />
                      </a>
@@ -216,7 +218,7 @@ export default function LandingPage() {
                </div>
 
                {/* Product 3 */}
-               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+               <div className="bg-white dark:bg-card border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
                   <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                   <div className="mb-6 relative z-10">
                      <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod3_title')}</h3>
@@ -253,7 +255,7 @@ export default function LandingPage() {
                </div>
 
                {/* Product 4 */}
-               <div className="bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
+               <div className="bg-white dark:bg-card border border-slate-200 dark:border-slate-800 rounded-3xl p-6 hover:shadow-2xl hover:border-neon/30 hover:-translate-y-1 transition-all duration-300 flex flex-col relative group">
                   <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent dark:from-slate-800/20 dark:to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                   <div className="mb-6 relative z-10">
                      <h3 className="text-xl font-extrabold text-foreground uppercase tracking-wide">{t('plan_prod4_title')}</h3>
@@ -323,7 +325,7 @@ export default function LandingPage() {
                      href="https://t.me/TRENOVATERMINAL"
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#229ED9] hover:bg-[#1CA0DE] text-white rounded-xl font-bold transition-all shadow-lg shadow-[#229ED9]/20 hover:shadow-[#229ED9]/40 active:scale-95"
+                     className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-neon hover:bg-neon-dark text-slate-950 rounded-xl font-bold transition-all shadow-lg active:scale-95"
                   >
                      <MessageCircle size={20} /> {t('lp_contact_btn')}
                   </a>
