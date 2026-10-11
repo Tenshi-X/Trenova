@@ -54,6 +54,10 @@ test('BTC BNB XRP work on the public-data host for every supported timeframe', a
       assert.equal(snapshot.timeframe, timeframe);
       assert.equal(snapshot.price, 100);
       assert.ok(snapshot.recentCandles.every(candle => candle.closeTime <= Date.now()));
+      assert.equal(snapshot.recentCandles.length, 24);
+      assert.equal(snapshot.ema50, 100);
+      assert.equal(snapshot.structure.support, 98);
+      assert.equal(snapshot.structure.resistance, 102);
       assert.equal(snapshot.fundingRate, null);
       assert.equal(snapshot.openInterestUsd, null);
       assert.equal(snapshot.fearGreed, null);

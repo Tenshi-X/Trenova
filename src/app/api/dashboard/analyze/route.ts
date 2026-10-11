@@ -3,12 +3,13 @@ import sharp from 'sharp';
 import { getSessionProfile, isActiveSubscriber } from '@/lib/authz';
 import {
   ANALYSIS_MODEL, MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, THINKING_BUDGET,
-  RESPONSE_SCHEMA, buildPrompt, estimateInputUpperBound, parseAnalysisInput,
-  safeWaitAnalysis, validateModelAnalysis, worstCaseCostIdr,
+  RESPONSE_SCHEMA, buildPrompt, parseAnalysisInput,
+  outputBudgetForCost, worstCaseCostIdr,
   isRolloutAllowed,
   CONFIRMATION_TIMEFRAME,
 } from '@/lib/analysis/core';
 import { getMarketSnapshot, getTrendConfirmation } from '@/lib/analysis/market';
+import { buildTechnicalAnalysis, enrichTechnicalAnalysis, technicalFallback } from '@/lib/analysis/report';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
 
   if (input.image && profile.enabled_features?.image_upload === false) return jsonError('Paket ini tidak menyertakan unggah chart.', 403);
 
-  // Limit repeated provider failures without consuming a customer's purchased credits.
+  // Bound repeated attempts, including technical reports delivered during AI outages.
   const recent = new Date(Date.now() - 10 * 60_000).toISOString();
   const { count: recentAttempts } = await admin.from('analysis_runs')
     .select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', recent);
@@ -115,16 +116,46 @@ export async function POST(request: Request) {
     return jsonError('Data konfirmasi timeframe lebih tinggi tidak tersedia atau kedaluwarsa. Coba lagi nanti atau nonaktifkan konfirmasi.', 422);
   }
   if (confirmation) market.confirmation = confirmation;
-  const prompt = buildPrompt(input, market);
-  const upperInput = estimateInputUpperBound(prompt, !!imageData);
+  let technical;
+  try { technical = buildTechnicalAnalysis(input, market); }
+  catch { return jsonError('Data pasar belum mendukung rencana Entry/SL/TP yang layak. Kuota belum digunakan; coba lagi nanti.', 422); }
+  const prompt = buildPrompt(input, market, technical.setups);
   const maxCost = Math.min(500, Number(control.max_cost_idr));
   const fxRate = Math.max(20_000, Number(control.fx_safety_rate));
-  if (upperInput > MAX_INPUT_TOKENS || !Number.isFinite(maxCost) || !Number.isFinite(fxRate)
-    || worstCaseCostIdr(upperInput, MAX_OUTPUT_TOKENS, fxRate) > maxCost) {
-    return jsonError('Input melebihi batas biaya analisis. Coba tanpa gambar atau ringkas konteks.', 413);
-  }
+  if (!Number.isFinite(maxCost) || maxCost <= 0 || !Number.isFinite(fxRate)) return jsonError('Konfigurasi biaya tidak valid.', 503);
   const key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_PREMIUM;
   if (!key) return jsonError('Layanan analisis belum dikonfigurasi.', 503);
+
+  const parts: Array<Record<string, unknown>> = [{ text: prompt }];
+  if (imageData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageData } });
+  const generationRequest = {
+    contents: [{ role: 'user', parts }],
+    generationConfig: {
+      temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS,
+      thinkingConfig: { thinkingBudget: THINKING_BUDGET },
+      responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA,
+    },
+  };
+  // Count the entire request, including image/schema, before reserving a credit.
+  // This allows useful context without treating every UTF-8 byte as a token.
+  let upperInput: number;
+  try {
+    const counted = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${ANALYSIS_MODEL}:countTokens`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({ generateContentRequest: { model: `models/${ANALYSIS_MODEL}`, ...generationRequest } }),
+      signal: AbortSignal.timeout(4000),
+    });
+    const metadata = await counted.json();
+    if (!counted.ok || !Number.isInteger(metadata?.totalTokens) || metadata.totalTokens <= 0) throw new Error('invalid_token_count');
+    upperInput = metadata.totalTokens + 256;
+  } catch {
+    return jsonError('Pemeriksaan batas biaya AI belum tersedia. Kuota belum digunakan; coba lagi.', 503);
+  }
+  const outputBudget = outputBudgetForCost(upperInput, maxCost, fxRate);
+  if (upperInput > MAX_INPUT_TOKENS || outputBudget === null) {
+    return jsonError('Input melebihi batas biaya analisis. Coba tanpa gambar atau ringkas konteks.', 413);
+  }
+  generationRequest.generationConfig.maxOutputTokens = outputBudget;
 
   const { data: reservation, error: reserveError } = await admin.rpc('reserve_analysis', {
     p_user_id: user.id, p_request_key: input.requestKey,
@@ -145,58 +176,62 @@ export async function POST(request: Request) {
   const runId = reservation.run_id as string;
   let usage: Usage = { input: null, output: null, thinking: null, cost: null };
   const fail = async (code: string) => {
-    await admin.rpc('fail_analysis', {
+    const { error, data } = await admin.rpc('fail_analysis', {
       p_user_id: user.id, p_run_id: runId, p_error_code: code,
       p_input_tokens: usage.input, p_output_tokens: usage.output,
       p_thinking_tokens: usage.thinking, p_cost_idr: usage.cost,
     });
+    if (error) console.error('Analysis quota release failed', error);
+    return !error && !!data;
   };
-
+  const pause = async (reason: string) => {
+    try {
+      const { error } = await admin.from('analysis_control').update({ enabled: false,
+        disabled_reason: reason, updated_at: new Date().toISOString() }).eq('singleton', true);
+      if (error) console.error('Analysis cost pause failed', error);
+    } catch (error) { console.error('Analysis cost pause failed', error); }
+  };
+  let result = technicalFallback(technical, 'provider_unavailable');
   try {
-    const parts: Array<Record<string, unknown>> = [{ text: prompt }];
-    if (imageData) parts.push({ inlineData: { mimeType: 'image/jpeg', data: imageData } });
     const provider = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${ANALYSIS_MODEL}:generateContent`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS,
-          thinkingConfig: { thinkingBudget: THINKING_BUDGET },
-          responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA,
-        },
-      }),
-      signal: AbortSignal.timeout(48_000),
+      body: JSON.stringify(generationRequest),
+      signal: AbortSignal.timeout(40_000),
     });
-    const payload: unknown = await provider.json();
+    let payload: unknown;
+    try { payload = await provider.json(); }
+    catch {
+      if (provider.ok) await pause('Provider tidak mengembalikan respons/metadata token yang dapat dibaca.');
+      throw new Error('unreadable_provider_response');
+    }
     const response = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
     usage = parseUsage(response, fxRate);
-    if (provider.ok && (usage.cost === null || usage.input! > MAX_INPUT_TOKENS
-      || usage.output! > MAX_OUTPUT_TOKENS || usage.cost > maxCost)) {
-      await admin.from('analysis_control').update({ enabled: false,
-        disabled_reason: usage.cost === null ? 'Provider tidak mengembalikan metadata token.'
-          : `Biaya/token aktual melewati batas: Rp${usage.cost.toFixed(2)}; ${usage.input}/${usage.output} token`,
-        updated_at: new Date().toISOString() }).eq('singleton', true);
-      await fail('cost_limit_exceeded');
-      return jsonError('Analisis dijeda karena biaya/token melebihi batas. Kuota dikembalikan.', 503);
+    if (provider.ok && (usage.cost === null || usage.input! > upperInput
+      || usage.output! > outputBudget || usage.cost > maxCost)) {
+      await pause(usage.cost === null ? 'Provider tidak mengembalikan metadata token.'
+        : `Biaya/token aktual melewati batas: Rp${usage.cost.toFixed(2)}; ${usage.input}/${usage.output} token`);
+      result = technicalFallback(technical, 'cost_guard');
+    } else if (provider.ok) {
+      const candidates = Array.isArray(response.candidates) ? response.candidates : [];
+      const candidate = candidates[0] && typeof candidates[0] === 'object' ? candidates[0] as Record<string, unknown> : {};
+      const content = candidate.content && typeof candidate.content === 'object' ? candidate.content as Record<string, unknown> : {};
+      const responseParts = Array.isArray(content.parts) ? content.parts : [];
+      // Thinking parts are not user-facing analysis.
+      const text = responseParts.filter(part => part && typeof part === 'object' && !(part as Record<string, unknown>).thought)
+        .map(part => (part as Record<string, unknown>).text).filter((part): part is string => typeof part === 'string').join('');
+      if (candidate.finishReason !== 'STOP') result = technicalFallback(technical, 'incomplete_response');
+      else {
+        try { result = enrichTechnicalAnalysis(JSON.parse(text), technical, market); }
+        catch { result = technicalFallback(technical, 'invalid_response'); }
+      }
     }
-    if (!provider.ok) {
-      await fail(`provider_${provider.status}`);
-      return jsonError('Layanan AI sedang tidak tersedia. Kuota Anda dikembalikan.', 502);
-    }
-    const candidates = Array.isArray(response.candidates) ? response.candidates : [];
-    const candidate = candidates[0] && typeof candidates[0] === 'object' ? candidates[0] as Record<string, unknown> : {};
-    const content = candidate.content && typeof candidate.content === 'object' ? candidate.content as Record<string, unknown> : {};
-    const responseParts = Array.isArray(content.parts) ? content.parts : [];
-    const text = responseParts.map((part) => part && typeof part === 'object' ? (part as Record<string, unknown>).text : '')
-      .filter((part): part is string => typeof part === 'string').join('');
-    let result;
-    try { result = validateModelAnalysis(JSON.parse(text), input, market); }
-    catch {
-      await fail('invalid_model_result');
-      return NextResponse.json({ result: safeWaitAnalysis(input, market,
-        input.language === 'en' ? 'AI output could not be validated; your credit was returned.'
-          : 'Hasil AI tidak lolos pemeriksaan; kuota Anda dikembalikan.'), charged: false });
-    }
+  } catch (error) {
+    console.error('AI unavailable; delivering technical report', error);
+  }
+
+  // A credit pays for the saved report. AI failures still deliver a clearly labelled
+  // technical report; only failure to persist any report releases the reservation.
+  try {
     const { data: resultId, error: finishError } = await admin.rpc('finish_analysis', {
       p_user_id: user.id, p_run_id: runId, p_analysis: result,
       p_symbol: input.symbol, p_coin_name: input.coinName,
@@ -204,11 +239,24 @@ export async function POST(request: Request) {
       p_input_tokens: usage.input, p_output_tokens: usage.output,
       p_thinking_tokens: usage.thinking, p_cost_idr: usage.cost,
     });
-    if (finishError) throw finishError;
+    if (finishError || !resultId) throw finishError ?? new Error('missing_result_id');
     return NextResponse.json({ result, id: resultId, charged: true });
   } catch (error) {
-    console.error('Analysis failed', error);
-    await fail('analysis_exception');
-    return jsonError('Analisis gagal. Kuota Anda dikembalikan.', 502);
+    console.error('Analysis report save failed', error);
+    // A transport error can occur after the database committed. Recover that result
+    // instead of refunding/re-generating a report which is already in history.
+    try {
+      const { data: completed } = await admin.from('analysis_runs').select('status,result_id')
+        .eq('id',runId).eq('user_id',user.id).maybeSingle();
+      if (completed?.status === 'completed' && completed.result_id) {
+        const { data: saved } = await admin.from('analysis_results').select('id,analysis_json')
+          .eq('id',completed.result_id).eq('user_id',user.id).single();
+        if (saved) return NextResponse.json({ result: saved.analysis_json, id: saved.id, charged: true, reused: true });
+        return jsonError('Laporan tersimpan, tetapi belum dapat dimuat. Buka kembali riwayat analisis.', 503);
+      }
+    } catch (recoveryError) { console.error('Analysis report recovery failed', recoveryError); }
+    const refunded = await fail('report_save_failed').catch(() => false);
+    return jsonError(refunded ? 'Laporan gagal disimpan. Kuota Anda dikembalikan.'
+      : 'Laporan belum dapat disimpan. Pemulihan kuota masih diproses; coba lagi nanti.', 502);
   }
 }

@@ -55,7 +55,7 @@ export default function HistoryPage() {
       const v2 = raw && typeof raw === 'object' && (raw as AnalysisV2).version === 2 ? raw as AnalysisV2 : null;
       return <article key={row.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
         <button className="w-full text-left flex justify-between" onClick={() => setExpanded(expanded === row.id ? null : row.id)}>
-          <div><strong>{row.coin_name || row.coin_symbol || 'Analisis lama'}</strong><p className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString('id-ID')} · {v2?.verdict || 'Arsip'}</p></div>
+          <div><strong>{row.coin_name || row.coin_symbol || 'Analisis lama'}</strong><p className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString('id-ID')} · {v2?.verdict === 'WAIT' && v2.setups.length ? `Rencana ${v2.setups[0].direction} bersyarat` : v2?.verdict || 'Arsip'}</p></div>
           <span>{expanded === row.id ? 'Tutup' : 'Lihat'}</span>
         </button>
         {expanded === row.id && <div className="space-y-4 border-t pt-4">
@@ -69,7 +69,7 @@ export default function HistoryPage() {
               setBusy(true); const note = (document.getElementById(`note-${row.id}`) as HTMLTextAreaElement).value;
               const result = await saveHistoryNote(row.id, note); setMessage(result.error || 'Catatan tersimpan.'); await load(); setBusy(false);
             }}>Simpan catatan</button>
-            {v2 && v2.verdict !== 'WAIT' && <button disabled={busy} className="rounded-lg border px-3 py-2" onClick={async () => {
+            {v2 && v2.verdict !== 'WAIT' && !v2.setups.some(setup => setup.execution === 'CONDITIONAL') && <button disabled={busy} className="rounded-lg border px-3 py-2" onClick={async () => {
               setBusy(true); const result = await checkHistoryOutcome(row.id);
               setMessage(result.error || 'Pemeriksaan selesai.'); await load(); setBusy(false);
             }}>Periksa target/stop</button>}
@@ -80,6 +80,7 @@ export default function HistoryPage() {
               setMessage(result.error || 'Laporan dikirim ke admin.'); setBusy(false);
             }}>Laporkan hasil keliru</button>
           </div>
+          {v2?.setups.some(setup => setup.execution === 'CONDITIONAL') && <p className="text-xs text-slate-500">Pemeriksaan TP/SL otomatis belum tersedia untuk rencana bersyarat karena pemicu masuk perlu dikonfirmasi terlebih dahulu.</p>}
           {outcomeText(row.outcome_json) && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 p-3">{outcomeText(row.outcome_json)}. Ini simulasi dari candle, dengan target utama TP1; urutan sentuhan dalam satu candle dapat tidak pasti.</p>}
         </div>}
       </article>;

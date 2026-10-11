@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { worstCaseCostIdr } from '../src/lib/analysis/core.ts';
+import { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, worstCaseCostIdr } from '../src/lib/analysis/core.ts';
 
 const file = process.argv[2];
 if (!file) throw new Error('Provide a file containing real, human-reviewed old/new sample pairs.');
@@ -19,7 +19,7 @@ for (const sample of samples) {
   if (![usage?.input,usage?.candidate,usage?.thinking].every((value) => Number.isInteger(value) && value >= 0)) throw new Error(`${sample.id}: invalid actual token metadata`);
   const output = usage.candidate + usage.thinking;
   const cost = worstCaseCostIdr(usage.input,output,20000);
-  if (usage.input > 4000 || output > 1900 || cost > 500) failures.push(`${sample.id}: token/cost limit exceeded`);
+  if (usage.input > MAX_INPUT_TOKENS || output > MAX_OUTPUT_TOKENS || cost > 500) failures.push(`${sample.id}: token/cost limit exceeded`);
 }
 if (failures.length) { console.error(failures.join('\n')); process.exitCode = 1; }
 else console.log(`${samples.length} human-reviewed pairs passed quality and cost checks.`);

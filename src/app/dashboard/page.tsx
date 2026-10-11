@@ -13,7 +13,7 @@ import TradingViewWidget from '@/components/TradingViewWidget';
 import SentimentChart from '@/components/SentimentChart';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import AnalysisResultV2 from '@/components/AnalysisResultV2';
-import { CONFIRMATION_TIMEFRAME, type AnalysisInput, type AnalysisV2, type Timeframe } from '@/lib/analysis/core';
+import { CONFIRMATION_TIMEFRAME, MAX_CONTEXT_CHARS, type AnalysisInput, type AnalysisV2, type Timeframe } from '@/lib/analysis/core';
 import { getPreferences, savePreferences, type UserPreset } from './preferences/actions';
 import LiveMarketTable from '@/components/LiveMarketTable';
 import CryptoNews from '@/components/CryptoNews';
@@ -376,7 +376,7 @@ export default function DashboardPage() {
       const options = { symbol: selectedCoin.symbol.toUpperCase(), coinName: selectedCoin.name,
         language, tradingStyle, timeframe, riskTolerance, strategyFocus, indicatorPref, targetRR,
         marketType, directionPreference, higherTimeframeConfirmation,
-        context: userPrompt.slice(0,400), image };
+        context: userPrompt.slice(0, MAX_CONTEXT_CHARS), image };
       const fingerprint = JSON.stringify(options);
       if (pendingAnalysisRef.current?.fingerprint !== fingerprint) {
         pendingAnalysisRef.current = { fingerprint, key: crypto.randomUUID() };
@@ -395,7 +395,8 @@ export default function DashboardPage() {
       setChatResult(payload.result as AnalysisV2);
       // A usage refresh failure must not turn a completed analysis into an error.
       void fetchUsage().catch(() => {});
-      toast.success(payload.charged === false ? 'Hasil belum tervalidasi; kuota dikembalikan.' : t('dash_toast_done'));
+      toast.success(payload.result?.provenance?.kind === 'technical'
+        ? copy('Rencana teknikal otomatis tersimpan.', 'Automatic technical plan saved.') : t('dash_toast_done'));
       router.refresh();
     } catch (error) {
       setAnalysisIssue(error instanceof Error ? error.message : t('dash_toast_fail'));
@@ -759,13 +760,13 @@ export default function DashboardPage() {
                                 <div className="relative">
                                     <textarea
                                         id="analysis-context"
-                                        maxLength={400}
+                                        maxLength={MAX_CONTEXT_CHARS}
                                         value={userPrompt}
                                         onChange={(e) => setUserPrompt(e.target.value)}
                                         placeholder={t('context_placeholder')}
                                         className="w-full h-32 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all resize-none text-foreground"
                                     />
-                                    <span className="absolute bottom-3 right-3 text-[10px] text-slate-400">{userPrompt.length}/400</span>
+                                    <span className="absolute bottom-3 right-3 text-[10px] text-slate-400">{userPrompt.length}/{MAX_CONTEXT_CHARS}</span>
                                 </div>
                             </div>
                         </div>
@@ -953,6 +954,9 @@ export default function DashboardPage() {
                                     </>
                                 )}
                             </button>
+                            <p className="mt-2 text-xs leading-relaxed text-slate-500">{copy(
+                              '1 kuota untuk 1 laporan tersimpan. Jika AI bermasalah, Anda tetap mendapat rencana teknikal otomatis dengan Entry, SL, dan TP. Membuka riwayat tidak menggunakan kuota.',
+                              '1 credit for 1 saved report. If AI is unavailable, you still receive an automatic technical plan with Entry, SL and TP. Opening history uses no credit.')}</p>
                         </div>
                     </fieldset>
 

@@ -63,6 +63,7 @@ export async function checkHistoryOutcome(id: string) {
     || !TIMEFRAMES.includes(row.timeframe as Timeframe)) return { error: 'Analisis ini belum mendukung pemeriksaan hasil.' };
   const analysis = row.analysis_json as AnalysisV2;
   if (analysis.verdict === 'WAIT' || !analysis.setups.length) return { error: 'Hasil WAIT tidak memiliki setup transaksi.' };
+  if (analysis.setups.some(setup => setup.execution === 'CONDITIONAL')) return { error: 'Pemicu rencana bersyarat harus dikonfirmasi sebelum pemeriksaan TP/SL.' };
   const startTime = new Date(row.created_at).getTime();
   const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(row.coin_symbol.toUpperCase())}USDT&interval=${row.timeframe}&startTime=${startTime}&limit=1000`;
   let candles: Candle[] = [];

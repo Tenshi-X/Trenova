@@ -97,6 +97,6 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
       openInterest: oi ? new Date(Number(oi.time)).toISOString() : null,
       sentiment: sentimentItem ? new Date(Number(sentimentItem.timestamp) * 1000).toISOString() : null },
     ...indicators,
-    recentCandles: candles.slice(-4),
+    recentCandles: candles.slice(-24),
   };
 }
