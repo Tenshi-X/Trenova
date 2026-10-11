@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity, Database, Sparkles, TrendingUp, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown } from 'lucide-react';
+import { Database, Sparkles, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown, Star, Check, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { getUserUsage, searchTVSymbols } from './actions';
@@ -25,7 +25,7 @@ type ChartSuggestion = { symbol: string; exchange: string; description: string; 
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
 
   // Tab State
   const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('chart');
@@ -63,9 +63,20 @@ export default function DashboardPage() {
   const [savedPresets, setSavedPresets] = useState<UserPreset[]>([]);
   const [adminPresets, setAdminPresets] = useState<Array<Record<string, string>>>([]);
   const [watchlist, setWatchlist] = useState<string[]>([]);
+  const [preferencesLoading, setPreferencesLoading] = useState(true);
+  const [preferencesReady, setPreferencesReady] = useState(false);
+  const [preferenceAction, setPreferenceAction] = useState<string | null>(null);
+  const [preferenceError, setPreferenceError] = useState('');
+  const [showPresetForm, setShowPresetForm] = useState(false);
+  const [presetName, setPresetName] = useState('');
+  const [activePresetName, setActivePresetName] = useState('');
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const copy = (id: string, en: string) => language === 'id' ? id : en;
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+  const preferenceLock = useRef(false);
   const analysisInFlightRef = useRef(false);
   const pendingAnalysisRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const ignoreSearchRef = useRef(false);
@@ -119,39 +130,53 @@ export default function DashboardPage() {
   };
 
 
-
-  useEffect(() => {
-      fetchUsage();
-      getPreferences().then((prefs) => {
-        if (prefs.error) return;
+  const loadPreferences = useCallback(async () => {
+      setPreferencesLoading(true);
+      setPreferenceError('');
+      try {
+        const prefs = await getPreferences();
+        if (prefs.error) throw new Error(prefs.error);
         setSavedPresets(prefs.presets ?? []);
         setWatchlist(prefs.watchlist ?? []);
         setAdminPresets((prefs.adminPresets ?? []) as Array<Record<string, string>>);
-      });
-
+        setPreferencesReady(true);
+      } catch (error) {
+        setPreferenceError(error instanceof Error ? error.message : 'Preferensi gagal dimuat.');
+      } finally {
+        setPreferencesLoading(false);
+      }
   }, []);
+
+  useEffect(() => {
+      void fetchUsage().catch(() => {});
+      void loadPreferences();
+  }, [loadPreferences]);
 
   // Loading Message Cycle
   useEffect(() => {
     if (!chatLoading) return;
 
-    const messages = [
-       "🚀 Connecting to Market Data...",
-       "🧠 AI Analyzing Price Action...",
-       "📊 Calculating Technical Indicators...",
-       "👁️ Scanning Chart Patterns...",
-       "🔮 Formulating Master Strategy..."
-    ];
+    const messages = language === 'id'
+      ? ['Menghubungkan data pasar…', 'Menyiapkan analisis AI…', 'Analisis masih diproses…', 'Menunggu hasil analisis…']
+      : ['Connecting to market data…', 'Preparing AI analysis…', 'Analysis is still processing…', 'Waiting for the analysis result…'];
     let i = 0;
     setLoadingMessage(messages[0]);
 
     const interval = setInterval(() => {
-       i = (i + 1) % messages.length;
+       i = Math.min(i + 1, messages.length - 1);
        setLoadingMessage(messages[i]);
-    }, 2500);
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [chatLoading]);
+  }, [chatLoading, language]);
+
+  useEffect(() => {
+    return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
+  }, [imagePreview]);
+
+  useEffect(() => {
+    if (chatResult || analysisIssue) resultRef.current?.focus({ preventScroll: true });
+  }, [chatResult, analysisIssue]);
 
   const fetchUsage = async () => {
       const stats = await getUserUsage();
@@ -159,12 +184,14 @@ export default function DashboardPage() {
   };
 
   const handleCoinSelect = (coin: Coin) => {
+      if (analysisInFlightRef.current) return;
       setSelectedCoin(coin);
       cleanAnalysis();
       setChatResult(null);
   };
 
   const applyPreset = (preset: UserPreset) => {
+    if (analysisInFlightRef.current) return;
     setTradingStyle(preset.tradingStyle as typeof tradingStyle);
     setTimeframe(preset.timeframe);
     setRiskTolerance(preset.riskTolerance);
@@ -174,34 +201,77 @@ export default function DashboardPage() {
     setMarketType(preset.marketType ?? 'futures');
     setDirectionPreference(preset.marketType === 'spot' && preset.directionPreference === 'short' ? 'auto' : preset.directionPreference ?? 'auto');
     setHigherTimeframeConfirmation(preset.higherTimeframeConfirmation ?? false);
+    setActivePresetName(preset.name);
+    toast.success(copy(`Preset ${preset.name} diterapkan.`, `Preset ${preset.name} applied.`));
   };
 
-  const saveCurrentPreset = async () => {
-    const name = window.prompt('Nama preset (2–40 karakter):');
-    if (!name) return;
-    const next = [...savedPresets, { name: name.trim(), tradingStyle, timeframe,
+  const persistPreferences = async (presets: UserPreset[], favorites: string[], action: string, success: string) => {
+    if (preferenceLock.current || !preferencesReady) return false;
+    preferenceLock.current = true;
+    setPreferenceAction(action);
+    setPreferenceError('');
+    try {
+      const result = await savePreferences(presets, favorites);
+      if (result.error) throw new Error(result.error);
+      setSavedPresets(presets);
+      setWatchlist(favorites);
+      toast.success(success);
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : copy('Preferensi gagal disimpan. Coba lagi.', 'Could not save preferences. Try again.');
+      setPreferenceError(message);
+      toast.error(message);
+      return false;
+    } finally {
+      preferenceLock.current = false;
+      setPreferenceAction(null);
+    }
+  };
+
+  const saveCurrentPreset = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = presetName.trim();
+    if (name.length < 2 || name.length > 40) {
+      setPreferenceError(copy('Nama preset harus 2–40 karakter.', 'Preset name must contain 2–40 characters.'));
+      return;
+    }
+    if (savedPresets.some(preset => preset.name.toLowerCase() === name.toLowerCase())) {
+      setPreferenceError(copy('Nama preset sudah dipakai. Gunakan nama lain.', 'This preset name is already used. Choose another name.'));
+      return;
+    }
+    const next = [...savedPresets, { name, tradingStyle, timeframe,
       riskTolerance, strategyFocus, indicatorPref, targetRR, marketType, directionPreference, higherTimeframeConfirmation }];
-    const result = await savePreferences(next, watchlist);
-    if (result.error) toast.error(result.error);
-    else { setSavedPresets(next); toast.success('Preset tersimpan.'); }
+    if (await persistPreferences(next, watchlist, 'save-preset', copy('Preset tersimpan.', 'Preset saved.'))) {
+      setShowPresetForm(false);
+      setPresetName('');
+      setActivePresetName(name);
+    }
   };
 
   const toggleFavorite = async () => {
-    if (!selectedCoin) return;
+    if (!selectedCoin || preferenceLock.current) return;
     const symbol = selectedCoin.symbol.toUpperCase();
     const next = watchlist.includes(symbol) ? watchlist.filter((item) => item !== symbol) : [...watchlist, symbol];
-    const result = await savePreferences(savedPresets, next);
-    if (result.error) toast.error(result.error);
-    else setWatchlist(next);
+    await persistPreferences(savedPresets, next, 'favorite', watchlist.includes(symbol)
+      ? copy(`${symbol} dihapus dari favorit.`, `${symbol} removed from favorites.`)
+      : copy(`${symbol} ditambahkan ke favorit.`, `${symbol} added to favorites.`));
   };
+
+  const receiveImage = useCallback((file: File) => {
+    if (analysisInFlightRef.current) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      toast.error(language === 'id' ? 'Gunakan gambar PNG, JPG, atau WebP maksimal 10 MB.' : 'Use a PNG, JPG, or WebP image up to 10 MB.');
+      return;
+    }
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    toast.success(language === 'id' ? 'Gambar chart siap dianalisis.' : 'Chart image ready for analysis.');
+  }, [language]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const objectUrl = URL.createObjectURL(file);
-      setImagePreview(objectUrl);
-    }
+    if (file) receiveImage(file);
+    e.target.value = '';
   };
 
   const cleanAnalysis = () => {
@@ -216,7 +286,7 @@ export default function DashboardPage() {
   // Paste Event Listener for AI Analysis
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-        if (activeTab !== 'analysis') return;
+        if (activeTab !== 'analysis' || chatLoading || !selectedCoin) return;
 
         const items = e.clipboardData?.items;
         if (!items) return;
@@ -225,10 +295,8 @@ export default function DashboardPage() {
             if (items[i].type.indexOf('image') !== -1) {
                 const file = items[i].getAsFile();
                 if (file) {
-                    setSelectedImage(file);
-                    const objectUrl = URL.createObjectURL(file);
-                    setImagePreview(objectUrl);
-                    // Provide visual feedback (optional toast or just the preview appearing)
+                    receiveImage(file);
+                    break;
                 }
             }
         }
@@ -236,7 +304,7 @@ export default function DashboardPage() {
 
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [activeTab]);
+  }, [activeTab, chatLoading, selectedCoin, receiveImage]);
 
   // Fullscreen State
   const [isChartFullscreen, setIsChartFullscreen] = useState(false);
@@ -298,7 +366,7 @@ export default function DashboardPage() {
   };
 
   const runAnalysis = async () => {
-    if (!selectedCoin || analysisInFlightRef.current) return;
+    if (!selectedCoin || analysisInFlightRef.current || preferenceLock.current) return;
     analysisInFlightRef.current = true;
     setChatLoading(true);
     setChatResult(null);
@@ -325,7 +393,8 @@ export default function DashboardPage() {
       }
       pendingAnalysisRef.current = null;
       setChatResult(payload.result as AnalysisV2);
-      await fetchUsage();
+      // A usage refresh failure must not turn a completed analysis into an error.
+      void fetchUsage().catch(() => {});
       toast.success(payload.charged === false ? 'Hasil belum tervalidasi; kuota dikembalikan.' : t('dash_toast_done'));
       router.refresh();
     } catch (error) {
@@ -429,14 +498,12 @@ export default function DashboardPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
                 <LiveMarketTable
                     onSelectSymbol={(sym) => {
+                        ignoreSearchRef.current = true;
+                        setChartSource('tradingview');
                         setChartSymbol(sym);
                         setChartSearchInput(sym);
+                        setShowSuggestions(false);
                         setActiveTab('chart');
-                    }}
-                    onAnalyzeSymbol={(symbol) => {
-                        handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol,
-                          image: '', current_price: 0, price_change_percentage_24h: 0 });
-                        setActiveTab('analysis');
                     }}
                 />
             </div>
@@ -576,7 +643,7 @@ export default function DashboardPage() {
 
         {/* --- ANALYSIS TAB --- */}
         <div className={clsx(
-            "space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
+            "ux-panel space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
             activeTab === 'analysis' ? "block" : "hidden"
         )}>
 
@@ -584,12 +651,19 @@ export default function DashboardPage() {
             <CoinSelector
                 selectedCoinId={selectedCoin?.id || ''}
                 onSelect={handleCoinSelect}
+                disabled={chatLoading}
             />
+            {preferencesLoading && <p role="status" className="flex items-center gap-2 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" />{copy('Memuat preset dan favorit…', 'Loading presets and favorites…')}</p>}
+            {preferenceError && <div role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-600 dark:text-rose-300"><p>{preferenceError}</p>
+              {!preferencesReady && <button type="button" onClick={() => void loadPreferences()} disabled={preferencesLoading} className="ux-button mt-2 rounded-lg border border-rose-500/30 px-3 py-2">{copy('Coba lagi', 'Try again')}</button>}
+            </div>}
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              {watchlist.map((symbol) => <button key={symbol} onClick={() => handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol,
-                image: '', current_price: 0, price_change_percentage_24h: 0 })} className="rounded-full border border-neon px-3 py-1 text-neon">★ {symbol}</button>)}
-              {selectedCoin && <button onClick={toggleFavorite} className="rounded-full border px-3 py-1">
-                {watchlist.includes(selectedCoin.symbol.toUpperCase()) ? 'Hapus favorit' : '☆ Tambah favorit'}
+              {watchlist.map((symbol) => <button type="button" key={symbol} disabled={chatLoading} aria-pressed={selectedCoin?.symbol.toUpperCase() === symbol} onClick={() => handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol,
+                image: '', current_price: 0, price_change_percentage_24h: 0 })} className={clsx('ux-button inline-flex items-center gap-1.5 rounded-full border border-neon px-3 py-1.5 text-neon', selectedCoin?.symbol.toUpperCase() === symbol && 'bg-neon/10')}><Star size={14} fill="currentColor" />{symbol}</button>)}
+              {selectedCoin && <button type="button" onClick={toggleFavorite} disabled={!preferencesReady || !!preferenceAction || chatLoading || (watchlist.length >= 20 && !watchlist.includes(selectedCoin.symbol.toUpperCase()))}
+                aria-busy={preferenceAction === 'favorite'} aria-pressed={watchlist.includes(selectedCoin.symbol.toUpperCase())} className="ux-button inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 px-3 py-1.5">
+                {preferenceAction === 'favorite' ? <Loader2 size={14} className="animate-spin" /> : <Star size={14} className="text-neon" fill={watchlist.includes(selectedCoin.symbol.toUpperCase()) ? 'currentColor' : 'none'} />}
+                {preferenceAction === 'favorite' ? copy('Menyimpan…', 'Saving…') : watchlist.includes(selectedCoin.symbol.toUpperCase()) ? copy('Hapus favorit', 'Remove favorite') : copy('Tambah favorit', 'Add favorite')}
               </button>}
             </div>
 
@@ -616,24 +690,35 @@ export default function DashboardPage() {
 
 
                     {/* Analysis Controls Panel */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors space-y-4 sm:space-y-6">
+                    <fieldset disabled={chatLoading} className="min-w-0 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors space-y-4 sm:space-y-6">
                         <div className="flex flex-wrap gap-2 items-center text-sm">
                           <span className="font-bold">Preset:</span>
-                          {adminPresets.map((preset) => <button key={preset.code} onClick={() => applyPreset({
+                          {adminPresets.map((preset) => <button type="button" key={preset.code} aria-pressed={activePresetName === preset.name_id} onClick={() => applyPreset({
                             name: preset.name_id, tradingStyle: preset.trading_style, timeframe: preset.timeframe,
                             riskTolerance: preset.risk_tolerance, strategyFocus: preset.strategy_focus,
                             indicatorPref: preset.indicator_pref, targetRR: preset.target_rr,
-                          })} className="rounded-lg border px-3 py-1">{language === 'en' ? preset.name_en : preset.name_id}</button>)}
+                          })} className={clsx('ux-button inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2', activePresetName === preset.name_id && 'border-neon bg-neon/10 text-neon')}>{activePresetName === preset.name_id && <Check size={14} />}{language === 'en' ? preset.name_en : preset.name_id}</button>)}
                           {savedPresets.map((preset, index) => <div key={`${preset.name}-${index}`} className="flex rounded-lg border border-neon text-neon">
-                            <button onClick={() => applyPreset(preset)} className="px-3 py-1">{preset.name}</button>
-                            <button aria-label={`Hapus preset ${preset.name}`} className="px-2 border-l border-neon" onClick={async () => {
+                            <button type="button" aria-pressed={activePresetName === preset.name} onClick={() => applyPreset(preset)} className={clsx('ux-button inline-flex items-center gap-1.5 rounded-l-lg px-3 py-2', activePresetName === preset.name && 'bg-neon/10')}>{activePresetName === preset.name && <Check size={14} />}{preset.name}</button>
+                            <button type="button" disabled={!!preferenceAction || !preferencesReady} aria-label={copy(`Hapus preset ${preset.name}`, `Delete preset ${preset.name}`)} className="ux-button px-2 border-l border-neon rounded-r-lg" onClick={async () => {
                               const next = savedPresets.filter((_, position) => position !== index);
-                              const result = await savePreferences(next,watchlist);
-                              if (result.error) toast.error(result.error); else setSavedPresets(next);
-                            }}>×</button>
+                              if (await persistPreferences(next, watchlist, `delete-${index}`, copy('Preset dihapus.', 'Preset deleted.')) && activePresetName === preset.name) setActivePresetName('');
+                            }}>{preferenceAction === `delete-${index}` ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}</button>
                           </div>)}
-                          <button onClick={saveCurrentPreset} className="rounded-lg border px-3 py-1">+ Simpan pilihan</button>
+                          <button type="button" onClick={() => setShowPresetForm(!showPresetForm)} disabled={!!preferenceAction || !preferencesReady || savedPresets.length >= 5}
+                            aria-expanded={showPresetForm} aria-controls="preset-name-form" className="ux-button inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2"><Plus size={14} />{copy('Simpan pilihan', 'Save selection')}</button>
                         </div>
+                        {savedPresets.length >= 5 && <p className="text-xs text-slate-500">{copy('Maksimal 5 preset. Hapus salah satu untuk menyimpan pilihan baru.', 'You can save up to 5 presets. Remove one to save a new selection.')}</p>}
+                        {showPresetForm && <form id="preset-name-form" onSubmit={saveCurrentPreset} className="flex flex-wrap items-end gap-2 rounded-xl border border-neon/30 bg-neon/5 p-3">
+                          <label className="flex-1 min-w-40 text-xs font-semibold">{copy('Nama preset', 'Preset name')}
+                            <input autoFocus required minLength={2} maxLength={40} value={presetName} onChange={event => setPresetName(event.target.value)} disabled={!!preferenceAction}
+                              placeholder={copy('Contoh: Swing konservatif', 'Example: Conservative swing')} className="mt-1 block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 p-2 text-sm" />
+                          </label>
+                          <button type="submit" disabled={!!preferenceAction || presetName.trim().length < 2} className="inline-flex items-center gap-2 rounded-lg bg-neon px-3 py-2 font-semibold text-white dark:text-slate-950 hover:bg-neon-dim">
+                            {preferenceAction === 'save-preset' && <Loader2 size={14} className="animate-spin" />}{preferenceAction === 'save-preset' ? copy('Menyimpan…', 'Saving…') : copy('Simpan', 'Save')}
+                          </button>
+                          <button type="button" disabled={!!preferenceAction} onClick={() => setShowPresetForm(false)} className="ux-button rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">{copy('Batal', 'Cancel')}</button>
+                        </form>}
 
                         {/* Row 1: Image & Context */}
                         <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
@@ -643,49 +728,55 @@ export default function DashboardPage() {
                                     {t('upload_label')} <span className="text-slate-400 font-normal">({t('feedback_optional')})</span>
                                 </label>
                                 {!imagePreview ? (
-                                    <div
+                                    <button type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32"
+                                        onDragOver={event => { event.preventDefault(); if (!chatLoading) setIsDraggingImage(true); }}
+                                        onDragLeave={() => setIsDraggingImage(false)}
+                                        onDrop={event => { event.preventDefault(); setIsDraggingImage(false); const file = event.dataTransfer.files[0]; if (file) receiveImage(file); }}
+                                        className={clsx('w-full text-left border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 gap-3 cursor-pointer hover:border-neon hover:bg-neon/5 transition-all text-slate-400 group h-32', isDraggingImage && 'border-neon bg-neon/10')}
                                     >
                                         <Upload size={20} className="group-hover:scale-110 transition-transform" />
                                         <div>
                                             <p className="font-bold text-sm">{t('upload_text')}</p>
                                             <p className="text-[10px] opacity-70">{t('dash_paste_label')}</p>
                                         </div>
-                                        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-                                    </div>
+                                    </button>
                                 ) : (
                                     <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 group h-32">
                                         <img src={imagePreview} alt="Chart" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                                        <button onClick={cleanAnalysis} className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md">
+                                        <button type="button" onClick={cleanAnalysis} aria-label={copy('Hapus gambar chart', 'Remove chart image')} className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-md">
                                             <X size={14} />
                                         </button>
                                     </div>
                                 )}
+                                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/png,image/jpeg,image/webp" className="hidden" />
+                                <p className="mt-1.5 text-[10px] text-slate-400">PNG, JPG, WebP · {copy('maks. 10 MB · bisa tarik & lepas', 'max. 10 MB · drag & drop supported')}</p>
                             </div>
 
                             {/* Custom Instruction */}
                             <div className="flex-1">
-                                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">{t('context_label')}</label>
+                                <label htmlFor="analysis-context" className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 pl-1">{t('context_label')}</label>
                                 <div className="relative">
                                     <textarea
+                                        id="analysis-context"
                                         maxLength={400}
                                         value={userPrompt}
                                         onChange={(e) => setUserPrompt(e.target.value)}
                                         placeholder={t('context_placeholder')}
                                         className="w-full h-32 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all resize-none text-foreground"
                                     />
+                                    <span className="absolute bottom-3 right-3 text-[10px] text-slate-400">{userPrompt.length}/400</span>
                                 </div>
                             </div>
                         </div>
 
                         <button type="button" onClick={() => setAdvancedMode(!advancedMode)}
-                          className="text-sm font-bold text-neon-dark dark:text-neon text-left">
-                          {advancedMode ? 'Sembunyikan pengaturan lanjut' : 'Tampilkan pengaturan lanjut'}
+                          aria-expanded={advancedMode} aria-controls="advanced-analysis-settings" className="ux-button flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-bold text-neon-dark dark:text-neon text-left">
+                          <ChevronDown size={16} className={clsx('transition-transform', advancedMode && 'rotate-180')} />{advancedMode ? copy('Sembunyikan pengaturan lanjut', 'Hide advanced settings') : copy('Tampilkan pengaturan lanjut', 'Show advanced settings')}
                         </button>
                         {!advancedMode && <p className="text-xs text-slate-500">{tradingStyle} · {timeframe} · {riskTolerance} · {targetRR} · {marketType} · {directionPreference === 'auto' ? t('ai_direction_auto') : directionPreference.toUpperCase()}{higherTimeframeConfirmation ? ` · ${t('ai_confirmation_label')} ${CONFIRMATION_TIMEFRAME[timeframe as Timeframe]}` : ''}</p>}
                         {/* Row 2: Advanced AI Parameters (Grid) */}
-                        <div className={clsx("grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
+                        <div id="advanced-analysis-settings" onChange={() => setActivePresetName('')} className={clsx("grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4", !advancedMode && 'hidden')}>
                             <div>
                               <label htmlFor="ai-market-type" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_market_type')}</label>
                               <select id="ai-market-type" value={marketType} onChange={(e) => {
@@ -845,7 +936,8 @@ export default function DashboardPage() {
                         <div className="pt-2">
                             <button
                                 onClick={runAnalysis}
-                                disabled={chatLoading}
+                                disabled={chatLoading || !!preferenceAction}
+                                aria-busy={chatLoading}
                                 className="w-full h-14 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all group border border-transparent dark:border-slate-700 relative overflow-hidden"
                             >
                                 {chatLoading ? (
@@ -862,17 +954,23 @@ export default function DashboardPage() {
                                 )}
                             </button>
                         </div>
-                    </div>
+                    </fieldset>
 
 
 
                     {/* --- ANALYSIS RESULTS --- */}
-                    {analysisIssue && <div role="status" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
-                      <h2 className="text-xl font-black text-amber-600">WAIT</h2><p className="mt-2">{analysisIssue}</p>
-                      <p className="text-sm text-slate-500 mt-2">Belum ada setup tervalidasi. Periksa pilihan dan tunggu data/pelayanan tersedia sebelum mencoba kembali.</p>
+                    {chatLoading && <div role="status" aria-live="polite" className="rounded-2xl border border-neon/30 bg-neon/5 p-5 space-y-3">
+                      <p className="flex items-center gap-2 font-semibold text-neon"><Loader2 size={18} className="animate-spin" />{loadingMessage}</p>
+                      <p className="text-sm text-slate-500">{copy('Pilihan dikunci selama analisis berjalan. Hasil akan muncul di bawah setelah selesai.', 'Selections are locked while analysis runs. Your result will appear below when ready.')}</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" aria-hidden="true">{[0,1,2,3].map(item => <div key={item} className="h-16 rounded-xl bg-slate-200/70 dark:bg-slate-800 animate-pulse" />)}</div>
+                    </div>}
+                    {analysisIssue && <div ref={resultRef} tabIndex={-1} role="alert" className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
+                      <h2 className="text-xl font-black text-amber-600">{copy('Analisis belum selesai', 'Analysis could not complete')}</h2><p className="mt-2">{analysisIssue}</p>
+                      <p className="text-sm text-slate-500 mt-2">{copy('Periksa pilihan atau coba kembali saat data tersedia.', 'Check your selections or try again when data is available.')}</p>
+                      <button type="button" disabled={chatLoading} onClick={runAnalysis} className="ux-button mt-4 inline-flex items-center gap-2 rounded-lg border border-amber-500/40 px-4 py-2 text-sm font-semibold"><RefreshCw size={16} />{copy('Coba lagi', 'Try again')}</button>
                     </div>}
                     {chatResult && (
-                        <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 transition-colors">
+                        <div ref={resultRef} tabIndex={-1} role="region" aria-label={copy('Hasil analisis AI', 'AI analysis result')} className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500 transition-colors">
                             {/* Replaced Text Header with just the new component which handles its own UI */}
 
                             <div className="p-4 md:p-6">

@@ -13,7 +13,8 @@ export async function getInsights() {
       .order('created_at', { ascending: false }).limit(50),
     context.admin.from('analysis_control').select('*').eq('singleton', true).single(),
   ]);
-  if (summary.error) return { error: summary.error.message };
+  const error = summary.error ?? reports.error ?? audit.error ?? control.error;
+  if (error) return { error: error.message };
   return { summary: summary.data as Record<string, number>, reports: reports.data ?? [], audit: audit.data ?? [], control: control.data };
 }
 

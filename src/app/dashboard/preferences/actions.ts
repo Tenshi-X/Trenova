@@ -15,6 +15,8 @@ export async function getPreferences() {
     context.admin.from('analysis_presets').select('*').eq('enabled', true),
     context.admin.from('user_profiles').select('enabled_presets').eq('id', context.user.id).single(),
   ]);
+  const error = preferences.error ?? presets.error ?? profile.error;
+  if (error) return { error: error.message };
   const allowed = profile.data?.enabled_presets as string[] | null;
   return { presets: (preferences.data?.presets ?? []) as UserPreset[],
     watchlist: (preferences.data?.watchlist ?? []) as string[],

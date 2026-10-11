@@ -16,11 +16,12 @@ export type Coin = {
 interface CoinSelectorProps {
     selectedCoinId: string;
     onSelect: (coin: Coin) => void;
+    disabled?: boolean;
 }
 
 import { useLanguage } from '@/context/LanguageContext';
 
-export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorProps) {
+export default function CoinSelector({ selectedCoinId, onSelect, disabled = false }: CoinSelectorProps) {
     const [coins, setCoins] = useState<Coin[]>([]);
     const [displayedCoins, setDisplayedCoins] = useState<Coin[]>([]);
     const [loading, setLoading] = useState(true);
@@ -148,6 +149,8 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                     type="text"
                     placeholder={t('coin_search_placeholder')}
                     value={search}
+                    disabled={disabled}
+                    aria-label={t('coin_search_placeholder')}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all"
                 />
@@ -175,6 +178,9 @@ export default function CoinSelector({ selectedCoinId, onSelect }: CoinSelectorP
                         return (
                             <button
                                 key={coin.id}
+                                type="button"
+                                disabled={disabled}
+                                aria-pressed={isSelected}
                                 onClick={() => onSelect(coin)}
                                 className={clsx(
                                     "flex flex-col items-start min-w-[140px] p-3 rounded-2xl border transition-all snap-start text-left relative overflow-hidden group",
