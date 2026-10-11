@@ -13,7 +13,6 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
   const title = conditional ? copy('Rencana ' + result.setups[0].direction, result.setups[0].direction + ' plan') : result.verdict;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
   const insights = result.insights;
-  const source = result.provenance?.kind;
   return <div className="terminal-result space-y-5 text-foreground">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -31,19 +30,6 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
       </div>
     </div>
     <AnalysisPlanMap result={result} language={language} />
-    {source && <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm leading-relaxed">
-      <p className="font-semibold">{source === 'technical' ? copy('Rencana teknikal otomatis', 'Automatic technical plan')
-        : source === 'ai_adjusted' ? copy('Analisis AI dengan penyesuaian', 'AI analysis with adjustments') : copy('Analisis AI', 'AI analysis')}</p>
-      <p className="mt-1 text-slate-600 dark:text-slate-400">{source === 'technical'
-        ? copy('Penjelasan AI tidak tersedia. Laporan ini menggunakan data pasar, indikator, dan perhitungan teknikal otomatis.',
-          'AI explanations are unavailable. This report uses market data, indicators and automatic technical calculations.')
-        : source === 'ai_adjusted'
-          ? copy('Sebagian penjelasan dilengkapi atau disesuaikan dengan data pasar. AI memilih rencana dan memberi pertimbangan.',
-            'Some explanations were completed or adjusted against market data. AI selects the plan and adds considerations.')
-          : copy('AI memilih rencana dan memberi pertimbangan berdasarkan data pasar.', 'AI selects the plan and adds considerations based on market data.')}</p>
-      <p className="mt-1 text-xs text-slate-500">{copy('Entry, SL, TP, R:R, dan pemicu dihitung sistem. Laporan tersimpan menggunakan 1 kuota; membukanya kembali tidak menggunakan kuota.',
-        'Entry, SL, TP, RR and triggers are calculated by the system. A saved report uses 1 credit; reopening it uses no credit.')}</p>
-    </div>}
     <p className="leading-relaxed">{result.reason}</p>
     {result.parameters && <p className="text-xs text-slate-500">{t('ai_market_type')}: {result.parameters.marketType} · {t('ai_direction_label')}: {result.parameters.directionPreference === 'auto' ? t('ai_direction_auto') : result.parameters.directionPreference.toUpperCase()}</p>}
     {result.verdict === 'WAIT' && result.wait_for && <div className="rounded-xl bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">

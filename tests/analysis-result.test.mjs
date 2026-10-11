@@ -73,19 +73,3 @@ test('archived v2 WAIT and trade results still render without new fields or inve
   assert.ok(html.includes('>WAIT</h2>'));
   assert.ok(!html.includes('Zona Entry'));
 });
-
-test('saved report source and one-credit policy are clear in both languages and preserved in history rendering', () => {
-  const result = validateModelAnalysis(modelResult({ verdict: 'WAIT' }), input, market);
-  for (const [kind, id, en] of [['technical', 'Rencana teknikal otomatis', 'Automatic technical plan'],
-    ['ai_adjusted', 'Analisis AI dengan penyesuaian', 'AI analysis with adjustments'], ['ai', 'Analisis AI', 'AI analysis']]) {
-    const report = { ...result, provenance: { kind, levels: 'technical' } };
-    const idHtml = renderAnalysis(report);
-    const enHtml = renderAnalysis(report, 'en');
-    assert.ok(idHtml.includes(id));
-    assert.ok(enHtml.includes(en));
-    assert.ok(idHtml.includes('1 kuota'));
-    assert.ok(enHtml.includes('1 credit'));
-    assert.ok(idHtml.includes('Entry, SL, TP, R:R, dan pemicu dihitung sistem.'));
-    if (kind === 'technical') assert.ok(idHtml.includes('Penjelasan AI tidak tersedia.'));
-  }
-});
