@@ -122,6 +122,8 @@ export type TranslationKey =
   | 'password_label'
   | 'login_btn'
   | 'authenticating'
+  | 'auth_login_loading_prefix'
+  | 'auth_login_loading_suffix'
   | 'loading'
   | 'coin_search_disclaimer'
   | 'searching_global'
@@ -682,6 +684,8 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     password_label: 'Password',
     login_btn: 'Login',
     authenticating: 'Authenticating...',
+    auth_login_loading_prefix: 'Get ready to earn',
+    auth_login_loading_suffix: 'with AI',
     loading: 'Loading...',
     coin_search_disclaimer: 'Showing Top 100 coins by default. Use the search bar to find any other coin from the global database.',
     searching_global: 'Searching Global Database...',
@@ -1316,6 +1320,8 @@ export const translations: Record<'en' | 'id', Record<TranslationKey, string>> =
     password_label: 'Kata Sandi',
     login_btn: 'Masuk',
     authenticating: 'Mengautentikasi...',
+    auth_login_loading_prefix: 'Bersiap menghasilkan',
+    auth_login_loading_suffix: 'dengan AI',
     loading: 'Memuat...',
     coin_search_disclaimer: 'Menampilkan 100 koin teratas secara default. Gunakan pencarian untuk menemukan koin apa pun dari database global.',
     searching_global: 'Mencari di Database Global...',

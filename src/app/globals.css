@@ -159,6 +159,8 @@ section[id] { scroll-margin-top: 100px; }
 .auth-loading > div { max-width: 440px; width: 100%; border: 1px solid var(--color-border); border-top: 2px solid var(--color-neon); background: var(--color-card); padding: 40px 24px; }
 .auth-loading h2 { color: var(--color-neon-dark); margin: 16px 0; font-size: 18px; font-weight: 700; }
 .auth-loading p { color: var(--color-slate-400); font-size: 13px; }
+.auth-loading .auth-encouragement { color: var(--foreground); font-size: clamp(16px, 3vw, 20px); line-height: 1.8; margin: 20px 0; }
+.auth-encouragement strong { color: var(--color-neon-dark); white-space: nowrap; }
 @media (max-width: 767px) {
   .admin-chrome { padding: 16px 16px 16px 64px; }
   .admin-workspace > :first-child { flex-wrap: wrap; gap: 16px; }

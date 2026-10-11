@@ -10,7 +10,7 @@ export default function AuthShell({ children, loading, mode }: {
   loading: boolean;
   mode: 'login' | 'register';
 }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   return <div className="auth-page">
     <header className="auth-header">
       <Link href="/" className="site-brand">TRENOVA <span>{'//'}</span> TERMINAL</Link>
@@ -42,7 +42,13 @@ export default function AuthShell({ children, loading, mode }: {
     <footer className="auth-footer">TRENOVA {'//'} TRADING INTELLIGENCE <span>MARKET · ANALYSIS · TRADE PLANS</span></footer>
     {loading && <div className="auth-loading" role="status" aria-live="polite">
       <div><Loader2 size={28} className="mx-auto animate-spin text-neon" />
-        <h2>TRENOVA {'//'} TERMINAL</h2><p>{t('authenticating')}</p>
+        <h2>TRENOVA {'//'} TERMINAL</h2>
+        {mode === 'login' && <p className="auth-encouragement">
+          {t('auth_login_loading_prefix')}{' '}
+          <strong>{language === 'id' ? '$1.000.000' : '$1,000,000'}</strong>{' '}
+          {t('auth_login_loading_suffix')}
+        </p>}
+        <p>{t('authenticating')}</p>
       </div>
     </div>}
   </div>;
