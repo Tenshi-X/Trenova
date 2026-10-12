@@ -1,5 +1,5 @@
 import {
-  validateClaims, validateModelAnalysis,
+  AI_EXPLANATION_LIMITS, validateClaims, validateModelAnalysis,
   type AnalysisInput, type AnalysisInsights, type AnalysisSetup, type AnalysisV2, type MarketSnapshot,
 } from './core';
 
@@ -124,7 +124,9 @@ export function enrichTechnicalAnalysis(raw: unknown, base: AnalysisV2, market: 
         market.structure?.rangeLow, market.structure?.rangeHigh, market.confirmation?.close, market.confirmation?.ema20,
         ...base.setups.flatMap(setup => [setup.entryLow, setup.entryHigh, setup.stopLoss, setup.takeProfit1, setup.takeProfit2])]
         .filter((value): value is number => typeof value === 'number');
-      for (const match of candidate.matchAll(/\b(support|resistance|retest|harga|price|candle(?:\s+\d+[mhdw])?)\s*(?:(?:tutup|menutup|ditutup|closes?|closed|at|di atas|di bawah|di|pada|near|sekitar|above|below|of|:|=)\s*){0,3}(\d+(?:[.,]\d+)*(?:e[-+]?\d+)?)/gi)) {
+      // A timeframe such as "candle 1h" or "candle 4 jam" is not a price.
+      // Require the full number, so backtracking cannot turn 9000 into 900.
+      for (const match of candidate.matchAll(/\b(support|resistance|retest|harga|price|candle(?:\s+\d+[mhdw])?)\s*(?:(?:tutup|menutup|ditutup|closes?|closed|at|di atas|di bawah|di|pada|near|sekitar|above|below|of|:|=)\s*){0,3}(\d+(?:[.,]\d+)*(?:e[-+]?\d+)?)(?!\d|[.,]\d|e[-+]?\d|[mhdw]\b|\s*(?:menit|minutes?|jam|hours?|hari|days?|minggu|weeks?|candles?|batang)\b)/gi)) {
         if (!matchesLevel(match[2], knownPrices)) throw new Error('unsupported_scenario_price');
       }
       if (candidate.length > max) {
@@ -145,12 +147,12 @@ export function enrichTechnicalAnalysis(raw: unknown, base: AnalysisV2, market: 
       return fallback;
     }
   };
-  const reason = text(response.reason, selectedReason, 600, 'reason');
+  const reason = text(response.reason, selectedReason, AI_EXPLANATION_LIMITS.reason, 'reason');
   const rawInsights = response.insights && typeof response.insights === 'object' && !Array.isArray(response.insights)
     ? response.insights as Record<string, unknown> : {};
   const insights = Object.fromEntries(Object.entries(base.insights!).map(([key, fallback]) =>
-    [key, text(rawInsights[key], fallback, 280, `insights.${key}`)])) as AnalysisInsights;
-  const rationale = text(response.rationale, selected.rationale!, 240, 'rationale');
+    [key, text(rawInsights[key], fallback, AI_EXPLANATION_LIMITS.insight, `insights.${key}`)])) as AnalysisInsights;
+  const rationale = text(response.rationale, selected.rationale!, AI_EXPLANATION_LIMITS.rationale, 'rationale');
   if (accepted === 0) throw new Error('empty_analysis');
   const setups = [{ ...selected, rationale }, ...base.setups.filter(setup => setup !== selected)];
   return { ...base, reason, insights, setups, wait_for: selected.trigger!,

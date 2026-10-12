@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { getSessionProfile, isActiveSubscriber } from '@/lib/authz';
 import {
-  ANALYSIS_MODEL, MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, THINKING_BUDGET,
+  ANALYSIS_MODEL, MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, ANALYSIS_THINKING_LEVEL,
   RESPONSE_SCHEMA, buildPrompt, parseAnalysisInput,
-  outputBudgetForCost, worstCaseCostIdr,
+  outputBudgetForCost, analysisCostIdr, analysisPricing,
   isRolloutAllowed,
   CONFIRMATION_TIMEFRAME,
 } from '@/lib/analysis/core';
@@ -50,7 +50,7 @@ async function prepareImage(dataUrl: string | undefined): Promise<string | null>
   return output.toString('base64');
 }
 
-function parseUsage(response: Record<string, unknown>, fxRate: number): Usage {
+function parseUsage(response: Record<string, unknown>, fxRate: number, pricingAt: number): Usage {
   const raw = response.usageMetadata && typeof response.usageMetadata === 'object'
     ? response.usageMetadata as Record<string, unknown> : {};
   const input = Number(raw.promptTokenCount);
@@ -61,7 +61,7 @@ function parseUsage(response: Record<string, unknown>, fxRate: number): Usage {
     return { input: null, output: null, thinking: null, cost: null };
   }
   const output = candidate + thinking;
-  return { input, output, thinking, cost: worstCaseCostIdr(input, output, fxRate) };
+  return { input, output, thinking, cost: analysisCostIdr(input, output, fxRate, pricingAt) };
 }
 
 export async function POST(request: Request) {
@@ -131,8 +131,8 @@ export async function POST(request: Request) {
   const generationRequest = {
     contents: [{ role: 'user', parts }],
     generationConfig: {
-      temperature: 0.2, maxOutputTokens: MAX_OUTPUT_TOKENS,
-      thinkingConfig: { thinkingBudget: THINKING_BUDGET },
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      thinkingConfig: { thinkingLevel: ANALYSIS_THINKING_LEVEL },
       responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA,
     },
   };
@@ -192,6 +192,7 @@ export async function POST(request: Request) {
     } catch (error) { console.error('Analysis cost pause failed', error); }
   };
   let result = technicalFallback(technical, 'provider_unavailable');
+  const pricingAt = Date.now();
   try {
     const provider = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${ANALYSIS_MODEL}:generateContent`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
       throw new Error('unreadable_provider_response');
     }
     const response = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {};
-    usage = parseUsage(response, fxRate);
+    usage = parseUsage(response, fxRate, pricingAt);
     if (provider.ok && (usage.cost === null || usage.input! > upperInput
       || usage.output! > outputBudget || usage.cost > maxCost)) {
       await pause(usage.cost === null ? 'Provider tidak mengembalikan metadata token.'
@@ -228,6 +229,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('AI unavailable; delivering technical report', error);
   }
+  result = { ...result, provenance: { ...result.provenance!, aiModel: ANALYSIS_MODEL,
+    aiPricing: analysisPricing(pricingAt) } };
 
   // A credit pays for the saved report. AI failures still deliver a clearly labelled
   // technical report; only failure to persist any report releases the reservation.

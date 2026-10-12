@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, worstCaseCostIdr } from '../src/lib/analysis/core.ts';
+import { ANALYSIS_MODEL, MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, worstCaseCostIdr } from '../src/lib/analysis/core.ts';
 
 const file = process.argv[2];
 if (!file) throw new Error('Provide a file containing real, human-reviewed old/new sample pairs.');
@@ -16,6 +16,7 @@ for (const sample of samples) {
   if (typeof sample.reviewer !== 'string' || !sample.reviewer.trim()) failures.push(`${sample.id}: missing reviewer`);
   if (score(sample.newScores) <= score(sample.oldScores) || sample.newScores.dataFaithfulness < 4) failures.push(`${sample.id}: quality did not improve`);
   const usage = sample.newUsage;
+  if (usage?.model !== ANALYSIS_MODEL) failures.push(`${sample.id}: newUsage.model must be ${ANALYSIS_MODEL}; costs cannot be assessed with another model's rates`);
   if (![usage?.input,usage?.candidate,usage?.thinking].every((value) => Number.isInteger(value) && value >= 0)) throw new Error(`${sample.id}: invalid actual token metadata`);
   const output = usage.candidate + usage.thinking;
   const cost = worstCaseCostIdr(usage.input,output,20000);

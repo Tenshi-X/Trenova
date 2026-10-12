@@ -47,12 +47,43 @@ test('conditional result shows numeric plan, trigger and reasoning instead of a 
   const result = validateModelAnalysis(modelResult({ verdict: 'WAIT' }), input, market);
   const html = renderAnalysis(result);
   for (const label of ['Rencana SHORT', 'Zona Entry', 'SL · Stop Loss', 'TP1 · Take Profit', 'TP2 · Take Profit',
-    'Pemicu masuk:', 'Batalkan rencana jika:', 'Skenario naik', 'Skenario turun', 'Pertimbangan analisis', '93 USDT', 'R:R TP1 1:2.00']) {
+    'Pemicu masuk:', 'Batalkan rencana jika:', 'Skenario naik', 'Skenario turun', 'Pertimbangan analisis', '93 USDT', 'Potensi hasil &amp; R:R per target']) {
     assert.ok(html.includes(label), label);
   }
   assert.ok(!html.includes('>WAIT</h2>'));
   assert.ok(html.includes('Bersyarat'));
   assert.ok(!html.includes('Setup siap'));
+});
+
+test('scorecard preserves zero values, converts funding to percent and labels unavailable data', () => {
+  const result = validateModelAnalysis(modelResult(), input, market);
+  result.market = { ...result.market, change24h: 0, volume24hUsd: 0, fundingRate: 0.000084,
+    openInterestUsd: 0, fearGreed: 0, ema50: undefined };
+  const html = renderAnalysis(result);
+  for (const text of ['Scorecard data pasar', '0.00%', '0.0084%', '0/100', 'Tidak tersedia', 'Open interest']) {
+    assert.ok(html.includes(text), text);
+  }
+  assert.ok(html.includes('<dd class="mt-1 break-words font-semibold tabular-nums">0 USDT</dd>'));
+  assert.ok(!html.includes('undefined'));
+  assert.ok(!html.includes('NaN'));
+});
+
+test('target tables show LONG/SHORT price returns and RR calculated locally even on archived data', () => {
+  for (const verdict of ['LONG', 'SHORT']) {
+    const result = validateModelAnalysis(modelResult({ verdict }), input, market);
+    delete result.setups[0].riskReward;
+    delete result.setups[0].stopDistancePct;
+    const html = renderAnalysis(result, 'en');
+    for (const text of ['Market data scorecard', 'Potential returns &amp; R:R by target',
+      'Potential gain', 'SL risk', '1:2.00', 'without leverage', 'Unavailable']) assert.ok(html.includes(text), text);
+    assert.ok(html.includes(verdict === 'LONG' ? '+6.00%' : '+6.06%'));
+    assert.ok(html.includes(verdict === 'LONG' ? '-3.00%' : '-3.03%'));
+    assert.ok(html.includes(verdict === 'LONG' ? '1:3.33' : '1:3.00'));
+  }
+  const result = validateModelAnalysis(modelResult({ verdict: 'WAIT' }), input, market);
+  const html = renderAnalysis({ ...result, setups: [], risk_reward: null });
+  assert.ok(html.includes('Scorecard data pasar'));
+  assert.ok(!html.includes('Potensi hasil &amp; R:R per target'));
 });
 
 test('English users receive translated result labels and conditional state', () => {

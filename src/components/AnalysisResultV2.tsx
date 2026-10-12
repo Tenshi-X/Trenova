@@ -1,6 +1,7 @@
 'use client';
 
 import type { AnalysisV2 } from '@/lib/analysis/core';
+import { setupTargetMetrics } from '@/lib/analysis/core';
 import { useLanguage } from '@/context/LanguageContext';
 import AnalysisStoryExport from '@/components/AnalysisStoryExport';
 import AnalysisPlanMap from '@/components/AnalysisPlanMap';
@@ -13,6 +14,24 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
   const title = conditional ? copy('Rencana ' + result.setups[0].direction, result.setups[0].direction + ' plan') : result.verdict;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
   const insights = result.insights;
+  const unavailable = copy('Tidak tersedia', 'Unavailable');
+  const percent = (value: number | null | undefined) => value == null ? unavailable : `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
+  const amount = (value: number | null | undefined) => value == null ? unavailable
+    : value.toLocaleString(language === 'id' ? 'id-ID' : 'en-US', { maximumFractionDigits: 2 }) + ' USDT';
+  const market = result.market;
+  const scorecard = [
+    [copy('Harga saat analisis', 'Price at analysis'), price(market.price)],
+    [copy('Perubahan harga 24 jam', '24h price change'), percent(market.change24h)],
+    [copy('Volume 24 jam', '24h volume'), amount(market.volume24hUsd)],
+    [copy('Volume relatif', 'Relative volume'), market.volumeRatio == null ? unavailable : `${market.volumeRatio.toFixed(2)}×`],
+    ['RSI (14)', market.rsi.toFixed(1)], ['EMA20', price(market.ema20)],
+    ['EMA50', market.ema50 == null ? unavailable : price(market.ema50)],
+    ['ATR', price(market.atr)],
+    ['Funding rate', market.fundingRate == null ? unavailable : `${(market.fundingRate * 100).toFixed(4)}%`],
+    ['Open interest', amount(market.openInterestUsd)],
+    [copy('Perubahan BTC 24 jam', 'BTC 24h change'), percent(market.btcChange24h)],
+    ['Fear & Greed', market.fearGreed == null ? unavailable : `${market.fearGreed}/100`],
+  ];
   return <div className="terminal-result space-y-5 text-foreground">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -32,11 +51,21 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
     <AnalysisPlanMap result={result} language={language} />
     <p className="leading-relaxed">{result.reason}</p>
     {result.parameters && <p className="text-xs text-slate-500">{t('ai_market_type')}: {result.parameters.marketType} · {t('ai_direction_label')}: {result.parameters.directionPreference === 'auto' ? t('ai_direction_auto') : result.parameters.directionPreference.toUpperCase()}</p>}
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-3">
+      <h3 className="font-bold">{copy('Scorecard data pasar', 'Market data scorecard')}</h3>
+      <dl className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 text-sm">
+        {scorecard.map(([label, value]) => <div key={label} className="min-w-0 rounded-xl bg-slate-50 dark:bg-slate-950 p-3">
+          <dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 break-words font-semibold tabular-nums">{value}</dd>
+        </div>)}
+      </dl>
+      <p className="text-xs text-slate-500">{copy('Snapshot saat analisis; data yang tidak tersedia tidak digunakan sebagai sinyal.', 'Snapshot at analysis time; unavailable data is not treated as a signal.')}</p>
+    </section>
     {result.verdict === 'WAIT' && result.wait_for && <div className="rounded-xl bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-300">
       <strong>{copy('Langkah sebelum entry', 'Before entering')}</strong><p className="mt-1">{result.wait_for}</p>
     </div>}
     {result.setups.map((setup, index) => {
       const pending = setup.execution === 'CONDITIONAL' || result.verdict === 'WAIT';
+      const metrics = setupTargetMetrics(setup);
       return <section key={index} className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-bold">{setup.direction} · {index === 0 ? copy('Rencana utama', 'Primary plan') : copy('Alternatif', 'Alternative')}</h3>
@@ -51,7 +80,24 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
               <p className="text-xs text-slate-500">{label}</p><p className="mt-1 break-words font-bold tabular-nums">{value}</p>
             </div>)}
         </div>
-        {setup.riskReward != null && <p className="text-xs text-slate-500">R:R TP1 1:{setup.riskReward.toFixed(2)} · {copy('Jarak SL', 'SL distance')} {setup.stopDistancePct?.toFixed(2)}% · {copy('dihitung dari entry terburuk, sebelum biaya/slippage', 'from worst entry, before fees/slippage')}</p>}
+        {metrics && <div className="space-y-2">
+          <h4 className="text-sm font-semibold">{copy('Potensi hasil & R:R per target', 'Potential returns & R:R by target')}</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs min-[360px]:text-sm tabular-nums">
+              <caption className="sr-only">{copy('Perbandingan potensi hasil dan risiko setiap take profit', 'Potential returns and risk at each take profit')}</caption>
+              <thead><tr className="border-b border-slate-200 dark:border-slate-800">
+                {[copy('Target', 'Target'), copy('Potensi gain', 'Potential gain'), copy('Risiko SL', 'SL risk'), 'R:R'].map(label => <th key={label} scope="col" className="px-1 min-[360px]:px-2 py-2 text-right font-semibold first:text-left">{label}</th>)}
+              </tr></thead>
+              <tbody>{metrics.targets.map(target => <tr key={target.label} className="border-b border-slate-200 dark:border-slate-800">
+                <th scope="row" className="px-1 min-[360px]:px-2 py-2 text-left font-semibold">{target.label}</th>
+                <td className="px-1 min-[360px]:px-2 py-2 text-right text-emerald-600 dark:text-emerald-400">+{target.gainPct.toFixed(2)}%</td>
+                <td className="px-1 min-[360px]:px-2 py-2 text-right text-rose-600 dark:text-rose-400">{metrics.lossPct.toFixed(2)}%</td>
+                <td className="px-1 min-[360px]:px-2 py-2 text-right font-semibold">1:{target.riskReward.toFixed(2)}</td>
+              </tr>)}</tbody>
+            </table>
+          </div>
+          <p className="text-xs text-slate-500">{copy('Dihitung dari entry terburuk', 'Calculated from worst entry')} {price(metrics.entry)} · {copy('perubahan harga tanpa leverage, sebelum biaya/slippage; bukan prediksi hasil', 'price returns without leverage, before fees/slippage; not a return forecast')}</p>
+        </div>}
         <div className="space-y-2 text-sm leading-relaxed">
           {setup.trigger && <p><strong>{copy('Pemicu masuk:', 'Entry trigger:')}</strong> {setup.trigger}</p>}
           {setup.invalidation && <p><strong>{copy('Batalkan rencana jika:', 'Cancel the plan if:')}</strong> {setup.invalidation}</p>}
@@ -79,8 +125,8 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
     {result.market.structure && <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-4 text-xs">
       {[[copy('Support terdekat', 'Nearest support'), price(result.market.structure.support)],
         [copy('Resistance terdekat', 'Nearest resistance'), price(result.market.structure.resistance)],
-        [copy('ATR / harga', 'ATR / price'), result.market.structure.atrPct.toFixed(2) + '%'],
-        [copy('Volume relatif', 'Relative volume'), result.market.volumeRatio === null ? '—' : result.market.volumeRatio.toFixed(2) + '×']].map(([label, value]) => <div key={label} className="min-w-0"><p className="text-slate-500">{label}</p><p className="mt-1 break-words font-semibold">{value}</p></div>)}
+        [copy('Range terendah', 'Range low'), price(result.market.structure.rangeLow)],
+        [copy('Range tertinggi', 'Range high'), price(result.market.structure.rangeHigh)]].map(([label, value]) => <div key={label} className="min-w-0"><p className="text-slate-500">{label}</p><p className="mt-1 break-words font-semibold">{value}</p></div>)}
     </div>}
     {result.market.confirmation && <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm">
       <strong>{t('ai_confirmation_label')} · {result.market.confirmation.timeframe}</strong>

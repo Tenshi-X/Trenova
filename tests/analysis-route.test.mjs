@@ -220,13 +220,15 @@ test('full schema/image request is counted and output allocation fits the config
     const { handler, calls, providerBodies, tokenBodies, rpcArgs } = route({ countedInput, fxRate });
     assert.equal((await handler(request({ ...input, context: 'x'.repeat(1200) }))).status, 200);
     const counted = tokenBodies[0].generateContentRequest;
-    assert.equal(counted.model, 'models/gemini-2.5-pro');
+    assert.equal(counted.model, 'models/gemini-3.8-flash');
     assert.deepEqual(counted.contents, providerBodies[0].contents);
     assert.deepEqual(counted.generationConfig.responseSchema, providerBodies[0].generationConfig.responseSchema);
     const budget = providerBodies[0].generationConfig.maxOutputTokens;
     assert.equal(budget, core.outputBudgetForCost(countedInput + 256, 500, fxRate));
     assert.ok(core.worstCaseCostIdr(countedInput + 256, budget, fxRate) <= 480);
-    assert.equal(providerBodies[0].generationConfig.thinkingConfig.thinkingBudget, 768);
+    assert.deepEqual(providerBodies[0].generationConfig.thinkingConfig, { thinkingLevel: 'LOW' });
+    assert.ok(!('temperature' in providerBodies[0].generationConfig));
+    assert.ok(!('thinkingBudget' in providerBodies[0].generationConfig.thinkingConfig));
     assert.equal(calls.filter(call => call === 'gemini').length, 1);
     assert.equal(rpcArgs.find(call => call.name === 'finish_analysis').args.p_analysis.setups.length, 2);
   }
@@ -254,11 +256,11 @@ test('empty and truncated AI responses produce labelled technical reports with c
 
 test('provider output overrun pauses analyses and records actual costs on the saved report', () => withProviderKey(async () => {
   const { handler, calls, rpcArgs } = route({ countedInput: 3500,
-    providerUsage: { promptTokenCount: 3500, candidatesTokenCount: 1500, thoughtsTokenCount: 768 } });
+    providerUsage: { promptTokenCount: 3500, candidatesTokenCount: 7000, thoughtsTokenCount: 768 } });
   assert.equal((await handler(request())).status, 200);
   assert.deepEqual(calls, ['count_tokens', 'reserve_analysis', 'gemini', 'pause_analysis', 'finish_analysis']);
   const finished = rpcArgs.find(call => call.name === 'finish_analysis').args;
-  assert.equal(finished.p_output_tokens, 2268);
+  assert.equal(finished.p_output_tokens, 7768);
   assert.equal(finished.p_thinking_tokens, 768);
   assert.ok(finished.p_cost_idr > 500);
 }));
@@ -272,6 +274,20 @@ test('unknown provider costs remain unknown, pause future generation and save th
   assert.deepEqual(calls, ['count_tokens', 'reserve_analysis', 'gemini', 'pause_analysis', 'finish_analysis']);
 }));
 
+test('Flash metadata without separate thoughts records actual rates and model on the saved report', () => withProviderKey(async () => {
+  const { handler, rpcArgs } = route({ countedInput: 2500,
+    providerUsage: { promptTokenCount: 2500, candidatesTokenCount: 1000 } });
+  const response = await handler(request());
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.result.provenance.aiModel, 'gemini-3.8-flash');
+  assert.deepEqual(payload.result.provenance.aiPricing, core.analysisPricing());
+  const finished = rpcArgs.find(call => call.name === 'finish_analysis').args;
+  assert.equal(finished.p_thinking_tokens, 0);
+  assert.equal(finished.p_output_tokens, 1000);
+  assert.equal(finished.p_cost_idr, core.analysisCostIdr(2500, 1000, 20000));
+}));
+
 test('minor explanation errors are repaired locally and server levels cannot be overwritten', () => withProviderKey(async () => {
   const output = aiExplanation({ reason: 'Penjelasan singkat yang masih lengkap. '.repeat(30),
     insights: { ...aiExplanation().insights, actionPlan: '', momentum: 'RSI: 95 menandakan jenuh beli.' },
@@ -279,7 +295,7 @@ test('minor explanation errors are repaired locally and server levels cannot be 
   const { handler, calls } = route({ output: JSON.stringify(output) });
   const payload = await (await handler(request())).json();
   assert.equal(payload.result.provenance.kind, 'ai_adjusted');
-  assert.ok(payload.result.reason.length <= 600);
+  assert.ok(payload.result.reason.length <= core.AI_EXPLANATION_LIMITS.reason);
   assert.ok(payload.result.insights.actionPlan);
   assert.ok(!payload.result.insights.momentum.includes('95'));
   assert.ok(payload.result.setups.every(setup => setup.entryLow > 0 && setup.stopLoss < 5000));

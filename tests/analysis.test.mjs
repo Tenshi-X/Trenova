@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, MIN_OUTPUT_TOKENS, MAX_CONTEXT_CHARS, THINKING_BUDGET,
+  MAX_INPUT_TOKENS, MAX_OUTPUT_TOKENS, MIN_OUTPUT_TOKENS, MAX_CONTEXT_CHARS, ANALYSIS_THINKING_LEVEL,
   buildPrompt, outputBudgetForCost, parseAnalysisInput, validateModelAnalysis, worstCaseCostIdr,
   TIMEFRAMES, TIMEFRAME_MILLIS, candlesAreFresh, CONFIRMATION_TIMEFRAME, calculateIndicators,
+  setupTargetMetrics,
+  analysisPricing, analysisCostIdr,
 } from '../src/lib/analysis/core.ts';
 import { evaluateSetupOutcome } from '../src/lib/analysis/outcome.ts';
 import { modelResult, longSetup, shortSetup } from './fixtures/analysis.mjs';
@@ -22,6 +24,28 @@ const market = {
     openTime: 1, closeTime: 2, open: 101, high: 102, low: 98, close: 100, volume: 100,
   }],
 };
+
+test('target returns use worst entry for both directions, price scales and archived setups', () => {
+  for (const setup of [longSetup, shortSetup]) for (const scale of [0.0000001, 1, 630]) {
+    const scaled = { ...setup, ...Object.fromEntries(['entryLow', 'entryHigh', 'stopLoss', 'takeProfit1', 'takeProfit2']
+      .map(key => [key, setup[key] * scale])) };
+    const metrics = setupTargetMetrics(scaled);
+    assert.ok(metrics);
+    assert.equal(metrics.entry, setup.direction === 'LONG' ? scaled.entryHigh : scaled.entryLow);
+    assert.ok(metrics.lossPct < 0);
+    assert.ok(Math.abs(metrics.targets[0].riskReward - 2) < 1e-8);
+    for (const [i, target] of metrics.targets.entries()) {
+      assert.equal(target.price, scaled[i === 0 ? 'takeProfit1' : 'takeProfit2']);
+      assert.ok(target.gainPct > 0);
+      assert.ok(Math.abs(target.gainPct / -metrics.lossPct - target.riskReward) < 1e-8);
+    }
+    assert.ok(metrics.targets[1].riskReward > metrics.targets[0].riskReward);
+  }
+  for (const bad of [{ entryLow: 0 }, { entryLow: 101 }, { stopLoss: 99 },
+    { takeProfit1: 110 }, { takeProfit2: NaN }, { takeProfit2: 94 }]) {
+    assert.equal(setupTargetMetrics({ ...shortSetup, ...bad }), null);
+  }
+});
 
 test('validates numeric SHORT setup and derives RR/stop distance from worst entry', () => {
   const result = validateModelAnalysis(modelResult({ reason: 'Harga di bawah EMA20 dengan momentum lemah.' }), input, market);
@@ -87,7 +111,7 @@ test('requires substantive bounded explanations without silently truncating canc
 });
 
 test('allocates more output/thinking within Rp500 and adapts for FX and larger inputs', () => {
-  assert.ok(THINKING_BUDGET > 512);
+  assert.equal(ANALYSIS_THINKING_LEVEL, 'LOW');
   assert.ok(MAX_OUTPUT_TOKENS > 1900);
   for (const fx of [20000, 22000, 25000]) {
     for (const tokens of [1200, 2500, MAX_INPUT_TOKENS]) {
@@ -99,10 +123,24 @@ test('allocates more output/thinking within Rp500 and adapts for FX and larger i
     }
   }
   assert.equal(outputBudgetForCost(1200, 500, 20000), MAX_OUTPUT_TOKENS);
-  assert.ok(outputBudgetForCost(4000, 500, 20000) < MAX_OUTPUT_TOKENS);
+  assert.ok(outputBudgetForCost(4000, 500, 30000) < MAX_OUTPUT_TOKENS);
   for (const args of [[4000, 100, 20000], [1000, 500, NaN], [-1, 500, 20000]]) {
     assert.equal(outputBudgetForCost(...args), null);
   }
+});
+
+test('Flash costs follow the UTC price transition and preflight always covers regular prices', () => {
+  const before = Date.parse('2026-12-31T23:59:59.999Z');
+  const after = Date.parse('2027-01-01T00:00:00Z');
+  assert.deepEqual(analysisPricing(before), { inputUsdPerMillion: 0.75, outputUsdPerMillion: 3.75 });
+  assert.deepEqual(analysisPricing(after), { inputUsdPerMillion: 1.5, outputUsdPerMillion: 7.5 });
+  assert.equal(analysisCostIdr(2000, 1000, 20000, before), 105);
+  assert.equal(analysisCostIdr(2000, 1000, 20000, after), 210);
+  for (const at of [before, after]) for (const fx of [20000, 22000, 30000]) {
+    const budget = outputBudgetForCost(4000, 500, fx);
+    if (budget !== null) assert.ok(analysisCostIdr(4000, budget, fx, at) <= 480);
+  }
+  assert.deepEqual(analysisPricing(NaN), analysisPricing(after));
 });
 
 test('prompt includes 24 OHLCV candles, richer context, actual structure and conditional plans', () => {

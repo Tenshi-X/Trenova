@@ -83,3 +83,69 @@ test('unusable data or impossible targets cannot become a paid technical report'
   const base = buildTechnicalAnalysis(input, technicalMarket);
   assert.throws(() => enrichTechnicalAnalysis({ preferredDirection: 'LONG' }, base, technicalMarket), /empty_analysis/);
 });
+
+test('richer explanations retain complete sentences and still repair contradictory later claims', () => {
+  const base = buildTechnicalAnalysis(input, technicalMarket);
+  const detail = 'Struktur pasar perlu dikonfirmasi oleh penutupan candle dan volume sebelum mengikuti rencana. ';
+  const reason = detail.repeat(7).trim();
+  const insight = detail.repeat(4).trim();
+  const rationale = detail.repeat(3).trim();
+  const raw = aiExplanation({ reason, rationale,
+    insights: Object.fromEntries(Object.keys(base.insights).map(key => [key, insight])) });
+  const report = enrichTechnicalAnalysis(raw, base, technicalMarket);
+  assert.equal(report.provenance.kind, 'ai');
+  assert.equal(report.reason, reason);
+  assert.equal(report.insights.actionPlan, insight);
+  assert.equal(report.setups[0].rationale, rationale);
+  assert.deepEqual(report.setups[0].entryLow, base.setups.find(setup => setup.direction === 'SHORT').entryLow);
+
+  const repaired = enrichTechnicalAnalysis({ ...raw,
+    insights: { ...raw.insights, momentum: insight + ' RSI: 82 menunjukkan momentum kuat.' } }, base, technicalMarket);
+  assert.equal(repaired.insights.momentum, base.insights.momentum);
+  assert.ok(repaired.provenance.repairedFields.includes('insights.momentum'));
+});
+
+test('timeframes and explicit missing data are not mistaken for unsupported market claims', () => {
+  const base = buildTechnicalAnalysis(input, technicalMarket);
+  for (const timeframe of ['1h', '4h', '1 jam', '4 jam', '15 menit', '4 hours']) {
+    const raw = aiExplanation({ reason: `Tunggu candle ${timeframe} tutup di bawah support 98 sebelum mengevaluasi retest.`,
+      insights: { ...aiExplanation().insights,
+        marketContext: 'Tidak ada data Funding Rate atau Open Interest. Fear & Greed bernilai null.' } });
+    const report = enrichTechnicalAnalysis(raw, base, technicalMarket);
+    assert.equal(report.reason, raw.reason);
+    assert.equal(report.insights.marketContext, raw.insights.marketContext);
+    assert.equal(report.provenance.kind, 'ai');
+  }
+  for (const reason of ['Jika candle 1h tutup di bawah 9000, evaluasi retest.',
+    'Jika support 98.9 ditembus, evaluasi retest.', 'Jika price 9800 turun, evaluasi retest.']) {
+    const report = enrichTechnicalAnalysis(aiExplanation({ reason }), base, technicalMarket);
+    assert.ok(report.provenance.repairedFields.includes('reason'));
+    assert.notEqual(report.reason, reason);
+  }
+  const report = enrichTechnicalAnalysis(aiExplanation({
+    reason: 'Funding bernilai null. RSI: 95 menunjukkan momentum kuat.' }), base, technicalMarket);
+  assert.ok(report.provenance.repairedFields.includes('reason'));
+  const nearOversold = { ...technicalMarket, rsi: 31.48 };
+  const reason = 'RSI mendekati area oversold sehingga risiko pantulan tetap perlu diperhatikan.';
+  assert.equal(enrichTechnicalAnalysis(aiExplanation({ reason }), base, nearOversold).reason, reason);
+  for (const marketContext of ['Tanpa data derivatif seperti funding rate dan open interest, konfirmasi terbatas.',
+    'Ketiadaan metrik funding rate dan open interest membatasi konteks pasar.']) {
+    const raw = aiExplanation({ insights: { ...aiExplanation().insights, marketContext } });
+    assert.equal(enrichTechnicalAnalysis(raw, base, technicalMarket).insights.marketContext, marketContext);
+  }
+  const claimedOversold = enrichTechnicalAnalysis(aiExplanation({ reason: 'RSI oversold menunjukkan tekanan jual ekstrem.' }), base, nearOversold);
+  assert.ok(claimedOversold.provenance.repairedFields.includes('reason'));
+  const candleCount = 'Harga bertahan di atas support 20 candle di 98 sebelum konfirmasi lanjutan.';
+  assert.equal(enrichTechnicalAnalysis(aiExplanation({ reason: candleCount }), base, technicalMarket).reason, candleCount);
+});
+
+test('contradictory EMA crossover claims are repaired while conditional scenarios remain possible', () => {
+  const base = buildTechnicalAnalysis(input, technicalMarket);
+  for (const reason of ['EMA20 telah memotong ke bawah EMA50, menandakan tren bearish.',
+    'EMA20 dan EMA50 telah membentuk persilangan bearish.']) {
+    const report = enrichTechnicalAnalysis(aiExplanation({ reason }), base, technicalMarket);
+    assert.ok(report.provenance.repairedFields.includes('reason'));
+  }
+  const reason = 'Jika EMA20 memotong ke bawah EMA50, evaluasi ulang arah rencana.';
+  assert.equal(enrichTechnicalAnalysis(aiExplanation({ reason }), base, technicalMarket).reason, reason);
+});
