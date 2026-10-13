@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { applyDerivatives, applyMarketCaps, getDerivatives, getMarketCaps } from '@/lib/market-derivatives';
-import { fetchOkxTickers, getIndicators } from '@/lib/screener-market';
+import { fetchOkxMarket, getIndicators } from '@/lib/screener-market';
+import { getCategories, restrictCategories } from '@/lib/market-categories';
 import { coinbasePremium, getCoinbaseBtcPrice, getGlobalMarket } from '@/lib/market-global';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -84,13 +85,14 @@ async function coinbaseSnapshot() {
 // Primary source: OKX perpetual swaps. One request lists every USDT swap; we keep the top 100 by USD volume,
 // one row per base symbol (no duplicates), and attach real 1h indicators (cached server-side, filled in progressively).
 async function okxSnapshot() {
-  const tickers = await fetchOkxTickers(undefined, 100);
-  if (!tickers || tickers.length < 10) return null;
-  const indicators = await getIndicators(tickers.map((t) => t.symbol));
-  return tickers.map((t, i) => {
+  const market = await fetchOkxMarket(undefined, 100, 20);
+  if (!market || market.crypto.length < 10) return null;
+  const all = [...market.crypto.map((t) => ({ t, group: 'crypto' as const })), ...market.tradfi.map((t) => ({ t, group: 'tradfi' as const }))];
+  const indicators = await getIndicators(all.map(({ t }) => t.symbol));
+  const coins = all.map(({ t, group }, i) => {
     const ind = indicators.get(t.symbol);
     return {
-      rank: i + 1, symbol: t.symbol, pair: `${t.symbol}USDT`, price: t.price, priceChangePercent: t.priceChangePercent,
+      rank: i + 1, symbol: t.symbol, pair: `${t.symbol}USDT`, group, price: t.price, priceChangePercent: t.priceChangePercent,
       high24h: t.high24h, low24h: t.low24h, volume24h: t.volume24h, marketCap: 0,
       fundingRate: null as number | null, openInterestUsd: null as number | null, sparkline: [] as number[],
       rsi: ind?.rsi ?? null, macdHist: ind?.macdHist ?? null, structure: ind?.structure ?? null,
@@ -98,6 +100,7 @@ async function okxSnapshot() {
       change1h: ind?.change1h ?? null, change4h: ind?.change4h ?? null, change12h: ind?.change12h ?? null,
     };
   });
+  return coins;
 }
 const CL = 'https://api.coinlore.net';
 async function clGlobal() {
@@ -172,13 +175,14 @@ export async function GET(req: Request) {
     // timed() never rejects, so this promise is safe to leave un-awaited on the fallback branches.
     const extras = Promise.all([timed('derivatives', () => getDerivatives()), timed('marketcaps', () => getMarketCaps())]);
     // P0: OKX perpetual swaps (top 100 by volume, real indicators)
-    const okx = await timed('okx', okxSnapshot);
-    if (okx && okx.length >= 10) {
-      const [[deriv, caps], gm, cbBtc] = await Promise.all([extras, timed('global', () => getGlobalMarket()), timed('coinbase-btc', () => getCoinbaseBtcPrice())]);
-      applyDerivatives(okx, deriv);
-      applyMarketCaps(okx, caps);
+    const okxAll = await timed('okx', okxSnapshot);
+    if (okxAll && okxAll.length >= 10) {
+      const okx = okxAll.filter((c) => c.group === 'crypto'); // headline stats ignore TradFi contracts
+      const [[deriv, caps], gm, cbBtc, cats] = await Promise.all([extras, timed('global', () => getGlobalMarket()), timed('coinbase-btc', () => getCoinbaseBtcPrice()), timed('categories', () => getCategories())]);
+      applyDerivatives(okxAll, deriv);
+      applyMarketCaps(okxAll, caps);
       // OKX gives its own volume; the other exchanges' volume for the same coin is added on top (one row per coin).
-      for (const c of okx) c.volume24h += deriv?.map.get(c.symbol)?.volumeUsd ?? 0;
+      for (const c of okxAll) c.volume24h += deriv?.map.get(c.symbol)?.volumeUsd ?? 0;
       const fundingValues = okx.flatMap((c) => (c.fundingRate === null ? [] : [c.fundingRate]));
       const avgFR = fundingValues.length ? Number((fundingValues.reduce((sum, v) => sum + v, 0) / fundingValues.length).toFixed(4)) : null;
       const totalVol = okx.reduce((sum, c) => sum + c.volume24h, 0);
@@ -195,7 +199,7 @@ export async function GET(req: Request) {
         rsiCount: rsiValues.length,
         coinbasePremium: premium === null ? null : Number(premium.toFixed(3)),
       };
-      const body: Record<string, unknown> = { coins: okx, global, timestamp: Date.now(), source: 'okx', degraded: false, derivativesSources: deriv?.providers ?? [] };
+      const body: Record<string, unknown> = { coins: okxAll, categories: restrictCategories(cats ?? {}, okx.map((c) => c.symbol)), global, timestamp: Date.now(), source: 'okx', degraded: false, derivativesSources: deriv?.providers ?? [] };
       if (debug) body.attempts = attempts;
       return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20' } });
     }

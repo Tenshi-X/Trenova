@@ -93,3 +93,24 @@ test('parseOkxCryptoBases keeps only instCategory 1 and fails soft', () => {
   assert.equal(lib.parseOkxCryptoBases({ code: '0', data: [] }), null);
   assert.equal(lib.parseOkxCryptoBases(null), null);
 });
+
+test('parseOkxInstrumentGroups separates crypto from TradFi and fails soft', () => {
+  const data = Array.from({ length: 25 }, (_, i) => ({ instId: `C${i}-USDT-SWAP`, instCategory: '1' }));
+  data.push({ instId: 'SOXL-USDT-SWAP', instCategory: '3' }, { instId: 'XAU-USDT-SWAP', instCategory: '4' }, { instId: 'C1-USDT-SWAP', instCategory: '3' }, { instId: 'X-USDT-SWAP' });
+  const groups = lib.parseOkxInstrumentGroups({ code: '0', data });
+  assert.equal(groups.crypto.size, 25);
+  assert.deepEqual([...groups.tradfi].sort(), ['SOXL', 'XAU']);
+  assert.equal(lib.parseOkxInstrumentGroups({ code: '0', data: [] }), null);
+});
+
+test('fetchOkxMarket returns crypto and TradFi separately', async () => {
+  lib.resetScreenerCache();
+  const instruments = Array.from({ length: 25 }, (_, i) => ({ instId: `C${i}-USDT-SWAP`, instCategory: '1' }));
+  instruments.push({ instId: 'SOXL-USDT-SWAP', instCategory: '3' });
+  const row = (id, vol) => ({ instId: id, last: '10', open24h: '10', high24h: '11', low24h: '9', volCcy24h: String(vol) });
+  const tickers = { code: '0', data: [row('C1-USDT-SWAP', 100), row('C2-USDT-SWAP', 50), row('SOXL-USDT-SWAP', 999)] };
+  const fetcher = async url => ({ ok: true, status: 200, json: async () => url.includes('instruments') ? { code: '0', data: instruments } : tickers });
+  const market = await lib.fetchOkxMarket(fetcher, 100, 20);
+  assert.deepEqual(market.crypto.map(c => c.symbol), ['C1', 'C2']);
+  assert.deepEqual(market.tradfi.map(c => c.symbol), ['SOXL']);
+});

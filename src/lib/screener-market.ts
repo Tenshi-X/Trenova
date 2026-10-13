@@ -74,39 +74,59 @@ export function parseOkxTickers(json: unknown, limit = 50, cryptoBases: Readonly
 }
 
 /**
- * OKX: GET /api/v5/public/instruments?instType=SWAP. instCategory "1" = crypto (others are tokenized stocks,
- * commodities, FX...). Returns the set of crypto base symbols, or null when unavailable (then nothing is filtered).
+ * OKX: GET /api/v5/public/instruments?instType=SWAP. instCategory "1" = crypto; the others (stocks, ETFs,
+ * commodities, FX, bonds) are "TradFi". Returns both sets of base symbols, or null when the list looks
+ * incomplete or unavailable (then nothing is filtered and no TradFi tab is offered).
  */
-export function parseOkxCryptoBases(json: unknown): Set<string> | null {
+export function parseOkxInstrumentGroups(json: unknown): { crypto: Set<string>; tradfi: Set<string> } | null {
   const root = asObject(json);
   if (!root || root.code !== '0' || !Array.isArray(root.data)) return null;
-  const bases = new Set<string>();
+  const crypto = new Set<string>();
+  const tradfi = new Set<string>();
   for (const item of root.data) {
     const row = asObject(item);
-    if (!row || String(row.instCategory ?? '') !== '1') continue;
+    if (!row) continue;
+    const category = String(row.instCategory ?? '');
+    if (category === '') continue;
     const match = /^([A-Z0-9]+)-USDT-SWAP$/.exec(String(row.instId ?? ''));
-    if (match) bases.add(match[1]);
+    if (!match) continue;
+    (category === '1' ? crypto : tradfi).add(match[1]);
   }
-  return bases.size >= 20 ? bases : null;
+  for (const base of crypto) tradfi.delete(base); // a symbol that exists as crypto is never TradFi
+  return crypto.size >= 20 ? { crypto, tradfi } : null;
+}
+
+/** Kept for callers that only need the crypto set. */
+export function parseOkxCryptoBases(json: unknown): Set<string> | null {
+  return parseOkxInstrumentGroups(json)?.crypto ?? null;
 }
 
 const BASES_TTL_MS = 6 * 60 * 60_000;
-let basesCache: { at: number; value: Set<string> } | null = null;
+let basesCache: { at: number; value: { crypto: Set<string>; tradfi: Set<string> } } | null = null;
 
-async function getCryptoBases(fetcher: Fetcher): Promise<Set<string> | null> {
+async function getInstrumentGroups(fetcher: Fetcher): Promise<{ crypto: Set<string>; tradfi: Set<string> } | null> {
   if (basesCache && Date.now() - basesCache.at < BASES_TTL_MS) return basesCache.value;
-  const value = parseOkxCryptoBases(await getJson(`${OKX}/api/v5/public/instruments?instType=SWAP`, fetcher, 5000));
+  const value = parseOkxInstrumentGroups(await getJson(`${OKX}/api/v5/public/instruments?instType=SWAP`, fetcher, 5000));
   if (value) { basesCache = { at: Date.now(), value }; return value; }
   return basesCache?.value ?? null; // stale is better than unfiltered
 }
 
-export async function fetchOkxTickers(fetcher: Fetcher = fetch, limit = 50): Promise<ScreenerTicker[] | null> {
-  const [json, bases] = await Promise.all([
+export interface OkxMarket { crypto: ScreenerTicker[]; tradfi: ScreenerTicker[] }
+
+/** Top crypto swaps by volume, plus the biggest TradFi contracts (stocks/commodities) kept apart from them. */
+export async function fetchOkxMarket(fetcher: Fetcher = fetch, limit = 100, tradfiLimit = 20): Promise<OkxMarket | null> {
+  const [json, groups] = await Promise.all([
     getJson(`${OKX}/api/v5/market/tickers?instType=SWAP`, fetcher, 5000),
-    getCryptoBases(fetcher),
+    getInstrumentGroups(fetcher),
   ]);
-  const tickers = parseOkxTickers(json, limit, bases);
-  return tickers.length ? tickers : null;
+  const crypto = parseOkxTickers(json, limit, groups?.crypto ?? null);
+  if (!crypto.length) return null;
+  const tradfi = groups && groups.tradfi.size ? parseOkxTickers(json, tradfiLimit, groups.tradfi) : [];
+  return { crypto, tradfi };
+}
+
+export async function fetchOkxTickers(fetcher: Fetcher = fetch, limit = 50): Promise<ScreenerTicker[] | null> {
+  return (await fetchOkxMarket(fetcher, limit, 0))?.crypto ?? null;
 }
 
 // ─── Indicators ───────────────────────────────────────────────────────────────
