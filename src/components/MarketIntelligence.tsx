@@ -45,10 +45,10 @@ const WIDGET_OPTIONS = [
     { id: 'loser', label: 'Top Loser (24h)' },
     { id: 'momentum', label: 'Market Momentum' },
     { id: 'ethbtc', label: 'ETH/BTC Ratio' },
-    { id: 'funding', label: 'Avg Funding Rate (Top 50)' },
+    { id: 'funding', label: 'Avg Funding Rate (Top 100)' },
     { id: 'btcd', label: 'BTC Dominance (BTC.D)' },
     { id: 'usdtd', label: 'USDT Dominance (USDT.D)' },
-    { id: 'avgrsi', label: 'Rata-rata RSI (Top 50)' },
+    { id: 'avgrsi', label: 'Rata-rata RSI (Top 100)' },
     { id: 'cbprem', label: 'Coinbase Premium (BTC)' },
 ];
 
