@@ -1,6 +1,6 @@
 import {
-  AI_EXPLANATION_LIMITS, validateClaims, validateModelAnalysis,
-  type AnalysisInput, type AnalysisInsights, type AnalysisSetup, type AnalysisV2, type MarketSnapshot,
+  AI_EXPLANATION_LIMITS, levelSourceLabel, TIMEFRAME_MILLIS, validateClaims, validateModelAnalysis,
+  type AnalysisInput, type AnalysisInsights, type AnalysisSetup, type AnalysisV2, type MarketSnapshot, type SignalFactor, type SignalQuality,
 } from './core';
 
 const priceText = (value: number) => Number(value.toPrecision(8)).toString();
@@ -11,6 +11,59 @@ const matchesLevel = (raw: string, values: number[]) => {
   const numbers = [Number(raw), Number(raw.replace(/,/g, '')), Number(raw.replace(/\./g, '').replace(',', '.'))];
   return values.some(value => numbers.some(number => Math.abs(number - value) <= value * 1e-6));
 };
+
+// Score a plan from independent, explainable checks. Unknown data earns half credit, a failed check none.
+// Weights are heuristics: the backtest endpoint exists to check whether the score really separates good from bad setups.
+const FACTOR_WEIGHTS = { htf: 25, trend: 15, rsi: 15, btc: 10, level: 15, path: 10, funding: 10 } as const;
+
+export function assessSetup(setup: AnalysisSetup, market: MarketSnapshot, source: AnalysisSetup['entryType'],
+  levelSource: NonNullable<MarketSnapshot['structure']>['supportSource'], language: 'id' | 'en'): SignalQuality {
+  const structure = market.structure!;
+  const long = setup.direction === 'LONG';
+  const want = long ? 'bullish' : 'bearish';
+  const copy = (id: string, english: string) => language === 'en' ? english : id;
+  const factors: Array<SignalFactor & { weight: number }> = [];
+  const add = (key: keyof typeof FACTOR_WEIGHTS, label: string, state: SignalFactor['state'], detail: string) =>
+    factors.push({ key, label, state, detail, weight: FACTOR_WEIGHTS[key] });
+  const trendState = (trend: string | undefined): [SignalFactor['state'], string] => !trend ? ['unknown', copy('data tidak tersedia', 'data unavailable')]
+    : trend === want ? ['pass', copy('searah', 'aligned')] : trend === 'neutral' ? ['unknown', copy('netral', 'neutral')]
+      : ['fail', copy('berlawanan', 'opposed')];
+  const [htfState, htfDetail] = trendState(market.higherTrend?.trend);
+  add('htf', copy(`Tren ${market.higherTrend?.timeframe ?? 'timeframe atas'}`, `${market.higherTrend?.timeframe ?? 'Higher timeframe'} trend`), htfState, htfDetail);
+  const [trendResult, trendDetail] = trendState(structure.trend);
+  add('trend', copy(`Struktur EMA ${market.timeframe}`, `${market.timeframe} EMA structure`), trendResult, trendDetail);
+  const exhausted = long ? market.rsi >= 70 : market.rsi <= 30;
+  const weakMomentum = source === 'BREAKOUT' && (long ? market.rsi < 50 : market.rsi > 50);
+  add('rsi', 'RSI', exhausted ? 'fail' : weakMomentum ? 'unknown' : 'pass',
+    exhausted ? copy(`RSI ${market.rsi.toFixed(0)}: sudah ekstrem, rawan mengejar`, `RSI ${market.rsi.toFixed(0)}: already extreme, chasing risk`)
+      : weakMomentum ? copy(`RSI ${market.rsi.toFixed(0)}: momentum belum mendukung breakout`, `RSI ${market.rsi.toFixed(0)}: momentum does not support the breakout yet`)
+        : copy(`RSI ${market.rsi.toFixed(0)}: masih ada ruang`, `RSI ${market.rsi.toFixed(0)}: room left`));
+  const btcMove = market.symbol === 'BTC' ? null : market.btcChange24h;
+  add('btc', copy('Arah BTC 24 jam', 'BTC 24h direction'), btcMove === null ? 'unknown'
+    : (long ? btcMove <= -1.5 : btcMove >= 1.5) ? 'fail' : 'pass',
+  btcMove === null ? copy('tidak berlaku atau tidak tersedia', 'not applicable or unavailable')
+    : `${btcMove.toFixed(2)}%`);
+  const strongLevel = !!levelSource && levelSource.tf !== 'local';
+  add('level', copy('Kualitas level', 'Level quality'), strongLevel ? 'pass' : 'fail',
+    strongLevel ? levelSourceLabel(levelSource, market.timeframe, language) : copy('hanya level candle terakhir (lemah)', 'only recent-candle level (weak)'));
+  const entry = long ? setup.entryHigh : setup.entryLow;
+  const blocker = (structure.htfLevels ?? []).find(value => (long ? value > entry * 1.002 && value < setup.takeProfit1
+    : value < entry * 0.998 && value > setup.takeProfit1));
+  add('path', copy('Jalur menuju TP1', 'Path to TP1'), !structure.htfLevels ? 'unknown' : blocker === undefined ? 'pass' : 'fail',
+    blocker === undefined ? (structure.htfLevels ? copy('tidak ada level D1/W1 yang menghalangi', 'no D1/W1 level in the way') : copy('data tidak tersedia', 'data unavailable'))
+      : copy(`TP1 melewati level D1/W1 di ${priceText(blocker)}`, `TP1 runs through a D1/W1 level at ${priceText(blocker)}`));
+  const funding = market.fundingRate;
+  const crowded = funding !== null && (long ? funding > 0.0005 : funding < -0.0005);
+  add('funding', 'Funding', funding === null ? 'unknown' : crowded ? 'fail' : 'pass',
+    funding === null ? copy('tidak tersedia', 'unavailable')
+      : crowded ? copy(`${(funding * 100).toFixed(3)}%: posisi searah terlalu ramai`, `${(funding * 100).toFixed(3)}%: same-side positioning is crowded`)
+        : `${(funding * 100).toFixed(3)}%`);
+  const score = Math.round(factors.reduce((sum, f) => sum + f.weight * (f.state === 'pass' ? 1 : f.state === 'unknown' ? 0.5 : 0), 0));
+  const nearest = market.price > setup.entryHigh ? market.price - setup.entryHigh : market.price < setup.entryLow ? setup.entryLow - market.price : 0;
+  const status = score < 40 ? 'NO_TRADE' : nearest <= market.atr * 1.5 && score >= 50 ? 'READY' : 'WATCH';
+  return { score, grade: score >= 70 ? 'HIGH' : score >= 50 ? 'MEDIUM' : 'LOW', status,
+    factors: factors.map(({ weight: _weight, ...factor }) => factor) };
+}
 
 // Build and validate the deliverable before reserving quota or calling a paid model.
 // Targets express the requested RR; they are not predicted market destinations.
@@ -29,13 +82,19 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
       : structure.trend === 'bearish' || (structure.trend === 'neutral' && market.price < market.ema20) ? 'SHORT' : 'LONG';
   const directions: AnalysisSetup['direction'][] = input.marketType === 'spot' || input.directionPreference !== 'auto'
     ? [preferred] : [preferred, preferred === 'LONG' ? 'SHORT' : 'LONG'];
+  const language = input.language === 'en' ? 'en' : 'id';
   const stopAtr = (input.riskTolerance === 'Low Risk' ? 1.5 : input.riskTolerance === 'High Risk' ? 0.75 : 1)
     * (input.tradingStyle === 'swing' ? 1.25 : input.tradingStyle === 'scalping' ? 0.8 : 1);
   const rr = Number(input.targetRR.slice(2));
-  const setups = directions.map(direction => {
+  const built = directions.map(direction => {
     const long = direction === 'LONG';
+    const trendMatches = structure.trend === (long ? 'bullish' : 'bearish');
+    // All-Round picks by location: with the trend, buy the dip / sell the rally when that level is nearer than the breakout level.
+    const nearerPullback = Math.abs((long ? structure.support : structure.resistance) - market.price)
+      <= Math.abs((long ? structure.resistance : structure.support) - market.price);
     const pullback = input.strategyFocus === 'Mean Reversion'
-      || (input.strategyFocus === 'Trend Following' && structure.trend === (long ? 'bullish' : 'bearish'));
+      || (input.strategyFocus === 'Trend Following' && trendMatches)
+      || (input.strategyFocus === 'All-Round' && trendMatches && nearerPullback);
     const anchor = pullback ? (long ? structure.support : structure.resistance)
       : (long ? structure.resistance : structure.support);
     const width = market.atr * 0.12;
@@ -48,8 +107,7 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
     const takeProfit2 = level(worstEntry + (long ? 1 : -1) * risk * (rr + 1));
     const zone = `${priceText(entryLow)}–${priceText(entryHigh)}`;
     const source = long === pullback ? structure.supportSource : structure.resistanceSource;
-    const sourceLabel = !source || source.tf === 'local' ? copy(`level ${input.timeframe}`, `${input.timeframe} level`)
-      : copy(`${source.tf}, ${source.touches} titik`, `${source.tf}, ${source.touches} pivots`);
+    const sourceLabel = levelSourceLabel(source, input.timeframe, input.language === 'en' ? 'en' : 'id');
     // A pullback plan is cancelled by its stop; a breakout plan is cancelled by losing the opposite structure level,
     // otherwise the cancel rule can already be true when the plan is created.
     const cancelAt = pullback ? stopLoss : long ? structure.support : structure.resistance;
@@ -60,15 +118,20 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
         `Wait for a test of ${zone}, a ${input.timeframe} close ${long ? 'above' : 'below'} ${priceText(long ? entryHigh : entryLow)}, then an entry-zone retest.`)
       : copy(`Tunggu candle ${input.timeframe} tutup ${long ? 'di atas' : 'di bawah'} ${priceText(long ? entryHigh : entryLow)}, lalu retest ${zone}.`,
         `Wait for a ${input.timeframe} close ${long ? 'above' : 'below'} ${priceText(long ? entryHigh : entryLow)}, then a retest of ${zone}.`);
-    return { direction, entryLow, entryHigh, stopLoss, takeProfit1, takeProfit2,
+    const setup: AnalysisSetup = { direction, entryLow, entryHigh, stopLoss, takeProfit1, takeProfit2,
       execution: 'CONDITIONAL' as const, trigger,
-      distanceToEntryPct,
-      invalidation: copy(`Batalkan sebelum entry jika candle ${input.timeframe} tutup ${long ? 'di bawah' : 'di atas'} ${priceText(cancelAt)}.`,
-        `Cancel before entry if a ${input.timeframe} candle closes ${long ? 'below' : 'above'} ${priceText(cancelAt)}.`),
+      distanceToEntryPct, entryType: pullback ? 'PULLBACK' : 'BREAKOUT', cancelAt: level(cancelAt),
+      invalidation: copy(`Candle ${input.timeframe} tutup ${long ? 'di bawah' : 'di atas'} ${priceText(cancelAt)} sebelum entry terpicu.`,
+        `A ${input.timeframe} candle closes ${long ? 'below' : 'above'} ${priceText(cancelAt)} before the entry triggers.`),
       rationale: copy(`${pullback ? 'Retest' : 'Breakout/retest'} ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)} (${sourceLabel}); SL memakai buffer ${stopAtr.toFixed(2)} ATR. Target dihitung dari R:R ${input.targetRR}, bukan prediksi harga.`,
         `${pullback ? 'Retest' : 'Breakout/retest'} of ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)} (${sourceLabel}); SL uses a ${stopAtr.toFixed(2)} ATR buffer. Targets use ${input.targetRR} RR, not a price forecast.`),
     };
+    setup.quality = assessSetup(setup, market, setup.entryType, source, language);
+    return setup;
   });
+  // The higher-scoring direction leads; ties keep the trend-based preference.
+  const setups = built.map((setup, index) => ({ setup, index }))
+    .sort((a, b) => (b.setup.quality!.score - a.setup.quality!.score) || (a.index - b.index)).map(item => item.setup);
   const btc = market.btcChange24h === null ? copy('tidak tersedia', 'unavailable') : `${market.btcChange24h.toFixed(2)}%`;
   const unavailable = copy('tidak tersedia', 'unavailable');
   const insights: AnalysisInsights = {
@@ -89,11 +152,18 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
       `Recheck after the ${input.timeframe} candle closes. Enter only after the trigger; size the position for account risk. Assess support/resistance barriers before TP; once in a position, use SL and review at TP1.`),
   };
   const report = validateModelAnalysis({ verdict: 'WAIT', setups, insights,
-    reason: copy(`Rencana ${preferred} disusun dari support/resistance candle tertutup dan ATR. Entry menunggu pemicu terukur; target R:R harus ditinjau terhadap hambatan harga dan biaya transaksi.`,
-      `The ${preferred} plan uses closed-candle support/resistance and ATR. Entry needs a measurable trigger; assess RR targets against price barriers and transaction costs.`),
+    reason: copy(`Rencana ${setups[0].direction} disusun dari support/resistance candle tertutup dan ATR. Entry menunggu pemicu terukur; target R:R harus ditinjau terhadap hambatan harga dan biaya transaksi.`,
+      `The ${setups[0].direction} plan uses closed-candle support/resistance and ATR. Entry needs a measurable trigger; assess RR targets against price barriers and transaction costs.`),
     wait_for: setups[0].trigger,
   }, input, market);
   report.wait_for = report.setups[0].trigger!;
+  const lead = report.setups[0].quality;
+  if (lead?.status === 'NO_TRADE') report.warnings.push(copy(
+    `Skor konfluensi ${lead.score}/100 (rendah): setup ini lebih baik dipantau saja, bukan dieksekusi.`,
+    `Confluence score ${lead.score}/100 (low): treat this setup as watch-only, not as a trade.`));
+  const blocked = lead?.factors.find(factor => factor.key === 'path' && factor.state === 'fail');
+  if (blocked) report.warnings.push(`${blocked.detail}.`);
+  report.expiresAt = new Date(new Date(market.asOf).getTime() + 6 * TIMEFRAME_MILLIS[input.timeframe]).toISOString();
   report.warnings.push(copy('TP adalah sasaran perhitungan R:R, bukan jaminan harga akan tercapai. Periksa biaya, slippage, dan hambatan struktur sebelum entry.',
     'TP levels are calculated RR objectives, not guaranteed destinations. Check fees, slippage and structural barriers before entry.'));
   report.provenance = { kind: 'technical', levels: 'technical' };

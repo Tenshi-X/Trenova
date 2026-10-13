@@ -61,3 +61,10 @@ test('breakout plans cancel on the opposite structure level, never on an already
     assert.equal(typeof setup.distanceToEntryPct, 'number');
   }
 });
+
+test('level source label separates weekly and daily pivots', async () => {
+  const { levelSourceLabel } = await import('../src/lib/analysis/core.ts');
+  assert.equal(levelSourceLabel({ tf: 'W1', touches: 12, weekly: 1 }, '4h', 'id'), 'W1 ×1 + D1 ×11 titik');
+  assert.equal(levelSourceLabel({ tf: 'D1', touches: 3, weekly: 0 }, '4h', 'en'), 'D1 ×3 pivots');
+  assert.equal(levelSourceLabel({ tf: 'local', touches: 0 }, '4h', 'id'), 'level 4h');
+});
