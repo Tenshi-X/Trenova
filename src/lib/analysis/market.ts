@@ -1,4 +1,4 @@
-import { calculateIndicators, candlesAreFresh, parseCandle, withHigherTimeframeLevels, type Candle, type MarketSnapshot, type Timeframe,
+import { calculateIndicators, candlesAreFresh, higherTimeframeTrend, parseCandle, withHigherTimeframeLevels, type Candle, type MarketSnapshot, type Timeframe,
   type CandleTimeframe, type TrendConfirmation } from './core';
 import { getDerivatives } from '../market-derivatives';
 
@@ -77,9 +77,12 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
   if (!indicators) return null;
   const closed = (raw: unknown) => Array.isArray(raw)
     ? raw.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now()) : [];
+  const dailyCandles = closed(rawDaily);
+  const weeklyCandles = closed(rawWeekly);
   if (indicators.structure) {
-    indicators.structure = withHigherTimeframeLevels(indicators.structure, price, indicators.atr, closed(rawDaily), closed(rawWeekly));
+    indicators.structure = withHigherTimeframeLevels(indicators.structure, price, indicators.atr, dailyCandles, weeklyCandles);
   }
+  const higherTrend = higherTimeframeTrend(timeframe, dailyCandles, weeklyCandles);
   const recentObject = (raw: unknown, field: string, ttl = 300000, seconds = false) => {
     const data = object(raw); const timestamp = numberOrNull(data?.[field]);
     const millis = timestamp === null ? null : timestamp * (seconds ? 1000 : 1);
@@ -114,6 +117,7 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
       openInterest: oi ? new Date(Number(oi.time)).toISOString() : (openInterestUsd !== null ? derivativesAt : null),
       sentiment: sentimentItem ? new Date(Number(sentimentItem.timestamp) * 1000).toISOString() : null },
     ...indicators,
+    higherTrend,
     recentCandles: candles.slice(-24),
   };
 }

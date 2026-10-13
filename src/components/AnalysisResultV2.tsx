@@ -1,7 +1,7 @@
 'use client';
 
 import type { AnalysisV2 } from '@/lib/analysis/core';
-import { setupTargetMetrics } from '@/lib/analysis/core';
+import { levelSourceLabel, setupTargetMetrics } from '@/lib/analysis/core';
 import { useLanguage } from '@/context/LanguageContext';
 import AnalysisStoryExport from '@/components/AnalysisStoryExport';
 import AnalysisPlanMap from '@/components/AnalysisPlanMap';
@@ -11,9 +11,7 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
   const copy = (id: string, en: string) => language === 'id' ? id : en;
   const price = (value: number) => value.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' USDT';
   const setup = result.setups[0];
-  const levelNote = (source?: { tf: string; touches: number }) => !source ? ''
-    : source.tf === 'local' ? copy(`level ${result.market.timeframe}`, `${result.market.timeframe} level`)
-      : `${source.tf} · ${source.touches} ${copy('titik', 'pivots')}`;
+  const levelNote = (source?: { tf: 'D1' | 'W1' | 'local'; touches: number; weekly?: number }) => source ? levelSourceLabel(source, result.market.timeframe, language === 'id' ? 'id' : 'en') : '';
   const conditional = result.setups.length > 0 && (result.verdict === 'WAIT' || result.setups[0].execution === 'CONDITIONAL');
   const title = conditional ? copy('Rencana ' + result.setups[0].direction, result.setups[0].direction + ' plan') : result.verdict;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
@@ -54,6 +52,27 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
       <AnalysisStoryExport result={result} />
       </div>
     </div>
+    {setup?.quality && <section className="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className={'rounded-full px-3 py-1 text-xs font-bold ' + (setup.quality.status === 'READY' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+          : setup.quality.status === 'WATCH' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300' : 'bg-rose-500/15 text-rose-600 dark:text-rose-300')}>
+          {setup.quality.status === 'READY' ? copy('SIAP · harga dekat zona entry', 'READY · price near the entry zone')
+            : setup.quality.status === 'WATCH' ? copy('PANTAU · belum waktunya entry', 'WATCH · not time to enter yet')
+              : copy('TIDAK ADA TRADE · skor rendah', 'NO TRADE · low score')}
+        </span>
+        <span className="text-sm font-bold tabular-nums">{copy('Skor konfluensi', 'Confluence score')} {setup.quality.score}/100
+          <span className="ml-1 font-normal text-slate-500">({setup.quality.grade === 'HIGH' ? copy('tinggi', 'high') : setup.quality.grade === 'MEDIUM' ? copy('sedang', 'medium') : copy('rendah', 'low')})</span></span>
+      </div>
+      <ul className="grid gap-1.5 text-sm sm:grid-cols-2">
+        {setup.quality.factors.map(factor => <li key={factor.key} className="flex gap-2">
+          <span aria-hidden className={factor.state === 'pass' ? 'text-emerald-500' : factor.state === 'fail' ? 'text-rose-500' : 'text-slate-400'}>{factor.state === 'pass' ? '✓' : factor.state === 'fail' ? '✕' : '–'}</span>
+          <span><span className="font-semibold">{factor.label}</span> <span className="text-slate-500">· {factor.detail}</span></span>
+        </li>)}
+      </ul>
+      <p className="text-xs text-slate-500">{setup.entryType && `${copy('Tipe entry', 'Entry type')}: ${setup.entryType === 'PULLBACK' ? 'Pullback' : 'Breakout'}. `}
+        {result.expiresAt && `${copy('Rencana berlaku sampai', 'Plan valid until')} ${new Date(result.expiresAt).toLocaleString(language === 'id' ? 'id-ID' : 'en-US', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })} WIB. `}
+        {copy('Skor adalah penyaring aturan, bukan peluang menang.', 'The score is a rule-based filter, not a win probability.')}</p>
+    </section>}
     <AnalysisPlanMap result={result} language={language} />
     <p className="leading-relaxed">{result.reason}</p>
     {result.parameters && <p className="text-xs text-slate-500">{t('ai_market_type')}: {result.parameters.marketType} · {t('ai_direction_label')}: {result.parameters.directionPreference === 'auto' ? t('ai_direction_auto') : result.parameters.directionPreference.toUpperCase()}</p>}
