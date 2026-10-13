@@ -3,6 +3,8 @@ import { applyDerivatives, applyMarketCaps, getDerivatives, getMarketCaps } from
 import { fetchOkxTickers, getIndicators } from '@/lib/screener-market';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+// Run close to Asia: Binance/Bybit block many US/EU datacenter IPs. Tokyo first (Bybit also blocks Singapore).
+export const preferredRegion = ['hnd1'];
 export const maxDuration = 25;
 export const revalidate = 10;
 // Live market aggregator. Priority: Coinbase (Vercel-friendly) -> Binance -> CoinLore -> static.

@@ -133,7 +133,7 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
                                 <div className={clsx("text-3xl font-black", getColor(sentiment))}>
                                     {sentiment.toFixed(1)}%
                                 </div>
-                                <div className="text-[10px] font-bold uppercase text-slate-400">
+                                <div className="text-[12px] font-bold uppercase text-slate-400">
                                     {sentiment >= 60 ? t('dash_bullish') : sentiment <= 40 ? t('dash_bearish') : t('dash_neutral')}
                                 </div>
                             </div>
@@ -149,7 +149,7 @@ export default function SentimentChart({ symbol }: SentimentChartProps) {
                 </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] text-slate-400">
+            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[12px] text-slate-400">
                 <span>{t('dash_view_insight')}</span>
                 <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
@@ -167,7 +167,7 @@ function IndicatorBar({ label, value, raw }: { label: string, value: number, raw
         <div className="flex flex-col gap-1 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-end">
                 <span className="text-xs font-bold text-slate-500">{label}</span>
-                <span className="text-[10px] font-mono opacity-50">{raw}</span>
+                <span className="text-[12px] font-mono opacity-50">{raw}</span>
             </div>
             <div className="h-16 w-full bg-slate-200 dark:bg-slate-800 rounded-lg relative overflow-hidden flex items-end">
                 <div
@@ -177,7 +177,7 @@ function IndicatorBar({ label, value, raw }: { label: string, value: number, raw
                     style={{ height: `${value}%` }}
                 />
             </div>
-            <div className="text-center text-[10px] font-bold md:mt-1">
+            <div className="text-center text-[12px] font-bold md:mt-1">
                 {isBullish ? "BULL" : isBearish ? "BEAR" : "NEUT"}
             </div>
         </div>

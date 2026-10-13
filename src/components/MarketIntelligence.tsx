@@ -223,7 +223,7 @@ export default function MarketIntelligence() {
                     <div className="flex items-center gap-1.5 text-slate-500 mb-2">
                         <span className={`text-${color}-500 font-black text-base`}>{icon}</span>
                         <span className="text-xs font-bold uppercase tracking-wider">{symbol}/USDT</span>
-                        <span className="text-[8px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded animate-pulse">LIVE</span>
+                        <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded animate-pulse">LIVE</span>
                     </div>
                     <div className="text-base font-black text-slate-800 dark:text-slate-100 tabular-nums leading-tight">
                         {price ? `$${price.toLocaleString('en', { minimumFractionDigits: symbol === 'DOGE' || symbol === 'XRP' ? 4 : 2, maximumFractionDigits: symbol === 'DOGE' || symbol === 'XRP' ? 4 : 2 })}` : "—"}
@@ -262,7 +262,7 @@ export default function MarketIntelligence() {
                                 {globalData ? formatCompactNumber(globalData.totalVolume24h) : "Loading..."}
                             </div>
                             <div className="mt-2">
-                                <div className="flex justify-between text-[9px] text-slate-400 mb-0.5">
+                                <div className="flex justify-between text-[11px] text-slate-400 mb-0.5">
                                     <span>BTC Vol</span>
                                     <span className="font-bold text-cyan-500">{globalData?.btcVolDominance?.toFixed(1) || '0'}%</span>
                                 </div>
@@ -299,7 +299,7 @@ export default function MarketIntelligence() {
                                 )}>
                                     {fng ? fng.value : "--"}
                                 </div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{fng ? fng.value_classification : "Loading"}</div>
+                                <div className="text-[12px] font-bold text-slate-400 uppercase tracking-wide">{fng ? fng.value_classification : "Loading"}</div>
                             </div>
                         </div>
                         <div className="w-16 h-8 relative flex items-end justify-center overflow-hidden shrink-0">
@@ -393,7 +393,7 @@ export default function MarketIntelligence() {
                                             <TrendingUp size={12} className="text-emerald-500" />
                                             <span className="text-sm font-black text-emerald-500">{globalData.gainersCount}</span>
                                         </div>
-                                        <div className="text-[10px] text-slate-400 font-bold">vs</div>
+                                        <div className="text-[12px] text-slate-400 font-bold">vs</div>
                                         <div className="flex items-center gap-1">
                                             <TrendingDown size={12} className="text-rose-500" />
                                             <span className="text-sm font-black text-rose-500">{globalData.losersCount}</span>
@@ -409,7 +409,7 @@ export default function MarketIntelligence() {
                                             style={{ width: `${(globalData.losersCount / Math.max(1, globalData.totalPairs)) * 100}%` }}
                                         />
                                     </div>
-                                    <div className="flex justify-between mt-1 text-[9px] text-slate-400 font-bold uppercase">
+                                    <div className="flex justify-between mt-1 text-[11px] text-slate-400 font-bold uppercase">
                                         <span>Bullish</span>
                                         <span>{globalData.totalPairs} pairs</span>
                                         <span>Bearish</span>
@@ -431,7 +431,7 @@ export default function MarketIntelligence() {
                             <div className="text-base font-black text-slate-800 dark:text-slate-100 tabular-nums leading-tight">
                                 {ratio > 0 ? ratio.toFixed(5) : "—"}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-2 font-medium">
+                            <div className="text-[12px] text-slate-400 mt-2 font-medium">
                                 Indicates Altcoin Season strength vs Bitcoin.
                             </div>
                         </div>
@@ -451,7 +451,7 @@ export default function MarketIntelligence() {
                                     {globalData?.avgFundingRate ? (globalData.avgFundingRate > 0 ? "+" : "") + globalData.avgFundingRate.toFixed(4) : "—"}%
                                 </div>
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-2 font-medium leading-snug">
+                            <div className="text-[12px] text-slate-400 mt-2 font-medium leading-snug">
                                 {globalData?.avgFundingRate == null ? 'Data funding tidak tersedia.' : (globalData.avgFundingRate || 0) > 0.01
                                     ? "Market leans heavily LONG."
                                     : (globalData?.avgFundingRate || 0) < 0
@@ -486,7 +486,7 @@ export default function MarketIntelligence() {
             </div>
 
             {lastUpdated ? (
-                <div className="terminal-market-status mb-6 text-[10px] text-slate-400 flex items-center gap-1">
+                <div className="terminal-market-status mb-6 text-[12px] text-slate-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
                     Live · Updated {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {dataSource}{isDegraded ? ' (cached)' : ''} /10s · FNG /5min
                 </div>

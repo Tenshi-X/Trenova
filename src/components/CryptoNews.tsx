@@ -97,12 +97,12 @@ export default function CryptoNews() {
             <Newspaper className="text-neon" size={20} />
           </div>
           <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">{t('news_title')}</h2>
-          <span className="text-[10px] font-bold tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full ml-2 hidden sm:inline-block">
+          <span className="text-[12px] font-bold tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full ml-2 hidden sm:inline-block">
             MULTI-SOURCE
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-slate-400 hidden sm:inline">
+          <span className="text-[12px] text-slate-400 hidden sm:inline">
             {news.length} {t('news_articles')}
           </span>
           <button
@@ -145,17 +145,17 @@ export default function CryptoNews() {
               {/* Content */}
               <div className="flex-1 flex flex-col justify-between min-w-0">
                 <div>
-                  <h3 className="font-bold text-[13px] leading-tight text-slate-800 dark:text-slate-200 line-clamp-2 mb-1.5 group-hover:text-neon transition-colors">
+                  <h3 className="font-bold text-[14px] leading-tight text-slate-800 dark:text-slate-200 line-clamp-2 mb-1.5 group-hover:text-neon transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed hidden sm:block">
+                  <p className="text-[13px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed hidden sm:block">
                     {item.description}
                   </p>
                 </div>
-                <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                <div className="flex items-center justify-between mt-2 text-[12px] text-slate-400 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-3">
                     <span className={clsx(
-                      "px-1.5 py-0.5 rounded text-[9px]",
+                      "px-1.5 py-0.5 rounded text-[11px]",
                       item.source === 'CoinDesk' ? "bg-blue-500/10 text-blue-500" : "bg-purple-500/10 text-purple-500"
                     )}>
                       {item.source}

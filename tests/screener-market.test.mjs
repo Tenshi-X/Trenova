@@ -74,3 +74,20 @@ test('getIndicators: caches, and backs off after failure', async () => {
   assert.ok(second.has('BTC'));
   assert.equal(calls, before, 'cached + failure backoff: no new requests');
 });
+
+test('parseOkxTickers drops non-crypto contracts when the crypto list is known', () => {
+  const row = (id) => ({ instId: id, last: '10', open24h: '10', high24h: '11', low24h: '9', volCcy24h: '100' });
+  const json = { code: '0', data: [row('BTC-USDT-SWAP'), row('SOXL-USDT-SWAP')] };
+  assert.deepEqual(lib.parseOkxTickers(json, 50, new Set(['BTC'])).map(c => c.symbol), ['BTC']);
+  assert.equal(lib.parseOkxTickers(json, 50, null).length, 2);
+});
+
+test('parseOkxCryptoBases keeps only instCategory 1 and fails soft', () => {
+  const data = Array.from({ length: 25 }, (_, i) => ({ instId: `C${i}-USDT-SWAP`, instCategory: '1' }));
+  data.push({ instId: 'SOXL-USDT-SWAP', instCategory: '3' }, { instId: 'BTC-USD-SWAP', instCategory: '1' });
+  const bases = lib.parseOkxCryptoBases({ code: '0', data });
+  assert.equal(bases.size, 25);
+  assert.ok(!bases.has('SOXL'));
+  assert.equal(lib.parseOkxCryptoBases({ code: '0', data: [] }), null);
+  assert.equal(lib.parseOkxCryptoBases(null), null);
+});

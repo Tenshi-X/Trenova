@@ -456,7 +456,7 @@ export default function DashboardPage() {
             )}
         >
             <Radio size={15} /> {t('nav_market')}
-            <span className="text-[8px] sm:text-[9px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
+            <span className="text-[11px] sm:text-[11px] font-black px-1 sm:px-1.5 py-0.5 bg-emerald-500 text-white rounded-full animate-pulse">LIVE</span>
         </button>
         <button
             id="terminal-tab-news" role="tab" aria-controls="terminal-panel-news" tabIndex={activeTab === 'news' ? 0 : -1} aria-selected={activeTab === 'news'}
@@ -585,8 +585,8 @@ export default function DashboardPage() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{item.symbol}</span>
-                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono truncate max-w-[80px]">{item.exchange}</span>
-                                            <span className="text-[10px] text-slate-400 uppercase">{item.type}</span>
+                                            <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono truncate max-w-[80px]">{item.exchange}</span>
+                                            <span className="text-[12px] text-slate-400 uppercase">{item.type}</span>
                                         </div>
                                         <div className="text-sm text-slate-500 dark:text-slate-400 truncate">{item.description}</div>
                                     </div>
@@ -751,7 +751,7 @@ export default function DashboardPage() {
                                         <Upload size={20} className="group-hover:scale-110 transition-transform" />
                                         <div>
                                             <p className="font-bold text-sm">{t('upload_text')}</p>
-                                            <p className="text-[10px] opacity-70">{t('dash_paste_label')}</p>
+                                            <p className="text-[12px] opacity-70">{t('dash_paste_label')}</p>
                                         </div>
                                     </button>
                                 ) : (
@@ -763,7 +763,7 @@ export default function DashboardPage() {
                                     </div>
                                 )}
                                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/png,image/jpeg,image/webp" className="hidden" />
-                                <p className="mt-1.5 text-[10px] text-slate-400">PNG, JPG, WebP · {copy('maks. 10 MB · bisa tarik & lepas', 'max. 10 MB · drag & drop supported')}</p>
+                                <p className="mt-1.5 text-[12px] text-slate-400">PNG, JPG, WebP · {copy('maks. 10 MB · bisa tarik & lepas', 'max. 10 MB · drag & drop supported')}</p>
                             </div>
 
                             {/* Custom Instruction */}
@@ -778,7 +778,7 @@ export default function DashboardPage() {
                                         placeholder={t('context_placeholder')}
                                         className="w-full h-32 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-sm focus:outline-none focus:ring-2 focus:ring-neon/20 focus:border-neon transition-all resize-none text-foreground"
                                     />
-                                    <span className="absolute bottom-3 right-3 text-[10px] text-slate-400">{userPrompt.length}/{MAX_CONTEXT_CHARS}</span>
+                                    <span className="absolute bottom-3 right-3 text-[12px] text-slate-400">{userPrompt.length}/{MAX_CONTEXT_CHARS}</span>
                                 </div>
                             </div>
                         </div>
@@ -799,7 +799,7 @@ export default function DashboardPage() {
                               }} className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm font-bold">
                                 <option value="futures">Futures</option><option value="spot">Spot</option>
                               </select>
-                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_market_type_hint')}</p>
+                              <p className="text-[12px] text-slate-400 mt-1.5">{t('ai_market_type_hint')}</p>
                             </div>
                             <div>
                               <label htmlFor="ai-direction" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_direction_label')}</label>
@@ -809,7 +809,7 @@ export default function DashboardPage() {
                                 <option value="long">{t('ai_direction_long')}</option>
                                 <option value="short" disabled={marketType === 'spot'}>{t('ai_direction_short')}</option>
                               </select>
-                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_direction_hint')}</p>
+                              <p className="text-[12px] text-slate-400 mt-1.5">{t('ai_direction_hint')}</p>
                             </div>
                             <div>
                               <label htmlFor="ai-confirmation" className="block text-xs font-bold text-slate-500 mb-1">{t('ai_confirmation_label')}</label>
@@ -818,7 +818,7 @@ export default function DashboardPage() {
                                 <option value="off">{t('ai_confirmation_off')}</option>
                                 <option value="on">{t('ai_confirmation_on')} · {CONFIRMATION_TIMEFRAME[timeframe as Timeframe]}</option>
                               </select>
-                              <p className="text-[10px] text-slate-400 mt-1.5">{t('ai_confirmation_hint')}</p>
+                              <p className="text-[12px] text-slate-400 mt-1.5">{t('ai_confirmation_hint')}</p>
                             </div>
                             {/* Trading Style Dropdown */}
                             <div>
@@ -837,7 +837,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_style_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_style_hint')}</p>
                             </div>
 
                             {/* Timeframe Dropdown */}
@@ -859,7 +859,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_tf_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_tf_hint')}</p>
                             </div>
 
                             {/* Risk Tolerance */}
@@ -879,7 +879,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_risk_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_risk_hint')}</p>
                             </div>
 
                             {/* Strategy Focus */}
@@ -900,7 +900,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_strategy_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_strategy_hint')}</p>
                             </div>
 
                             {/* Indicator Preference */}
@@ -921,7 +921,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_indicator_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_indicator_hint')}</p>
                             </div>
 
                             {/* Target Risk/Reward */}
@@ -941,7 +941,7 @@ export default function DashboardPage() {
                                         <ChevronDown size={14} />
                                     </div>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_rr_hint')}</p>
+                                <p className="text-[12px] text-slate-400 mt-1.5 pl-1 leading-relaxed">{t('dash_rr_hint')}</p>
                             </div>
                         </div>
 

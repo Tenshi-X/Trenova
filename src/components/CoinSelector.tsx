@@ -160,7 +160,7 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
                     </div>
                 )}
             </div>
-            <p className="text-[10px] md:text-xs text-slate-400 mb-4 px-1">
+            <p className="text-[12px] md:text-xs text-slate-400 mb-4 px-1">
                 {t('coin_search_disclaimer')}
             </p>
 
@@ -200,7 +200,7 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
                                     {coin.symbol}
                                 </span>
 
-                                <div className={clsx("mt-auto flex items-center gap-1 text-[10px] font-bold", isBullish ? "text-emerald-500" : "text-rose-500")}>
+                                <div className={clsx("mt-auto flex items-center gap-1 text-[12px] font-bold", isBullish ? "text-emerald-500" : "text-rose-500")}>
                                     {isBullish ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                                     {coin.price_change_percentage_24h ? Math.abs(coin.price_change_percentage_24h).toFixed(2) : "0.00"}%
                                 </div>

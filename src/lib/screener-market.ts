@@ -45,7 +45,7 @@ export interface ScreenerTicker {
 }
 
 /** OKX: GET /api/v5/market/tickers?instType=SWAP. USDT-margined swaps only, stablecoins removed, top N by volume. */
-export function parseOkxTickers(json: unknown, limit = 50): ScreenerTicker[] {
+export function parseOkxTickers(json: unknown, limit = 50, cryptoBases: ReadonlySet<string> | null = null): ScreenerTicker[] {
   const root = asObject(json);
   if (!root || root.code !== '0' || !Array.isArray(root.data)) return [];
   const bySymbol = new Map<string, ScreenerTicker>();
@@ -54,6 +54,7 @@ export function parseOkxTickers(json: unknown, limit = 50): ScreenerTicker[] {
     if (!row) continue;
     const match = /^([A-Z0-9]+)-USDT-SWAP$/.exec(String(row.instId ?? ''));
     if (!match || STABLE_BASES.has(match[1])) continue;
+    if (cryptoBases && !cryptoBases.has(match[1])) continue; // tokenized stocks / ETFs / commodities
     const price = toNumber(row.last);
     const open = toNumber(row.open24h);
     const baseVolume = toNumber(row.volCcy24h);
@@ -72,8 +73,39 @@ export function parseOkxTickers(json: unknown, limit = 50): ScreenerTicker[] {
   return [...bySymbol.values()].sort((a, b) => b.volume24h - a.volume24h).slice(0, limit);
 }
 
+/**
+ * OKX: GET /api/v5/public/instruments?instType=SWAP. instCategory "1" = crypto (others are tokenized stocks,
+ * commodities, FX...). Returns the set of crypto base symbols, or null when unavailable (then nothing is filtered).
+ */
+export function parseOkxCryptoBases(json: unknown): Set<string> | null {
+  const root = asObject(json);
+  if (!root || root.code !== '0' || !Array.isArray(root.data)) return null;
+  const bases = new Set<string>();
+  for (const item of root.data) {
+    const row = asObject(item);
+    if (!row || String(row.instCategory ?? '') !== '1') continue;
+    const match = /^([A-Z0-9]+)-USDT-SWAP$/.exec(String(row.instId ?? ''));
+    if (match) bases.add(match[1]);
+  }
+  return bases.size >= 20 ? bases : null;
+}
+
+const BASES_TTL_MS = 6 * 60 * 60_000;
+let basesCache: { at: number; value: Set<string> } | null = null;
+
+async function getCryptoBases(fetcher: Fetcher): Promise<Set<string> | null> {
+  if (basesCache && Date.now() - basesCache.at < BASES_TTL_MS) return basesCache.value;
+  const value = parseOkxCryptoBases(await getJson(`${OKX}/api/v5/public/instruments?instType=SWAP`, fetcher, 5000));
+  if (value) { basesCache = { at: Date.now(), value }; return value; }
+  return basesCache?.value ?? null; // stale is better than unfiltered
+}
+
 export async function fetchOkxTickers(fetcher: Fetcher = fetch, limit = 50): Promise<ScreenerTicker[] | null> {
-  const tickers = parseOkxTickers(await getJson(`${OKX}/api/v5/market/tickers?instType=SWAP`, fetcher, 5000), limit);
+  const [json, bases] = await Promise.all([
+    getJson(`${OKX}/api/v5/market/tickers?instType=SWAP`, fetcher, 5000),
+    getCryptoBases(fetcher),
+  ]);
+  const tickers = parseOkxTickers(json, limit, bases);
   return tickers.length ? tickers : null;
 }
 
@@ -181,7 +213,7 @@ const indicatorFailures = new Map<string, number>();
 let indicatorJob: Promise<void> | null = null;
 
 export function resetScreenerCache() {
-  indicatorCache.clear(); indicatorFailures.clear(); indicatorJob = null;
+  indicatorCache.clear(); indicatorFailures.clear(); indicatorJob = null; basesCache = null;
 }
 
 export interface IndicatorOptions { budgetMs?: number; batchSize?: number; gapMs?: number }

@@ -42,7 +42,7 @@ type MarketSnapshot = {
 
 // Column layout shared by the header and every row (15 columns).
 const ROW_GRID = 'grid-cols-[30px_1.5fr_1fr_1fr_1fr_1fr_1fr_0.8fr_0.8fr_1fr_1fr_1fr_1fr_1fr_1.5fr]';
-const TABLE_MIN_W = 'min-w-[1300px]';
+const TABLE_MIN_W = 'min-w-[1480px]';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtPrice(p: number): string {
@@ -189,13 +189,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       type="button"
       aria-label={`${label}: ${sortBy === col ? sortDir : 'sort'}`}
       className={clsx(
-        'text-[9px] sm:text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-teal-400',
+        'text-[11px] font-semibold uppercase tracking-wide transition-colors flex items-center gap-1 cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-teal-400',
         align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start',
         sortBy === col ? 'text-neon' : 'text-slate-400 hover:text-slate-300',
       )}
     >
       {label}
-      {sortBy === col && <span className="text-[8px]">{sortDir === 'desc' ? '▼' : '▲'}</span>}
+      {sortBy === col && <span className="text-xs">{sortDir === 'desc' ? '▼' : '▲'}</span>}
     </button>
   );
 
@@ -207,8 +207,8 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                  <div className="p-1.5 bg-neon/10 rounded-lg"><Search size={14} className="text-neon" /></div>
-                 <span className="text-sm font-black text-neon uppercase tracking-widest drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
-                     ALTCOIN SCREENER
+                 <span className="text-base font-semibold text-slate-100 tracking-tight">
+                     Altcoin Screener
                  </span>
               </div>
               <div className="flex flex-wrap items-center gap-2 pb-1">
@@ -219,7 +219,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                         aria-pressed={filterMode === mode}
                         onClick={() => setFilterMode(mode as typeof filterMode)}
                         className={clsx(
-                            "px-3 py-1.5 rounded text-[10px] font-bold uppercase transition-all tracking-wider border cursor-pointer active:scale-95 focus-visible:outline-2 focus-visible:outline-teal-400",
+                            "px-3 py-1.5 rounded text-xs font-bold uppercase transition-all tracking-wider border cursor-pointer active:scale-95 focus-visible:outline-2 focus-visible:outline-teal-400",
                             filterMode === mode
                                 ? "border-neon text-neon bg-neon/10"
                                 : "border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700 bg-slate-900"
@@ -239,7 +239,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                         onChange={(e) => setSearch(e.target.value)}
                         aria-label={t('market_search_ph')}
                         placeholder={t('market_search_ph')}
-                        className="w-32 pl-7 pr-3 py-1 bg-slate-900 border border-slate-800 rounded text-[10px] focus:border-neon focus:outline-none transition-colors"
+                        className="w-40 pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-full text-xs focus:border-neon focus:outline-none transition-colors"
                     />
                  </div>
                  <button type="button" onClick={() => void fetchMarketData()} disabled={isRefreshing}
@@ -249,10 +249,10 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                  </button>
               </div>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">
+          <p className="text-xs text-slate-500 mt-2">
             {language === 'id' ? 'RSI, MACD, EMA20, dan struktur dihitung dari candle 1 jam OKX. Rating adalah ringkasan teknikal sederhana (RSI, MACD, EMA20), bukan saran trading. Indikator terisi bertahap saat pertama dibuka.' : 'RSI, MACD, EMA20 and structure are computed from OKX 1h candles. Rating is a simple technical summary (RSI, MACD, EMA20), not trading advice. Indicators fill in gradually on first load.'}
           </p>
-          <p className="text-[10px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {language === 'id' ? 'Funding dan OI adalah data futures publik (OKX/Bybit/Binance), bukan agregat seluruh exchange. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding and OI are public futures data (OKX/Bybit/Binance), not an all-exchange aggregate. A — means the data is not available yet.'}
           </p>
           {error && coins.length > 0 && <p role="status" className="text-xs text-amber-400 mt-2">{t('market_load_fail')} · {language === 'id' ? 'Menampilkan pembaruan terakhir.' : 'Showing the last update.'}</p>}
@@ -260,23 +260,23 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
       <div className="flex-1 overflow-auto">
       {/* ── Table Header ── */}
-      <div className={`sticky top-0 z-10 ${TABLE_MIN_W} grid ${ROW_GRID} gap-x-2 px-4 py-2.5 bg-slate-900 border-b border-slate-800`}>
-        <div className="text-[10px] font-bold text-slate-500 text-center">#</div>
+      <div className={`sticky top-0 z-10 ${TABLE_MIN_W} grid ${ROW_GRID} gap-x-3 px-5 py-3 bg-slate-900 border-b border-slate-800`}>
+        <div className="text-xs font-bold text-slate-500 text-center">#</div>
         {sortHeader('sym', 'SYMBOL')}
         {sortHeader('price', 'PRICE', 'right')}
         {sortHeader('chg', '24H %', 'right')}
         {sortHeader('vol', 'VOL', 'right')}
         {sortHeader('mcap', 'MCAP', 'right', 'Market cap (CoinGecko)')}
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">24H RANGE</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="RSI 14, candle 1 jam">RSI</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="MACD histogram (12/26/9) candle 1 jam, dalam % dari harga">MACD</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center">24H RANGE</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="RSI 14, candle 1 jam">RSI</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="MACD histogram (12/26/9) candle 1 jam, dalam % dari harga">MACD</div>
         {sortHeader('fund', 'FUNDING', 'right', 'Funding rate futures perpetual')}
         {sortHeader('oi', 'OI', 'right', 'Open interest (USD) dari OKX/Bybit, bukan agregat seluruh exchange')}
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-end">24H HIGH</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="Breakout/Breakdown: harga 1 jam menembus high/low 20 candle terakhir">STRUCTURE</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="Rating teknikal sederhana dari RSI, MACD, dan EMA20 (candle 1 jam)">RATING 1H</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-end">24H HIGH</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="Breakout/Breakdown: harga 1 jam menembus high/low 20 candle terakhir">STRUCTURE</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="Rating teknikal sederhana dari RSI, MACD, dan EMA20 (candle 1 jam)">RATING 1H</div>
         <div className="flex justify-end gap-3 items-center">
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest">SORT:</span>
+            <span className="text-[11px] text-slate-500 uppercase tracking-wide">SORT:</span>
             {sortHeader('score', 'SCORE', 'right')}
         </div>
       </div>
@@ -286,7 +286,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         {isLoading && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-500">
             <Loader2 className="animate-spin text-neon" size={24} />
-            <span className="text-xs tracking-widest">{t('market_loading')}</span>
+            <span className="text-xs">{t('market_loading')}</span>
           </div>
         ) : error && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-2">
@@ -294,13 +294,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
             <button
               onClick={() => { setIsLoading(true); void fetchMarketData(); }}
               disabled={isRefreshing}
-              className="text-[10px] px-3 py-1 bg-slate-800 rounded text-slate-300 hover:text-neon transition-colors"
+              className="text-xs px-3 py-1 bg-slate-800 rounded text-slate-300 hover:text-neon transition-colors"
             >
               {t('market_retry')}
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-40 text-xs text-slate-500 tracking-widest uppercase">
+          <div className="flex items-center justify-center h-40 text-sm text-slate-500">
             {search ? `${t('market_no_match')} "${search}"` : t('market_no_data')}
           </div>
         ) : (
@@ -311,33 +311,36 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                 key={coin.pair}
                 onClick={() => onSelectSymbol?.(coin.pair)}
                 aria-label={`${coin.symbol}: ${language === 'id' ? 'buka chart' : 'open chart'}`}
-                className={`w-full text-left grid ${ROW_GRID} gap-x-2 px-4 py-2 border-b border-slate-800/30 hover:bg-slate-900/80 focus-visible:bg-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-400 active:bg-slate-800 cursor-pointer transition-colors group items-center`}
+                className={`w-full text-left grid ${ROW_GRID} gap-x-3 px-5 py-3.5 border-b border-slate-800/40 hover:bg-slate-900/80 focus-visible:bg-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-400 active:bg-slate-800 cursor-pointer transition-colors group items-center`}
               >
-                <div className="text-[10px] text-slate-500 text-center font-mono">{index + 1}</div>
+                <div className="text-xs text-slate-500 text-center tabular-nums">{index + 1}</div>
 
                 {/* Symbol */}
-                <div>
-                   <div className="text-xs font-bold text-slate-200 tracking-wide group-hover:text-neon transition-colors">{coin.symbol}/{source === 'binance' || source === 'okx' ? 'USDT' : 'USD'}</div>
-                   <div className="text-[9px] text-slate-500 lowercase">{source}</div>
+                <div className="flex items-center gap-3 min-w-0">
+                   <div className="w-8 h-8 shrink-0 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-semibold text-slate-200">{coin.symbol.slice(0, 2)}</div>
+                   <div className="min-w-0">
+                     <div className="text-sm font-semibold text-slate-100 group-hover:text-neon transition-colors truncate">{coin.symbol}<span className="text-slate-500 font-normal">/{source === 'binance' || source === 'okx' ? 'USDT' : 'USD'}</span></div>
+                     <div className="text-[11px] text-slate-500">Perpetual · {source.toUpperCase()}</div>
+                   </div>
                 </div>
 
                 {/* Price */}
-                <div className="text-xs font-mono font-bold text-slate-200 text-right">
+                <div className="text-sm tabular-nums font-semibold text-slate-100 text-right">
                     {fmtPrice(coin.price)}
                 </div>
 
                 {/* 24h % */}
-                <div className={clsx('text-[11px] font-bold text-right font-mono', coin.chg24h >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+                <div className={clsx('text-[13px] font-semibold text-right tabular-nums', coin.chg24h >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
                     {coin.chg24h >= 0 ? '+' : ''}{coin.chg24h.toFixed(2)}%
                 </div>
 
                 {/* Vol */}
-                <div className="text-[10px] font-mono text-slate-400 text-right">
+                <div className="text-[13px] tabular-nums text-slate-400 text-right">
                     {fmtVol(coin.vol24h)}
                 </div>
 
                 {/* Market cap */}
-                <div className={clsx('text-[10px] font-mono text-right', coin.marketCap > 0 ? 'text-slate-400' : 'text-slate-600')}>
+                <div className={clsx('text-[13px] tabular-nums text-right', coin.marketCap > 0 ? 'text-slate-400' : 'text-slate-600')}>
                     {coin.marketCap > 0 ? fmtVol(coin.marketCap) : '—'}
                 </div>
 
@@ -358,52 +361,52 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                             );
                         })()}
                     </div>
-                    <div className="flex justify-between w-full text-[8px] text-slate-500 font-mono">
+                    <div className="flex justify-between w-full text-[10px] text-slate-500 tabular-nums">
                         <span>{fmtPrice(coin.low24h)}</span>
                         <span>{fmtPrice(coin.high24h)}</span>
                     </div>
                 </div>
 
                 {/* RSI */}
-                <div className={clsx('text-[11px] font-bold text-center font-mono',
+                <div className={clsx('text-[13px] font-semibold text-center tabular-nums',
                     coin.rsi === null ? 'text-slate-600' : coin.rsi > 70 ? 'text-rose-500' : coin.rsi < 30 ? 'text-emerald-500' : 'text-slate-300'
                 )}>
                     {coin.rsi === null ? '—' : coin.rsi.toFixed(0)}
                 </div>
 
                 {/* MACD */}
-                <div className={clsx('text-[11px] font-bold text-center font-mono', coin.macdHist === null ? 'text-slate-600' : coin.macdHist >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+                <div className={clsx('text-[13px] font-semibold text-center tabular-nums', coin.macdHist === null ? 'text-slate-600' : coin.macdHist >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
                     {coin.macdHist === null ? '—' : `${coin.macdHist > 0 ? '+' : ''}${((coin.macdHist / coin.price) * 100).toFixed(3)}%`}
                 </div>
 
                 {/* FUNDING */}
-                <div className={clsx('text-[10px] font-mono text-right',
+                <div className={clsx('text-[13px] tabular-nums text-right',
                     coin.fundingRate === null ? 'text-slate-600' : coin.fundingRate > 0 ? 'text-emerald-500' : 'text-rose-500'
                 )}>
                     {coin.fundingRate === null ? '—' : `${coin.fundingRate > 0 ? '+' : ''}${coin.fundingRate.toFixed(4)}%`}
                 </div>
 
                 {/* OPEN INTEREST */}
-                <div className={clsx('text-[10px] font-mono text-right', coin.openInterestUsd === null ? 'text-slate-600' : 'text-slate-400')}>
+                <div className={clsx('text-[13px] tabular-nums text-right', coin.openInterestUsd === null ? 'text-slate-600' : 'text-slate-400')}>
                     {coin.openInterestUsd === null ? '—' : fmtVol(coin.openInterestUsd)}
                 </div>
 
                 {/* 24H HIGH */}
-                <div className={clsx('text-[10px] font-mono text-right',
+                <div className={clsx('text-[13px] tabular-nums text-right',
                     coin.distHigh === 0 ? 'text-slate-600' : coin.distHigh > -2 ? 'text-emerald-500' : 'text-rose-500'
                 )}>
                     {coin.distHigh === 0 ? '—' : `${coin.distHigh.toFixed(1)}%`}
                 </div>
 
                 {/* STRUCTURE */}
-                <div className="text-[10px] text-slate-400 text-center tracking-wider">
+                <div className="text-xs text-slate-400 text-center">
                     {coin.structure ?? '—'}
                 </div>
 
                 {/* SIGNAL */}
                 <div className="flex justify-center">
                     <span className={clsx(
-                        "text-[9px] font-bold px-2 py-0.5 rounded border tracking-widest",
+                        "text-[11px] font-semibold px-2.5 py-1 rounded-full border",
                         (coin.rating ?? '').includes('BULL') ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' :
                         (coin.rating ?? '').includes('BEAR') ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' :
                         'border-slate-600 text-slate-400 bg-slate-800/50'
@@ -423,7 +426,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                             style={{ width: `${coin.score ?? 0}%` }}
                         />
                     </div>
-                    <span className={clsx("text-xs font-bold font-mono w-6 text-right",
+                    <span className={clsx("text-sm font-semibold tabular-nums w-7 text-right",
                         coin.score === null ? 'text-slate-600' : coin.score >= 70 ? 'text-emerald-500' :
                         coin.score <= 40 ? 'text-rose-500' : 'text-amber-500'
                     )}>{coin.score ?? '—'}</span>
@@ -438,10 +441,10 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
       {/* ── Footer ── */}
       <div className="flex-none px-4 py-2 border-t border-slate-800/80 bg-slate-950 flex flex-wrap gap-2 items-center justify-between">
-        <span className="text-[9px] text-slate-500 uppercase tracking-widest">
+        <span className="text-[11px] text-slate-500 uppercase tracking-wide">
           {t('market_showing')} {filtered.length} {t('market_of')} {coins.length} pairs
         </span>
-        <span className="text-[9px] text-slate-500 uppercase tracking-widest flex items-center gap-2">
+        <span className="text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-2">
           <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-neon animate-pulse' : 'bg-rose-500')} />
           {isConnected
             ? `${t('market_synced')} ${source.toUpperCase()} /5s · ${lastUpdated?.toLocaleTimeString(language === 'id' ? 'id-ID' : 'en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' }) ?? ''} WIB`

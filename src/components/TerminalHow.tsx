@@ -37,13 +37,13 @@ export default function TerminalHow() {
     <section id="how" className="py-20 bg-slate-900/50 border-t border-slate-800 border-b font-mono text-slate-300">
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[12px] font-bold uppercase tracking-[0.2em] mb-6">
             {t('lp_how_pill')}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {t('lp_how_title')}<br /><span className="text-neon">{t('lp_how_title_accent')}</span>
           </h2>
-          <p className="text-slate-500 text-[13px] max-w-xl mx-auto leading-[1.8]">
+          <p className="text-slate-500 text-[14px] max-w-xl mx-auto leading-[1.8]">
             {t('lp_how_desc')}
           </p>
         </div>
@@ -58,11 +58,11 @@ export default function TerminalHow() {
                   {s.num}
                 </div>
                 <div className="flex-1 bg-slate-900/50 border border-slate-800 p-6">
-                  <div className="text-[12px] font-bold text-white mb-2 tracking-[0.06em]">{t(s.titleKey)}</div>
-                  <p className="text-[11px] text-slate-500 leading-[1.9] mb-4">{t(s.descKey)}</p>
+                  <div className="text-[14px] font-bold text-white mb-2 tracking-[0.06em]">{t(s.titleKey)}</div>
+                  <p className="text-[13px] text-slate-500 leading-[1.9] mb-4">{t(s.descKey)}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {s.chips.map((chip, j) => (
-                      <span key={j} className="text-[9px] px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 tracking-[0.04em]">
+                      <span key={j} className="text-[11px] px-2 py-0.5 bg-slate-950 border border-slate-800 text-slate-400 tracking-[0.04em]">
                         {chip}
                       </span>
                     ))}
