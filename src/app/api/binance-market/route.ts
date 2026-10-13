@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { applyDerivatives, applyMarketCaps, getDerivatives, getMarketCaps } from '@/lib/market-derivatives';
+import { fetchOkxTickers, getIndicators } from '@/lib/screener-market';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 25;
@@ -77,6 +78,23 @@ async function coinbaseSnapshot() {
   coins.forEach((c, i) => { c.rank = i + 1; });
   return coins;
 }
+// Primary source: OKX perpetual swaps. One request lists every USDT swap; we keep the top 50 by USD volume,
+// one row per base symbol (no duplicates), and attach real 1h indicators (cached server-side, filled in progressively).
+async function okxSnapshot() {
+  const tickers = await fetchOkxTickers(undefined, 50);
+  if (!tickers || tickers.length < 10) return null;
+  const indicators = await getIndicators(tickers.map((t) => t.symbol));
+  return tickers.map((t, i) => {
+    const ind = indicators.get(t.symbol);
+    return {
+      rank: i + 1, symbol: t.symbol, pair: `${t.symbol}USDT`, price: t.price, priceChangePercent: t.priceChangePercent,
+      high24h: t.high24h, low24h: t.low24h, volume24h: t.volume24h, marketCap: 0,
+      fundingRate: null as number | null, openInterestUsd: null as number | null, sparkline: [] as number[],
+      rsi: ind?.rsi ?? null, macdHist: ind?.macdHist ?? null, structure: ind?.structure ?? null,
+      rating: ind?.rating ?? null, score: ind?.score ?? null,
+    };
+  });
+}
 const CL = 'https://api.coinlore.net';
 async function clGlobal() {
   try {
@@ -149,6 +167,21 @@ export async function GET(req: Request) {
     // Funding rate / open interest / market cap are fetched alongside the price source so they add no latency.
     // timed() never rejects, so this promise is safe to leave un-awaited on the fallback branches.
     const extras = Promise.all([timed('derivatives', () => getDerivatives()), timed('marketcaps', () => getMarketCaps())]);
+    // P0: OKX perpetual swaps (top 50 by volume, real indicators)
+    const okx = await timed('okx', okxSnapshot);
+    if (okx && okx.length >= 10) {
+      const [deriv, caps] = await extras;
+      applyDerivatives(okx, deriv);
+      applyMarketCaps(okx, caps);
+      const fundingValues = okx.flatMap((c) => (c.fundingRate === null ? [] : [c.fundingRate]));
+      const avgFR = fundingValues.length ? Number((fundingValues.reduce((sum, v) => sum + v, 0) / fundingValues.length).toFixed(4)) : null;
+      const totalVol = okx.reduce((sum, c) => sum + c.volume24h, 0);
+      const btcVol = okx.find((c) => c.symbol === 'BTC')?.volume24h ?? 0;
+      const btcDom = totalVol > 0 ? Number(((btcVol / totalVol) * 100).toFixed(2)) : 0;
+      const body: Record<string, unknown> = { coins: okx, global: globalFromCoins(okx, okx.length, avgFR, btcDom), timestamp: Date.now(), source: 'okx', degraded: false, derivativesSources: deriv?.providers ?? [] };
+      if (debug) body.attempts = attempts;
+      return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20' } });
+    }
     // P1: Coinbase (Vercel-friendly, no key, no geo-block)
     const cb = await timed('coinbase', coinbaseSnapshot);
     if (cb && cb.length >= 3) {

@@ -20,6 +20,11 @@ interface CoinData {
   marketCap: number;
   fundingRate: number | null;
   openInterestUsd: number | null;
+  rsi: number | null;
+  macdHist: number | null;
+  structure: string | null;
+  rating: string | null;
+  score: number | null;
 }
 
 interface LiveMarketTableProps {
@@ -29,7 +34,8 @@ interface LiveMarketTableProps {
 type MarketSnapshot = {
   coins: Array<{ symbol: string; pair?: string; price: number; priceChangePercent: number;
     high24h: number; low24h: number; volume24h: number; fundingRate: number | null;
-    openInterestUsd?: number | null; marketCap?: number }>;
+    openInterestUsd?: number | null; marketCap?: number; rsi?: number | null; macdHist?: number | null;
+    structure?: string | null; rating?: string | null; score?: number | null }>;
   source?: string;
   timestamp?: number;
 };
@@ -51,48 +57,6 @@ function fmtVol(v: number): string {
   if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
   if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
   return '$' + v.toFixed(0);
-}
-
-function getHeuristicTA(coin: CoinData) {
-  // A deterministic hash based on symbol name length and characters
-  const seed = coin.symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-
-  // Base RSI on 24h change (bounded 10-90)
-  let rsi = 50 + (coin.chg24h * 1.5) + (seed % 10 - 5);
-  rsi = Math.max(15, Math.min(85, rsi));
-
-  // Base MACD on price change
-  const macd = (coin.price * 0.002) * (coin.chg24h / 5) * (1 + (seed % 5)/10);
-
-  // Structure
-  const structures = ['Range', 'Breakout', 'FVG', 'Liq Grab', 'Trend'];
-  const structIdx = Math.floor(Math.abs(rsi + coin.chg24h + seed)) % structures.length;
-  const structure = structures[structIdx];
-
-  // Score 0-100
-  let score = 50 + (coin.chg24h * 1.2) + (rsi > 55 ? 5 : rsi < 45 ? -5 : 0);
-  score = Math.max(10, Math.min(95, score));
-
-  let signal = 'NEUTRAL';
-  if (score >= 75) signal = 'STR BUY';
-  else if (score >= 60) signal = 'BUY';
-  else if (score <= 25) signal = 'STR SELL';
-  else if (score <= 40) signal = 'SELL';
-
-  // Distance to 24h high
-  let distHigh = 0;
-  if (coin.high24h > 0) {
-     distHigh = ((coin.price - coin.high24h) / coin.high24h) * 100;
-  }
-
-  return {
-     rsi: Math.round(rsi),
-     macd: macd,
-     structure,
-     score: Math.round(score),
-     signal,
-     distHigh
-  }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -140,6 +104,11 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           marketCap: coin.marketCap ?? 0,
           fundingRate: coin.fundingRate ?? null,
           openInterestUsd: coin.openInterestUsd ?? null,
+          rsi: coin.rsi ?? null,
+          macdHist: coin.macdHist ?? null,
+          structure: coin.structure ?? null,
+          rating: coin.rating ?? null,
+          score: coin.score ?? null,
         }));
       });
 
@@ -177,10 +146,11 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
     else { setSortBy(col); setSortDir(col === 'sym' ? 'asc' : 'desc'); }
   };
 
-  const processedCoins = coins.map(c => {
-      const ta = getHeuristicTA(c);
-      return { ...c, ...ta };
-  });
+  const processedCoins = coins.map(c => ({
+      ...c,
+      // Distance of the current price from the 24h high (real data, not an estimate).
+      distHigh: c.high24h > 0 ? ((c.price - c.high24h) / c.high24h) * 100 : 0,
+  }));
 
   const filtered = processedCoins
     .filter(c => {
@@ -188,15 +158,15 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         const q = search.toUpperCase();
         if (!c.symbol.includes(q) && !c.name.toUpperCase().includes(q)) return false;
       }
-      if (filterMode === 'BULL') return c.signal.includes('BUY');
-      if (filterMode === 'BEAR') return c.signal.includes('SELL');
+      if (filterMode === 'BULL') return (c.rating ?? '').includes('BULL');
+      if (filterMode === 'BEAR') return (c.rating ?? '').includes('BEAR');
       if (filterMode === 'BREAKOUT') return c.structure === 'Breakout';
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === 'mcap' || sortBy === 'oi' || sortBy === 'fund') {
+      if (sortBy === 'mcap' || sortBy === 'oi' || sortBy === 'fund' || sortBy === 'score') {
         const pick = (c: typeof a) => sortBy === 'mcap' ? (c.marketCap > 0 ? c.marketCap : null)
-          : sortBy === 'oi' ? c.openInterestUsd : c.fundingRate;
+          : sortBy === 'oi' ? c.openInterestUsd : sortBy === 'score' ? c.score : c.fundingRate;
         const av = pick(a);
         const bv = pick(b);
         if (av === null && bv === null) return 0;
@@ -209,7 +179,6 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       if (sortBy === 'chg')   d = b.chg24h  - a.chg24h;
       if (sortBy === 'price') d = b.price   - a.price;
       if (sortBy === 'sym')   d = b.symbol.localeCompare(a.symbol);
-      if (sortBy === 'score') d = b.score   - a.score;
       return sortDir === 'desc' ? d : -d;
     });
 
@@ -281,7 +250,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
               </div>
           </div>
           <p className="text-[10px] text-slate-500 mt-2">
-            {language === 'id' ? 'RSI, MACD, struktur, sinyal, dan skor adalah estimasi screener dari perubahan 24 jam.' : 'RSI, MACD, structure, signals, and scores are screener estimates based on 24h changes.'}
+            {language === 'id' ? 'RSI, MACD, EMA20, dan struktur dihitung dari candle 1 jam OKX. Rating adalah ringkasan teknikal sederhana (RSI, MACD, EMA20), bukan saran trading. Indikator terisi bertahap saat pertama dibuka.' : 'RSI, MACD, EMA20 and structure are computed from OKX 1h candles. Rating is a simple technical summary (RSI, MACD, EMA20), not trading advice. Indicators fill in gradually on first load.'}
           </p>
           <p className="text-[10px] text-slate-500 mt-1">
             {language === 'id' ? 'Funding dan OI adalah data futures publik (OKX/Bybit/Binance), bukan agregat seluruh exchange. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding and OI are public futures data (OKX/Bybit/Binance), not an all-exchange aggregate. A — means the data is not available yet.'}
@@ -299,13 +268,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         {sortHeader('vol', 'VOL', 'right')}
         {sortHeader('mcap', 'MCAP', 'right', 'Market cap (CoinGecko)')}
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">24H RANGE</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">RSI</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">MACD</div>
+        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="RSI 14, candle 1 jam">RSI</div>
+        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="MACD histogram (12/26/9) candle 1 jam, dalam % dari harga">MACD</div>
         {sortHeader('fund', 'FUNDING', 'right', 'Funding rate futures perpetual')}
         {sortHeader('oi', 'OI', 'right', 'Open interest (USD) dari OKX/Bybit, bukan agregat seluruh exchange')}
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-end">24H HIGH</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">STRUCTURE</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">SIGNAL</div>
+        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="Breakout/Breakdown: harga 1 jam menembus high/low 20 candle terakhir">STRUCTURE</div>
+        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center" title="Rating teknikal sederhana dari RSI, MACD, dan EMA20 (candle 1 jam)">RATING 1H</div>
         <div className="flex justify-end gap-3 items-center">
             <span className="text-[9px] text-slate-500 uppercase tracking-widest">SORT:</span>
             {sortHeader('score', 'SCORE', 'right')}
@@ -348,7 +317,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
                 {/* Symbol */}
                 <div>
-                   <div className="text-xs font-bold text-slate-200 tracking-wide group-hover:text-neon transition-colors">{coin.symbol}/{source === 'binance' ? 'USDT' : 'USD'}</div>
+                   <div className="text-xs font-bold text-slate-200 tracking-wide group-hover:text-neon transition-colors">{coin.symbol}/{source === 'binance' || source === 'okx' ? 'USDT' : 'USD'}</div>
                    <div className="text-[9px] text-slate-500 lowercase">{source}</div>
                 </div>
 
@@ -397,14 +366,14 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
                 {/* RSI */}
                 <div className={clsx('text-[11px] font-bold text-center font-mono',
-                    coin.rsi > 70 ? 'text-rose-500' : coin.rsi < 30 ? 'text-emerald-500' : 'text-slate-300'
+                    coin.rsi === null ? 'text-slate-600' : coin.rsi > 70 ? 'text-rose-500' : coin.rsi < 30 ? 'text-emerald-500' : 'text-slate-300'
                 )}>
-                    {coin.rsi}
+                    {coin.rsi === null ? '—' : coin.rsi.toFixed(0)}
                 </div>
 
                 {/* MACD */}
-                <div className={clsx('text-[11px] font-bold text-center font-mono', coin.macd >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
-                    {coin.macd > 0 ? '+' : ''}{coin.macd.toFixed(0)}
+                <div className={clsx('text-[11px] font-bold text-center font-mono', coin.macdHist === null ? 'text-slate-600' : coin.macdHist >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+                    {coin.macdHist === null ? '—' : `${coin.macdHist > 0 ? '+' : ''}${((coin.macdHist / coin.price) * 100).toFixed(3)}%`}
                 </div>
 
                 {/* FUNDING */}
@@ -428,18 +397,18 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
 
                 {/* STRUCTURE */}
                 <div className="text-[10px] text-slate-400 text-center tracking-wider">
-                    {coin.structure}
+                    {coin.structure ?? '—'}
                 </div>
 
                 {/* SIGNAL */}
                 <div className="flex justify-center">
                     <span className={clsx(
                         "text-[9px] font-bold px-2 py-0.5 rounded border tracking-widest",
-                        coin.signal.includes('BUY') ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' :
-                        coin.signal.includes('SELL') ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' :
+                        (coin.rating ?? '').includes('BULL') ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' :
+                        (coin.rating ?? '').includes('BEAR') ? 'border-rose-500/50 text-rose-400 bg-rose-500/10' :
                         'border-slate-600 text-slate-400 bg-slate-800/50'
                     )}>
-                        {coin.signal}
+                        {coin.rating ?? '—'}
                     </span>
                 </div>
 
@@ -448,16 +417,16 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                     <div className="flex-1 max-w-[50px] bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div
                             className={clsx("h-full rounded-full transition-all",
-                                coin.score >= 70 ? 'bg-emerald-500' :
+                                coin.score === null ? 'bg-slate-700' : coin.score >= 70 ? 'bg-emerald-500' :
                                 coin.score <= 40 ? 'bg-rose-500' : 'bg-amber-500'
                             )}
-                            style={{ width: `${coin.score}%` }}
+                            style={{ width: `${coin.score ?? 0}%` }}
                         />
                     </div>
                     <span className={clsx("text-xs font-bold font-mono w-6 text-right",
-                        coin.score >= 70 ? 'text-emerald-500' :
+                        coin.score === null ? 'text-slate-600' : coin.score >= 70 ? 'text-emerald-500' :
                         coin.score <= 40 ? 'text-rose-500' : 'text-amber-500'
-                    )}>{coin.score}</span>
+                    )}>{coin.score ?? '—'}</span>
                 </div>
 
               </button>

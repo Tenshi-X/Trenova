@@ -164,3 +164,10 @@ test('market caps are applied only when missing and cached', async () => {
   lib.applyMarketCaps(coins, null);
   lib.resetMarketDerivativesCache();
 });
+
+test('normalizeBase strips 1000x contract multipliers', () => {
+  assert.equal(lib.normalizeBase('1000PEPE'), 'PEPE');
+  assert.equal(lib.normalizeBase('1000000MOG'), 'MOG');
+  assert.equal(lib.normalizeBase('BTC'), 'BTC');
+  assert.equal(lib.normalizeBase('1000'), '1000');
+});
