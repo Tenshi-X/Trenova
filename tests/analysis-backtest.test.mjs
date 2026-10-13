@@ -99,3 +99,12 @@ test('summary reports a 95% interval and halves split by time', async () => {
   assert.equal(first.length + second.length, 40);
   assert.ok(first.every(t => t.at < second[0].at));
 });
+
+test('risk profile reports losing streak and drawdown per symbol', async () => {
+  const { riskProfile } = await import('./fixtures/backtest.mjs');
+  const make = (i, outcome, r) => ({ symbol: 'AAA', at: new Date(2026, 0, 1 + i).toISOString(), filled: true, outcome, r, score: 80, grade: 'HIGH', status: 'READY', direction: 'LONG' });
+  const profile = riskProfile([make(0, 'TP1', 3), make(1, 'SL', -1), make(2, 'SL', -1), make(3, 'SL', -1), make(4, 'TP1', 3)]);
+  assert.equal(profile.longestLosingStreak.worst, 3);
+  assert.equal(profile.maxDrawdownR.worst, 3);
+  assert.equal(riskProfile([]), null);
+});
