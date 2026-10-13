@@ -12,10 +12,10 @@ const HOSTS = ['https://data-api.binance.vision', 'https://api.binance.com', 'ht
 const DEFAULT_SYMBOLS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'AVAX', 'LINK', 'DOT',
   'LTC', 'TRX', 'NEAR', 'ATOM', 'UNI', 'AAVE', 'ARB', 'OP', 'SUI', 'INJ'];
 
-async function klines(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
+async function klinePage(symbol: string, interval: string, limit: number, endTime?: number): Promise<Candle[] | null> {
   for (const host of HOSTS) {
     try {
-      const response = await fetch(`${host}/api/v3/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}`,
+      const response = await fetch(`${host}/api/v3/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}${endTime ? `&endTime=${endTime}` : ''}`,
         { cache: 'no-store', signal: AbortSignal.timeout(6000) });
       if (!response.ok) continue;
       const raw: unknown = await response.json();
@@ -24,6 +24,21 @@ async function klines(symbol: string, interval: string, limit: number): Promise<
     } catch { /* try the next host */ }
   }
   return null;
+}
+
+// Binance returns at most 1000 candles per call; older history is fetched page by page, newest first.
+async function klines(symbol: string, interval: string, limit: number): Promise<Candle[] | null> {
+  let all: Candle[] = [];
+  let endTime: number | undefined;
+  while (all.length < limit) {
+    const page = await klinePage(symbol, interval, Math.min(1000, limit - all.length), endTime);
+    if (!page) return all.length ? all : null;
+    if (!page.length) break;
+    all = [...page, ...all];
+    if (page.length < 1000 && all.length < limit) break;
+    endTime = page[0].openTime - 1;
+  }
+  return all;
 }
 
 const pick = <T extends string>(value: string | null, allowed: readonly T[], fallback: T): T =>
@@ -52,14 +67,15 @@ export async function GET(request: Request) {
   if (!input) return NextResponse.json({ error: 'Parameter tidak valid.' }, { status: 400 });
 
   const started = Date.now();
-  const btc = await klines('BTC', timeframe, 1000);
+  const history = intParam(params.get('history'), 1000, 300, 8000);
+  const btc = await klines('BTC', timeframe, history);
   const series: SymbolSeries[] = [];
   const failed: string[] = [];
   let skipped: string[] = [];
   for (let i = 0; i < symbols.length; i += 4) {
-    if (Date.now() - started > 40_000) { skipped = symbols.slice(i); break; }
+    if (Date.now() - started > 35_000) { skipped = symbols.slice(i); break; }
     await Promise.all(symbols.slice(i, i + 4).map(async symbol => {
-      const [candles, daily, weekly] = await Promise.all([klines(symbol, timeframe, 1000), klines(symbol, '1d', 1000), klines(symbol, '1w', 300)]);
+      const [candles, daily, weekly] = await Promise.all([klines(symbol, timeframe, history), klines(symbol, '1d', 1000), klines(symbol, '1w', 300)]);
       if (!candles || candles.length < 100 || !daily || !weekly) { failed.push(symbol); return; }
       series.push({ symbol, timeframe, candles, daily, weekly, btc: btc ?? undefined });
     }));
@@ -73,13 +89,17 @@ export async function GET(request: Request) {
   };
   const span = series[0] ? { from: new Date(series[0].candles[0].openTime).toISOString().slice(0, 10),
     to: new Date(series[0].candles[series[0].candles.length - 1].closeTime).toISOString().slice(0, 10) } : null;
-  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span };
+  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span, candlesPerSymbol: history };
 
   if (params.get('sweep') === '1') {
     // Many configurations on the same data. The best of many looks good by luck alone, so a result only counts
     // when both halves of the data are positive and the interval around the average R stays above zero.
     const results: Array<Record<string, unknown>> = [];
-    for (const strategy of STRATEGIES) for (const rrChoice of TARGET_RRS) {
+    const wanted = <T extends string>(name: string, all: readonly T[]): T[] => {
+      const list = params.get(name)?.split(',').map(item => item.trim()).filter((item): item is T => all.includes(item as T));
+      return list?.length ? list : [...all];
+    };
+    for (const strategy of wanted('strategies', STRATEGIES)) for (const rrChoice of wanted('rrs', TARGET_RRS)) {
       if (Date.now() - started > 55_000) break;
       const config = parseAnalysisInput({ ...rawInput, strategyFocus: strategy, targetRR: rrChoice });
       if (!config) continue;
