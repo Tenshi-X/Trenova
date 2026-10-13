@@ -25,6 +25,13 @@ export type SymbolSeries = {
   symbol: string; timeframe: Timeframe; candles: Candle[]; daily: Candle[]; weekly: Candle[]; btc?: Candle[];
 };
 
+// The last `count` candles that had closed by `time` (candles are sorted by time).
+function upTo(candles: Candle[], time: number, count: number): Candle[] {
+  let low = 0, high = candles.length;
+  while (low < high) { const mid = (low + high) >> 1; if (candles[mid].closeTime <= time) low = mid + 1; else high = mid; }
+  return candles.slice(Math.max(0, low - count), low);
+}
+
 const DEFAULTS = { warmup: 60, step: 6, maxWait: 6, maxHold: 24, feePct: 0.1 } as const;
 
 function changeOverDay(candles: Candle[], index: number, timeframe: Timeframe): number | null {
@@ -82,8 +89,8 @@ export function runBacktest(series: SymbolSeries, input: AnalysisInput, options:
     const now = candles[i].closeTime;
     const indicators = calculateIndicators(window);
     if (!indicators?.structure) continue;
-    const dailyNow = daily.filter(candle => candle.closeTime <= now).slice(-150);
-    const weeklyNow = weekly.filter(candle => candle.closeTime <= now).slice(-80);
+    const dailyNow = upTo(daily, now, 150);
+    const weeklyNow = upTo(weekly, now, 80);
     const price = candles[i].close;
     const btcIndex = btcByClose.get(now);
     const market: MarketSnapshot = { symbol, asOf: new Date(now).toISOString(), price,
