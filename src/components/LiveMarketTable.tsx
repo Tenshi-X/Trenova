@@ -66,6 +66,10 @@ function fmtVol(v: number): string {
   return '$' + v.toFixed(0);
 }
 
+function fmtRangeEnd(value: number): string {
+  return value >= 1000 ? Math.round(value).toLocaleString('en-US') : fmtPrice(value);
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps) {
   const { t, language } = useLanguage();
@@ -339,7 +343,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                    <div className="w-8 h-8 shrink-0 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-semibold text-slate-200">{coin.symbol.slice(0, 2)}</div>
                    <div className="min-w-0">
                      <div className="text-sm font-semibold text-slate-100 group-hover:text-neon transition-colors truncate">{coin.symbol}<span className="text-slate-500 font-normal">/{source === 'binance' || source === 'okx' ? 'USDT' : 'USD'}</span></div>
-                     <div className="text-[11px] text-slate-500">Perpetual · {coin.exchanges && coin.exchanges > 1 ? `${coin.exchanges} exchange` : source.toUpperCase()}</div>
+                     <div className="text-[11px] text-slate-500 whitespace-nowrap">Perp · {coin.exchanges && coin.exchanges > 1 ? `${coin.exchanges} exch.` : source.toUpperCase()}</div>
                    </div>
                 </div>
 
@@ -381,8 +385,8 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                         })()}
                     </div>
                     <div className="flex justify-between w-full text-[10px] text-slate-500 tabular-nums">
-                        <span>{fmtPrice(coin.low24h)}</span>
-                        <span>{fmtPrice(coin.high24h)}</span>
+                        <span>{fmtRangeEnd(coin.low24h)}</span>
+                        <span>{fmtRangeEnd(coin.high24h)}</span>
                     </div>
                 </div>
 

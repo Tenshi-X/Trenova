@@ -41,8 +41,8 @@ const tone = (value: number | null) => value === null ? 'text-slate-600' : value
 /** Cell colour from the 24h change: green for up, red for down, stronger the bigger the move (caps at +/-8%). */
 function cellColor(change: number): string {
   const strength = Math.min(Math.abs(change) / 8, 1);
-  const lightness = 22 + strength * 14;
-  const saturation = 35 + strength * 30;
+  const lightness = 26 + strength * 16;
+  const saturation = 45 + strength * 35;
   return `hsl(${change >= 0 ? 150 : 355} ${saturation}% ${lightness}%)`;
 }
 
@@ -64,7 +64,8 @@ export default function MarketOverview({ coins, language, onSelectSymbol }: Mark
 
   const cells = useMemo(() => {
     const valueOf = (coin: OverviewCoin) => metric === 'oi' ? (coin.openInterestUsd ?? 0) : coin.vol24h;
-    const rects = squarify(coins.map((coin) => ({ id: coin.symbol, value: valueOf(coin) })), 1600, 900);
+    // Box area follows the square root of the metric, so BTC/ETH do not swallow the whole map and small coins stay readable.
+    const rects = squarify(coins.map((coin) => ({ id: coin.symbol, value: Math.sqrt(Math.max(valueOf(coin), 0)) })), 1600, 900);
     const bySymbol = new Map(coins.map((coin) => [coin.symbol, coin]));
     return rects.flatMap((rect) => { const coin = bySymbol.get(rect.id); return coin ? [{ rect, coin }] : []; });
   }, [coins, metric]);
@@ -155,7 +156,7 @@ export default function MarketOverview({ coins, language, onSelectSymbol }: Mark
           })}
         </div>
         <p className="mt-2 text-[11px] text-slate-500">
-          {id ? 'Ukuran kotak = ' : 'Box size = '}{metric === 'oi' ? 'open interest' : (id ? 'volume 24 jam' : '24h volume')}{id ? '. Warna = perubahan harga 24 jam (hijau naik, merah turun).' : '. Colour = 24h price change (green up, red down).'}
+          {id ? 'Ukuran kotak mengikuti ' : 'Box size follows '}{metric === 'oi' ? 'open interest' : (id ? 'volume 24 jam' : '24h volume')}{id ? ' (skala akar, supaya koin kecil tetap terbaca). Warna = perubahan harga 24 jam (hijau naik, merah turun).' : ' (square-root scale, so small coins stay readable). Colour = 24h price change (green up, red down).'}
         </p>
       </section>
     </div>
