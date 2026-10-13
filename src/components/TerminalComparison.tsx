@@ -24,13 +24,13 @@ export default function TerminalComparison() {
     <section className="py-20 bg-slate-950 border-t border-slate-800 font-mono text-slate-300">
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[12px] font-bold uppercase tracking-[0.2em] mb-6">
             {t('lp_comp_pill')}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {t('lp_comp_title')}<br /><span className="text-neon">{t('lp_comp_title_accent')}</span>
           </h2>
-          <p className="text-slate-500 text-[13px] max-w-xl mx-auto leading-[1.8]">
+          <p className="text-slate-500 text-[14px] max-w-xl mx-auto leading-[1.8]">
             {t('lp_comp_desc')}
           </p>
         </div>
@@ -38,37 +38,37 @@ export default function TerminalComparison() {
         <div className="border border-slate-800 overflow-x-auto">
           {/* Header */}
           <div className="grid grid-cols-[2fr_1fr_1fr_1fr] min-w-[800px] border-b border-slate-800">
-            <div className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em] border-r border-slate-800">{t('lp_comp_col_cap')}</div>
-            <div className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_manual')}</div>
-            <div className="px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_signal')}</div>
-            <div className="px-5 py-3 text-[10px] font-bold text-neon uppercase tracking-[0.12em] text-center border-t-2 border-t-neon bg-neon/[0.04]">
+            <div className="px-5 py-3 text-[12px] font-bold text-slate-500 uppercase tracking-[0.12em] border-r border-slate-800">{t('lp_comp_col_cap')}</div>
+            <div className="px-5 py-3 text-[12px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_manual')}</div>
+            <div className="px-5 py-3 text-[12px] font-bold text-slate-500 uppercase tracking-[0.12em] text-center border-r border-slate-800">{t('lp_comp_col_signal')}</div>
+            <div className="px-5 py-3 text-[12px] font-bold text-neon uppercase tracking-[0.12em] text-center border-t-2 border-t-neon bg-neon/[0.04]">
               TRENOVA TERMINAL
-              <div className="text-[9px] text-neon/70 font-normal mt-0.5">⭐ {t('lp_comp_col_trenova_rec')}</div>
+              <div className="text-[11px] text-neon/70 font-normal mt-0.5">⭐ {t('lp_comp_col_trenova_rec')}</div>
             </div>
           </div>
           {/* Rows */}
           {rows.map((r, i) => (
             <div key={i} className="grid grid-cols-[2fr_1fr_1fr_1fr] min-w-[800px] border-b border-slate-800 last:border-b-0 hover:bg-white/[0.01] transition-colors">
-              <div className="px-5 py-3.5 text-[11px] text-slate-300 border-r border-slate-800 flex items-center gap-2.5">
+              <div className="px-5 py-3.5 text-[13px] text-slate-300 border-r border-slate-800 flex items-center gap-2.5">
                 {t(r.featureKey)}
               </div>
-              <div className="px-5 py-3.5 text-[11px] text-center border-r border-slate-800 flex items-center justify-center">
-                <span className={isCheckNo(r.manual) ? "text-slate-700" : isCheckYes(r.manual) ? "text-emerald-400 font-bold" : "text-neon/70 text-[10px]"}>
+              <div className="px-5 py-3.5 text-[13px] text-center border-r border-slate-800 flex items-center justify-center">
+                <span className={isCheckNo(r.manual) ? "text-slate-700" : isCheckYes(r.manual) ? "text-emerald-400 font-bold" : "text-neon/70 text-[12px]"}>
                   {r.manual}
                 </span>
               </div>
-              <div className="px-5 py-3.5 text-[11px] text-center border-r border-slate-800 flex items-center justify-center">
-                <span className={isCheckNo(r.signal) ? "text-slate-700" : isCheckYes(r.signal) ? "text-emerald-400 font-bold" : "text-neon/70 text-[10px]"}>
+              <div className="px-5 py-3.5 text-[13px] text-center border-r border-slate-800 flex items-center justify-center">
+                <span className={isCheckNo(r.signal) ? "text-slate-700" : isCheckYes(r.signal) ? "text-emerald-400 font-bold" : "text-neon/70 text-[12px]"}>
                   {r.signal}
                 </span>
               </div>
               {/* Standard column */}
-              <div className="px-5 py-3.5 text-[11px] text-center bg-neon/[0.04] flex items-center justify-center gap-2">
+              <div className="px-5 py-3.5 text-[13px] text-center bg-neon/[0.04] flex items-center justify-center gap-2">
                 <span className={isCheckNo(r.standard) ? "text-slate-700" : isCheckYes(r.standard) ? "text-emerald-400 font-bold" : "text-slate-300 font-bold"}>
                   {r.standard}
                 </span>
                 {r.premiumWin && (
-                  <span className="bg-neon text-slate-950 text-[8px] font-bold px-2 py-0.5 tracking-[0.06em]">TERBAIK</span>
+                  <span className="bg-neon text-slate-950 text-[11px] font-bold px-2 py-0.5 tracking-[0.06em]">TERBAIK</span>
                 )}
               </div>
             </div>

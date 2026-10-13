@@ -180,7 +180,7 @@ export default function LandingPage() {
                {/* Product 2 */}
                <div className="bg-slate-50 dark:bg-card border border-neon/50 dark:border-neon rounded-3xl p-6 hover:shadow-2xl hover:shadow-neon/20 transition-all duration-300 flex flex-col relative transform  shadow-xl group">
                   <div className="absolute inset-0 bg-gradient-to-b from-neon/5 to-transparent rounded-3xl pointer-events-none"></div>
-                  <div className="absolute top-0 right-0 bg-neon text-slate-950 text-[11px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
+                  <div className="absolute top-0 right-0 bg-neon text-slate-950 text-[13px] font-black px-4 py-1.5 rounded-bl-xl rounded-tr-3xl tracking-wider uppercase shadow-md">
                      POPULAR
                   </div>
                   <div className="mb-6 pt-2 relative z-10">

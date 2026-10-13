@@ -31,7 +31,7 @@ const CustomDateInput = forwardRef<HTMLButtonElement, { value?: string; onClick?
             >
                 <div>
                     <span className={clsx(
-                        "block text-[10px] font-bold uppercase tracking-wider mb-0.5 transition-colors",
+                        "block text-[12px] font-bold uppercase tracking-wider mb-0.5 transition-colors",
                          // Label logic: always visible, colored if value present
                         value ? "text-neon" : "text-slate-400 group-hover:text-neon/70"
                     )}>

@@ -49,13 +49,13 @@ export default function TerminalFeatures() {
     <section id="features" className="py-20 bg-slate-950 font-mono text-slate-300">
       <div className="container mx-auto px-6 max-w-6xl">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[12px] font-bold uppercase tracking-[0.2em] mb-6">
             {t('lp_feat_pill')}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {t('lp_feat_title')}<br />Trader <span className="text-neon">{t('lp_feat_title_accent')}</span>
           </h2>
-          <p className="text-slate-500 text-[13px] max-w-xl mx-auto leading-[1.8]">
+          <p className="text-slate-500 text-[14px] max-w-xl mx-auto leading-[1.8]">
             {t('lp_feat_desc')}
           </p>
         </div>
@@ -64,14 +64,14 @@ export default function TerminalFeatures() {
           {features.map((f, i) => (
             <div key={i} className="bg-slate-950 p-7 flex flex-col items-start group hover:bg-slate-900/50 transition-colors">
               <div className="flex items-center justify-between w-full mb-4">
-                <span className="text-[10px] text-slate-700 font-bold tracking-[0.1em]">{f.num}</span>
+                <span className="text-[12px] text-slate-700 font-bold tracking-[0.1em]">{f.num}</span>
                 <span className="text-2xl">{f.icon}</span>
               </div>
-              <h3 className="text-[12px] font-bold text-white mb-3 tracking-[0.08em] uppercase">{t(f.titleKey)}</h3>
-              <p className="text-[11px] text-slate-500 leading-[1.9] mb-4 flex-grow">{t(f.descKey)}</p>
+              <h3 className="text-[14px] font-bold text-white mb-3 tracking-[0.08em] uppercase">{t(f.titleKey)}</h3>
+              <p className="text-[13px] text-slate-500 leading-[1.9] mb-4 flex-grow">{t(f.descKey)}</p>
               <div className="flex flex-wrap gap-1.5">
                 {f.tags.map((tag, j) => (
-                  <span key={j} className={`text-[9px] px-2 py-0.5 border tracking-[0.04em] ${tag.active ? 'border-neon/30 text-neon bg-neon/5' : 'border-slate-800 text-slate-600'}`}>
+                  <span key={j} className={`text-[11px] px-2 py-0.5 border tracking-[0.04em] ${tag.active ? 'border-neon/30 text-neon bg-neon/5' : 'border-slate-800 text-slate-600'}`}>
                     {tag.text}
                   </span>
                 ))}

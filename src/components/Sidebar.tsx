@@ -112,7 +112,7 @@ export default function Sidebar() {
               "md:opacity-0 md:group-hover:opacity-100 md:translate-x-10 md:group-hover:translate-x-0"
           )}>
              <h1 className="text-xl font-bold tracking-wider text-foreground">{t('app_title')}</h1>
-             <p className="text-[10px] text-slate-500 font-medium tracking-widest uppercase">{t('admin_panel')}</p>
+             <p className="text-[12px] text-slate-500 font-medium tracking-wide uppercase">{t('admin_panel')}</p>
           </div>
         </div>
 
@@ -123,7 +123,7 @@ export default function Sidebar() {
         )}>
           <div className="bg-neon/10 border border-neon/30 rounded-xl px-3 py-2.5 flex items-center gap-2">
             <Shield size={14} className="text-neon" />
-            <span className="text-[10px] font-bold text-neon uppercase tracking-wider">{t('admin_role')}</span>
+            <span className="text-[12px] font-bold text-neon uppercase tracking-wider">{t('admin_role')}</span>
           </div>
         </div>
 

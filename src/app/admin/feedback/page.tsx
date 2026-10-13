@@ -348,7 +348,7 @@ export default function AdminFeedbackPage() {
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span
                         className={clsx(
-                          'px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider',
+                          'px-2 py-0.5 rounded border text-[12px] font-bold uppercase tracking-wider',
                           CATEGORY_BADGE
                         )}
                       >
@@ -356,14 +356,14 @@ export default function AdminFeedbackPage() {
                       </span>
                       <span
                         className={clsx(
-                          'px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider',
+                          'px-2 py-0.5 rounded border text-[12px] font-bold uppercase tracking-wider',
                           STATUS_BADGE[status]
                         )}
                       >
                         {t(STATUS_LABEL_KEYS[status])}
                       </span>
                       {(row.attachment_path || row.attachment_link) && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <span className="flex items-center gap-1 text-[12px] font-bold uppercase tracking-wider text-slate-400">
                           <Link2 size={12} /> {t('afb_row_attach')}
                         </span>
                       )}
@@ -372,7 +372,7 @@ export default function AdminFeedbackPage() {
                     <h3 className="text-sm md:text-base font-bold text-foreground truncate">{row.subject}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">{row.message}</p>
 
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-slate-400">
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-[13px] text-slate-400">
                       <span className="flex items-center gap-1">
                         <Mail size={12} /> {row.contact_email || row.user_email || t('afb_row_no_email')}
                       </span>
@@ -402,13 +402,13 @@ export default function AdminFeedbackPage() {
                   <div className="border-t border-slate-100 dark:border-slate-800 p-4 md:p-5 space-y-4 bg-slate-50/50 dark:bg-slate-950/40">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
-                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
+                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[12px]">
                           {t('afb_row_sender')}
                         </p>
                         <p className="text-slate-600 dark:text-slate-300 break-all">{row.user_email || '-'}</p>
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
+                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[12px]">
                           {t('afb_row_contact')}
                         </p>
                         <p className="text-slate-600 dark:text-slate-300 break-all">
@@ -418,14 +418,14 @@ export default function AdminFeedbackPage() {
                     </div>
 
                     <div>
-                      <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">{t('afb_row_message')}</p>
+                      <p className="font-semibold text-slate-400 uppercase tracking-wider text-[12px] mb-1">{t('afb_row_message')}</p>
                       <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{row.message}</p>
                     </div>
 
                     {row.attachment_path ? (
                       signedUrl ? (
                         <div className="space-y-2">
-                          <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
+                          <p className="font-semibold text-slate-400 uppercase tracking-wider text-[12px]">
                             {t('afb_row_attach')} ({formatBytes(row.attachment_size)})
                           </p>
                           <a href={signedUrl} target="_blank" rel="noreferrer" className="block w-fit">
@@ -450,7 +450,7 @@ export default function AdminFeedbackPage() {
 
                     {row.attachment_link && (
                       <div>
-                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[10px] mb-1">
+                        <p className="font-semibold text-slate-400 uppercase tracking-wider text-[12px] mb-1">
                           {t('afb_row_link_title')}
                         </p>
                         <a

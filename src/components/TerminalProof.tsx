@@ -28,13 +28,13 @@ export default function TerminalProof() {
       <div className="container mx-auto px-6 max-w-6xl">
         {/* Header */}
         <div className="mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-900 border border-slate-800 text-neon text-[12px] font-bold uppercase tracking-[0.2em] mb-6">
             ── {t('lp_proof_header')}
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {t('lp_proof_title')}<br /><span className="text-neon">{t('lp_proof_title_accent')}</span>
           </h2>
-          <p className="text-slate-500 text-[13px] max-w-xl leading-[1.8]">
+          <p className="text-slate-500 text-[14px] max-w-xl leading-[1.8]">
             {t('lp_proof_desc')}
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function TerminalProof() {
               {/* ROI Header */}
               <div className="mb-4 text-left">
                 <div className="text-2xl md:text-3xl font-bold text-emerald-400 tracking-tight">{trade.roi}</div>
-                <div className="text-[10px] text-slate-500 uppercase mt-1">{trade.pair} · {trade.type} · {trade.exchange}</div>
+                <div className="text-[12px] text-slate-500 uppercase mt-1">{trade.pair} · {trade.type} · {trade.exchange}</div>
               </div>
 
               {/* Trade Image */}
@@ -66,14 +66,14 @@ export default function TerminalProof() {
 
         {/* Ticker Row - More Results */}
         <div className="border border-slate-800 bg-slate-950 p-4 mb-6">
-          <div className="text-[9px] text-slate-600 uppercase tracking-[0.12em] text-center mb-4">
+          <div className="text-[11px] text-slate-600 uppercase tracking-[0.12em] text-center mb-4">
             {t('lp_proof_more')}
           </div>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
             {tickerResults.map((t, i) => (
               <div key={i} className="flex-shrink-0 bg-slate-900/30 border border-slate-800/50 p-3 text-left w-[180px] rounded hover:bg-slate-900/80 transition-colors">
                 <div className="text-emerald-400 font-bold text-base tracking-tight">{t.roi}</div>
-                <div className="text-[9px] text-slate-500 mt-0.5 uppercase mb-3">{t.pair} · {t.type} · {t.exchange}</div>
+                <div className="text-[11px] text-slate-500 mt-0.5 uppercase mb-3">{t.pair} · {t.type} · {t.exchange}</div>
                 <div className="rounded overflow-hidden border border-slate-800/30">
                   <img src={t.image} alt={t.pair} className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity" />
                 </div>
@@ -94,8 +94,8 @@ export default function TerminalProof() {
               <div className="text-3xl md:text-[40px] font-bold text-neon leading-none mb-1.5 tracking-tight">
                 {s.num}<span className="text-lg text-neon/70">{s.suffix}</span>
               </div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-[0.06em] mb-1">{t(s.labelKey)}</div>
-              <div className="text-[10px] text-slate-700">{t(s.subKey)}</div>
+              <div className="text-[12px] text-slate-500 uppercase tracking-[0.06em] mb-1">{t(s.labelKey)}</div>
+              <div className="text-[12px] text-slate-700">{t(s.subKey)}</div>
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-neon/50 to-transparent" />
             </div>
           ))}
@@ -109,18 +109,18 @@ export default function TerminalProof() {
             { initials: 'SF', name: 'Sarah F.', role: 'Crypto Enthusiast', quote: 'Awalnya ragu, tapi setelah coba langsung berlangganan. AI-nya beneran canggih dan risk management-nya lengkap.' },
           ].map((tItem, i) => (
             <div key={i} className="bg-slate-950 p-7">
-              <p className="text-[11px] text-slate-300 leading-[1.9] mb-5 italic">
+              <p className="text-[13px] text-slate-300 leading-[1.9] mb-5 italic">
                 <span className="text-neon text-base not-italic">&ldquo;</span>{tItem.quote}<span className="text-neon text-base not-italic">&rdquo;</span>
               </p>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 flex items-center justify-center bg-neon/[0.06] border border-neon/20 text-[11px] font-bold text-neon flex-shrink-0">
+                <div className="w-8 h-8 flex items-center justify-center bg-neon/[0.06] border border-neon/20 text-[13px] font-bold text-neon flex-shrink-0">
                   {tItem.initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-semibold text-white">{tItem.name}</div>
-                  <div className="text-[10px] text-slate-600 mt-0.5">{tItem.role}</div>
+                  <div className="text-[13px] font-semibold text-white">{tItem.name}</div>
+                  <div className="text-[12px] text-slate-600 mt-0.5">{tItem.role}</div>
                 </div>
-                <span className="text-[8px] px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 tracking-[0.04em] flex-shrink-0">
+                <span className="text-[11px] px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 tracking-[0.04em] flex-shrink-0">
                   VERIFIED
                 </span>
               </div>

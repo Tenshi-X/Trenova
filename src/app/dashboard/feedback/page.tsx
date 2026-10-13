@@ -243,7 +243,7 @@ export default function DashboardFeedbackPage() {
             />
             <div className="flex items-center justify-between gap-3">
               {renderError('subject')}
-              <span className="ml-auto text-[11px] text-slate-400">
+              <span className="ml-auto text-[13px] text-slate-400">
                 {form.subject.length}/{FEEDBACK_LIMITS.subjectMax}
               </span>
             </div>
@@ -253,7 +253,7 @@ export default function DashboardFeedbackPage() {
           <div className="space-y-2">
             <label htmlFor="feedback-email" className="text-sm font-semibold text-foreground flex items-center gap-2">
               {t('feedback_email_label')}
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
+              <span className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
                 {t('feedback_optional')}
               </span>
             </label>
@@ -276,7 +276,7 @@ export default function DashboardFeedbackPage() {
           <div className="space-y-3">
             <div className="text-sm font-semibold text-foreground flex items-center gap-2">
               {t('feedback_attachment_label')}
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
+              <span className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
                 {t('feedback_optional')}
               </span>
             </div>
@@ -333,7 +333,7 @@ export default function DashboardFeedbackPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className="text-xs font-semibold text-foreground truncate">{image.name}</p>
                     {imageInfo && (
-                      <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                      <p className="text-[13px] font-medium text-emerald-600 dark:text-emerald-400">
                         {t('feedback_image_compressed')
                           .replace('{original}', formatBytes(imageInfo.originalSize))
                           .replace('{compressed}', formatBytes(imageInfo.size))}
@@ -344,7 +344,7 @@ export default function DashboardFeedbackPage() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isSubmitting}
-                        className="text-[11px] font-bold text-neon hover:underline disabled:opacity-60"
+                        className="text-[13px] font-bold text-neon hover:underline disabled:opacity-60"
                       >
                         {t('feedback_image_change')}
                       </button>
@@ -352,7 +352,7 @@ export default function DashboardFeedbackPage() {
                         type="button"
                         onClick={clearImage}
                         disabled={isSubmitting}
-                        className="text-[11px] font-bold text-rose-500 hover:underline disabled:opacity-60"
+                        className="text-[13px] font-bold text-rose-500 hover:underline disabled:opacity-60"
                       >
                         {t('feedback_image_remove')}
                       </button>
@@ -377,7 +377,7 @@ export default function DashboardFeedbackPage() {
                 </p>
               )}
 
-              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              <p className="text-[13px] text-slate-400 dark:text-slate-500">
                 {t('feedback_attachment_hint').replace('{limit}', String(FEEDBACK_IMAGE_MAX_MB))}
               </p>
             </div>
@@ -403,7 +403,7 @@ export default function DashboardFeedbackPage() {
             />
             <div className="flex items-center justify-between gap-3">
               {renderError('message')}
-              <span className="ml-auto text-[11px] text-slate-400">
+              <span className="ml-auto text-[13px] text-slate-400">
                 {form.message.length}/{FEEDBACK_LIMITS.messageMax}
               </span>
             </div>
