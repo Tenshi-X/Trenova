@@ -12,7 +12,9 @@
 .terminal-dashboard :is(input, select, textarea) { color-scheme: dark; }
 .terminal-dashboard :is(input, select, textarea):focus-visible,
 .terminal-dashboard :is(button, a):focus-visible { outline: 2px solid #f0c060; outline-offset: 3px; }
-.terminal-dashboard :is([class~="rounded-3xl"], [class~="rounded-2xl"], [class~="rounded-xl"], [class~="rounded-lg"], [class~="rounded-full"]) { border-radius: 4px; }
+.terminal-dashboard :is([class~="rounded-3xl"], [class~="rounded-2xl"]) { border-radius: 18px; }
+.terminal-dashboard [class~="rounded-xl"] { border-radius: 14px; }
+.terminal-dashboard [class~="rounded-lg"] { border-radius: 10px; }
 .terminal-dashboard :is([class~="shadow-xl"], [class~="shadow-lg"], [class~="shadow-sm"]) { box-shadow: none; }
 .terminal-dashboard :is([class~="bg-white"], [class~="bg-slate-50"], [class~="bg-slate-50/50"]) { background-color: #111; }
 .terminal-dashboard :is([class~="border-slate-200"], [class~="border-slate-100"]) { border-color: #2a2a2a; }
@@ -30,7 +32,7 @@
 .terminal-navigation { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2a2a; background: #0f0f0f; padding: 0 24px; gap: 8px; }
 .terminal-route-links, .terminal-nav-actions { display: flex; align-items: center; gap: 4px; }
 .terminal-route-links { overflow-x: auto; scrollbar-width: none; }
-.terminal-route { display: flex; align-items: center; gap: 7px; padding: 12px 16px; white-space: nowrap; text-transform: uppercase; font-size: 12px; letter-spacing: .06em; color: #999; border-bottom: 2px solid transparent; }
+.terminal-route { display: flex; align-items: center; gap: 7px; padding: 12px 16px; white-space: nowrap; text-transform: none; font-size: 12px; letter-spacing: 0; color: #999; border-bottom: 2px solid transparent; }
 .terminal-route:hover { color: #f0c060; background: #19160f; }
 .terminal-route[aria-current="page"] { color: #f0c060; border-bottom-color: #d4a843; }
 .terminal-icon-button { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; color: #aaa; border: 1px solid #2a2a2a; background: #141414; }
@@ -41,22 +43,22 @@
 .terminal-footer { display: flex; justify-content: space-between; gap: 12px; padding: 14px 24px; border-top: 1px solid #242424; color: #929292; font-size: 11px; letter-spacing: .05em; }
 .terminal-workspace { max-width: none; }
 .terminal-workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-left: 3px solid #d4a843; padding-left: 12px; }
-.terminal-workspace-heading h1 { font-size: 17px; font-weight: 600; text-transform: uppercase; color: #d8d8d8; }
+.terminal-workspace-heading h1 { font-size: 17px; font-weight: 600; text-transform: none; color: #d8d8d8; }
 .terminal-workspace-heading p { font-size: 13px; color: #929292; }
 .terminal-workspace-heading > div { min-width: 0; }
 .terminal-section-code { color: #d4a843; font-size: 12px; border: 1px solid #3b3320; padding: 4px 8px; }
 .terminal-tabs { background: #111; border: 1px solid #2a2a2a; margin: 0 0 16px; padding: 0; }
-.terminal-tabs button { text-transform: uppercase; letter-spacing: .04em; font-size: 13px; border-bottom: 0; border-right: 1px solid #2a2a2a; padding: 12px 18px; }
+.terminal-tabs button { text-transform: none; letter-spacing: 0; font-size: 13px; border-bottom: 0; border-right: 1px solid #2a2a2a; padding: 12px 18px; }
 .terminal-tabs button[aria-selected="true"] { background: #d4a843; color: #0a0a0a; }
 .terminal-market-strip > div:first-child { margin-bottom: 6px; }
 .terminal-market-strip .terminal-market-toolbar { position: static; margin-bottom: 8px; }
 .terminal-market-strip .terminal-market-status { margin-bottom: 0; }
-.terminal-market-strip [class~="grid"] { gap: 6px; }
-.terminal-market-strip .terminal-market-card { border-radius: 2px; padding: 10px 12px; min-height: 108px; height: 108px; box-shadow: none; }
-.terminal-market-strip .terminal-market-card [class~="text-2xl"] { font-size: 18px; }
+.terminal-market-strip [class~="grid"] { gap: 14px; }
+.terminal-market-strip .terminal-market-card { border-radius: 16px; padding: 16px 18px; min-height: 132px; height: auto; box-shadow: none; }
+.terminal-market-strip .terminal-market-card [class~="text-2xl"] { font-size: 26px; }
 .terminal-analysis-grid { display: grid; align-items: start; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .terminal-input-panel { padding: 16px; border: 1px solid #2a2a2a; background: #111; min-width: 0; }
-.terminal-panel-heading { text-transform: uppercase; color: #d4a843; font-size: 14px; letter-spacing: .06em; font-weight: 700; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #2a2a2a; }
+.terminal-panel-heading { text-transform: none; color: #d4a843; font-size: 14px; letter-spacing: 0; font-weight: 700; padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid #2a2a2a; }
 .terminal-analysis-grid .terminal-controls { padding: 0; border: 0; background: transparent; }
 .terminal-analysis-grid .terminal-upload-context { flex-direction: column; }
 .terminal-analysis-grid .terminal-upload-context > div { max-width: none; }

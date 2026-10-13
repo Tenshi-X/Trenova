@@ -79,20 +79,61 @@ test('Binance and CoinGecko parsers', () => {
   assert.equal(caps.has('ZZZ'), false);
 });
 
-test('merge prefers OKX, falls back per field, and reports provider stats', () => {
+test('merge combines exchanges: funding mean, OI and volume summed, one row per coin', () => {
   const snapshot = lib.mergeProviders([
     { source: 'binance', funding: lib.parseBinancePremiumIndex(binance), openInterest: new Map() },
     { source: 'bybit', ...lib.parseBybitTickers(bybit) },
     { source: 'okx', funding: lib.parseOkxFunding(okxFunding), openInterest: lib.parseOkxOpenInterest(okxOi) },
   ]);
   const btc = snapshot.map.get('BTC');
-  near(btc.fundingRate, 0.01);              // OKX beats Bybit (0.03) and Binance (0.005)
-  assert.equal(btc.openInterestUsd, 5100000000); // OKX OI beats Bybit OI
+  near(btc.fundingRate, (0.01 + 0.03 + 0.005) / 3);         // mean of OKX, Bybit, Binance
+  assert.equal(btc.openInterestUsd, 5100000000 + 4000000000); // OKX + Bybit (Binance has no bulk OI)
+  assert.equal(btc.exchanges, 3);
+  assert.deepEqual(Object.keys(btc.perExchange).sort(), ['binance', 'bybit', 'okx']);
   assert.equal(snapshot.map.get('SOL').openInterestUsd, 600000000); // only Bybit has SOL
+  assert.equal(snapshot.map.get('SOL').exchanges, 1);
   near(snapshot.map.get('DOGE').fundingRate, 0.01); // only Binance has DOGE
   assert.equal(snapshot.map.get('DOGE').openInterestUsd, null);
   assert.deepEqual(snapshot.providers.map(p => p.source), ['okx', 'bybit', 'binance']);
   assert.equal(lib.mergeProviders([]), null);
+});
+
+test('Bitget, Gate and MEXC parsers (shapes taken from the live APIs)', () => {
+  const bitget = lib.parseBitgetTickers({ code: '00000', data: [
+    { symbol: 'BTCUSDT', lastPr: '83969.2', markPrice: '83969.2', fundingRate: '0.000022', holdingAmount: '33124.889', usdtVolume: '1495572652.07' },
+    { symbol: 'ETHUSDT', lastPr: '2562.78', markPrice: '2562.78', fundingRate: '-0.000008', holdingAmount: '769716.58', usdtVolume: '1213541660.42' },
+    { symbol: 'BTCUSD', fundingRate: '1' },
+  ] });
+  near(bitget.funding.get('BTC'), 0.0022);
+  near(bitget.openInterest.get('BTC'), 33124.889 * 83969.2);
+  assert.equal(bitget.volume.get('ETH'), 1213541660.42);
+  assert.equal(bitget.funding.has('BTCUSD'), false);
+  assert.equal(lib.parseBitgetTickers({ code: '40001' }).funding.size, 0);
+
+  const gate = lib.parseGateTickers([
+    { contract: 'BTC_USDT', funding_rate: '0.0001', total_size: '5000000', quanto_multiplier: '0.0001', mark_price: '84000', volume_24h_quote: '2000000000' },
+    { contract: 'GP_USDT', funding_rate: '0.00005', total_size: '346258', quanto_multiplier: '100', mark_price: '0.002', volume_24h_quote: '27140' },
+    { contract: 'BTC_USD', funding_rate: '1' },
+  ]);
+  near(gate.funding.get('BTC'), 0.01);
+  near(gate.openInterest.get('BTC'), 5000000 * 0.0001 * 84000);
+  near(gate.openInterest.get('GP'), 346258 * 100 * 0.002);
+  assert.equal(gate.volume.get('BTC'), 2000000000);
+
+  const mexc = lib.parseMexcTickers({ success: true, code: 0, data: [
+    { symbol: 'BTC_USDT', fundingRate: 0.000016, amount24: 2068388329.19, holdVol: 431514732 },
+    { symbol: 'BTC_USD', fundingRate: 1 },
+  ] });
+  near(mexc.funding.get('BTC'), 0.0016);
+  assert.equal(mexc.volume.get('BTC'), 2068388329.19);
+  assert.equal(lib.parseMexcTickers({ success: false }).funding.size, 0);
+});
+
+test('Bybit turnover is exposed as volume and 1000x symbols merge into the plain coin', () => {
+  const parsed = lib.parseBybitTickers({ retCode: 0, result: { list: [
+    { symbol: '1000PEPEUSDT', fundingRate: '0.0001', openInterestValue: '10', turnover24h: '5' },
+  ] } });
+  assert.equal(parsed.volume.get('PEPE'), 5);
 });
 
 test('fetchDerivatives survives geo-blocked providers and returns null when all fail', async () => {
