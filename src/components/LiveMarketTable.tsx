@@ -5,6 +5,7 @@ import { Search, Loader2, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
 import { useLanguage } from '@/context/LanguageContext';
 import MarketOverview from '@/components/MarketOverview';
+import { CATEGORY_DEFS } from '@/lib/market-categories';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CoinData {
@@ -30,6 +31,7 @@ interface CoinData {
   chg4h: number | null;
   chg12h: number | null;
   exchanges: number | null;
+  group: 'crypto' | 'tradfi';
 }
 
 interface LiveMarketTableProps {
@@ -41,8 +43,8 @@ type MarketSnapshot = {
     high24h: number; low24h: number; volume24h: number; fundingRate: number | null;
     openInterestUsd?: number | null; marketCap?: number; rsi?: number | null; macdHist?: number | null;
     structure?: string | null; rating?: string | null; score?: number | null;
-    change1h?: number | null; change4h?: number | null; change12h?: number | null; exchanges?: number }>;
-  derivativesSources?: Array<{ source: string }>;
+    change1h?: number | null; change4h?: number | null; change12h?: number | null; exchanges?: number; group?: string }>;
+  categories?: Record<string, string[]>;
   source?: string;
   timestamp?: number;
 };
@@ -74,16 +76,15 @@ function fmtRangeEnd(value: number): string {
 export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps) {
   const { t, language } = useLanguage();
   const [coins, setCoins]             = useState<CoinData[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading]     = useState(true);
   const [error, setError]             = useState('');
   const [search, setSearch]           = useState('');
   const [sortBy, setSortBy]           = useState<'score'|'vol' | 'chg' | 'price' | 'sym' | 'mcap' | 'oi' | 'fund'>('score');
   const [sortDir, setSortDir]         = useState<'desc' | 'asc'>('desc');
   const [filterMode, setFilterMode]   = useState<'ALL' | 'BULL' | 'BEAR' | 'BREAKOUT'>('ALL');
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [source, setSource] = useState('');
-  const [exchangeList, setExchangeList] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Record<string, string[]>>({});
+  const [category, setCategory] = useState<string>('crypto');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const requestRef = useRef<AbortController | null>(null);
@@ -125,18 +126,16 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           chg4h: coin.change4h ?? null,
           chg12h: coin.change12h ?? null,
           exchanges: coin.exchanges ?? null,
+          group: coin.group === 'tradfi' ? 'tradfi' as const : 'crypto' as const,
         }));
       });
 
-      setIsConnected(true);
       setIsLoading(false);
       setError('');
       setSource(json.source ?? 'binance');
-      setExchangeList((json.derivativesSources ?? []).map((item) => item.source));
-      setLastUpdated(new Date(json.timestamp ?? Date.now()));
+      setCategories(json.categories ?? {});
     } catch {
       if (controller.signal.aborted) return;
-      setIsConnected(false);
       setError('unavailable');
     } finally {
       if (!controller.signal.aborted) {
@@ -169,12 +168,26 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       distHigh: c.high24h > 0 ? ((c.price - c.high24h) / c.high24h) * 100 : 0,
   }));
 
+  const categoryTabs = [
+    { id: 'all', label: 'All', count: coins.length },
+    { id: 'crypto', label: 'Crypto', count: coins.filter((c) => c.group === 'crypto').length },
+    ...(coins.some((c) => c.group === 'tradfi') ? [{ id: 'tradfi', label: 'TradFi', count: coins.filter((c) => c.group === 'tradfi').length }] : []),
+    ...CATEGORY_DEFS.flatMap((def) => (categories[def.id]?.length ? [{ id: def.id, label: def.label, count: categories[def.id].length }] : [])),
+  ];
+
+  // If the chosen category vanished (e.g. CoinGecko is down), fall back to Crypto instead of showing an empty table.
+  const activeCategory = categoryTabs.some((tab) => tab.id === category) ? category : 'crypto';
+
   const filtered = processedCoins
     .filter(c => {
       if (search) {
         const q = search.toUpperCase();
         if (!c.symbol.includes(q) && !c.name.toUpperCase().includes(q)) return false;
       }
+      if (activeCategory === 'crypto' && c.group !== 'crypto') return false;
+      if (activeCategory === 'tradfi' && c.group !== 'tradfi') return false;
+      if (activeCategory !== 'all' && activeCategory !== 'crypto' && activeCategory !== 'tradfi'
+        && !(c.group === 'crypto' && categories[activeCategory]?.includes(c.symbol))) return false;
       if (filterMode === 'BULL') return (c.rating ?? '').includes('BULL');
       if (filterMode === 'BEAR') return (c.rating ?? '').includes('BEAR');
       if (filterMode === 'BREAKOUT') return c.structure === 'Breakout';
@@ -219,7 +232,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   return (
     <div className="space-y-4">
     <MarketOverview
-      coins={coins.map((c) => ({ symbol: c.symbol, price: c.price, chg24h: c.chg24h, chg1h: c.chg1h, chg4h: c.chg4h, chg12h: c.chg12h, vol24h: c.vol24h, openInterestUsd: c.openInterestUsd }))}
+      coins={coins.filter((c) => c.group === 'crypto').map((c) => ({ symbol: c.symbol, price: c.price, chg24h: c.chg24h, chg1h: c.chg1h, chg4h: c.chg4h, chg12h: c.chg12h, vol24h: c.vol24h, openInterestUsd: c.openInterestUsd }))}
       language={language}
       onSelectSymbol={(symbol) => onSelectSymbol?.(symbol)}
     />
@@ -272,12 +285,23 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                  </button>
               </div>
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            {language === 'id' ? 'RSI, MACD, EMA20, dan struktur dihitung dari candle 1 jam OKX. Rating adalah ringkasan teknikal sederhana (RSI, MACD, EMA20), bukan saran trading. Indikator terisi bertahap saat pertama dibuka.' : 'RSI, MACD, EMA20 and structure are computed from OKX 1h candles. Rating is a simple technical summary (RSI, MACD, EMA20), not trading advice. Indicators fill in gradually on first load.'}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            {language === 'id' ? 'Funding = rata-rata antar exchange, OI dan volume = jumlah dari exchange yang datanya bisa diambil (lihat daftar di bawah tabel), bukan seluruh pasar. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding = mean across exchanges; OI and volume = sum over the exchanges we could reach (listed below the table), not the whole market. A — means the data is not available yet.'}
-          </p>
+          <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1" role="tablist" aria-label="Kategori">
+            {categoryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeCategory === tab.id}
+                onClick={() => setCategory(tab.id)}
+                className={clsx(
+                  'shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-teal-400',
+                  activeCategory === tab.id ? 'border-neon text-neon bg-neon/10' : 'border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700 bg-slate-900',
+                )}
+              >
+                {tab.label} <span className="text-slate-500 font-normal">{tab.count}</span>
+              </button>
+            ))}
+          </div>
           {error && coins.length > 0 && <p role="status" className="text-xs text-amber-400 mt-2">{t('market_load_fail')} · {language === 'id' ? 'Menampilkan pembaruan terakhir.' : 'Showing the last update.'}</p>}
       </div>
 
@@ -462,19 +486,6 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       </div>
       </div>
 
-      {/* ── Footer ── */}
-      <div className="flex-none px-4 py-2 border-t border-slate-800/80 bg-slate-950 flex flex-wrap gap-2 items-center justify-between">
-        <span className="text-[11px] text-slate-500 uppercase tracking-wide">
-          {exchangeList.length ? `${exchangeList.length} exchange: ${exchangeList.join(' · ').toUpperCase()} — ` : ''}{t('market_showing')} {filtered.length} {t('market_of')} {coins.length} pairs
-        </span>
-        <span className="text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-2">
-          <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-neon animate-pulse' : 'bg-rose-500')} />
-          {isConnected
-            ? `${t('market_synced')} ${source.toUpperCase()} /5s · ${lastUpdated?.toLocaleTimeString(language === 'id' ? 'id-ID' : 'en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit' }) ?? ''} WIB`
-            : t('market_disconnected')
-          }
-        </span>
-      </div>
     </div>
     </div>
   );

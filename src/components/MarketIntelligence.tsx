@@ -541,7 +541,7 @@ export default function MarketIntelligence() {
             {lastUpdated ? (
                 <div className="terminal-market-status mb-6 text-[12px] text-slate-400 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    Live · Updated {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {dataSource}{isDegraded ? ' (cached)' : ''} /10s · FNG /5min
+                    Live update {lastUpdated.toLocaleTimeString('id', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}{isDegraded ? ' (cache)' : ''}
                 </div>
             ) : null}
 
