@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminContext } from '@/lib/authz';
 import { parseAnalysisInput, parseCandle, RISKS, STRATEGIES, STYLES, TARGET_RRS, TIMEFRAMES,
   type Candle, type Timeframe } from '@/lib/analysis/core';
-import { groupSummary, runBacktest, summarize, type BacktestTrade } from '@/lib/analysis/backtest';
+import { groupSummary, runBacktest, splitHalves, summarize, type BacktestTrade, type SymbolSeries } from '@/lib/analysis/backtest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,36 +44,62 @@ export async function GET(request: Request) {
     .filter(item => /^[A-Z0-9]{2,10}$/.test(item)).slice(0, 30);
   const options = { step: intParam(params.get('step'), 6, 1, 48), maxWait: intParam(params.get('wait'), 6, 1, 48),
     maxHold: intParam(params.get('hold'), 24, 1, 200), feePct: intParam(params.get('fee'), 10, 0, 100) / 100 };
-  const input = parseAnalysisInput({ requestKey: crypto.randomUUID(), symbol: 'BTC', language: 'id', timeframe,
+  const rawInput = { requestKey: crypto.randomUUID(), symbol: 'BTC', language: 'id', timeframe,
     tradingStyle: pick(params.get('style'), STYLES, 'intraday'), riskTolerance: pick(params.get('risk'), RISKS, 'Medium Risk'),
     strategyFocus: pick(params.get('strategy'), STRATEGIES, 'All-Round'), indicatorPref: 'Default',
-    targetRR: pick(params.get('rr'), TARGET_RRS, '1:2') });
+    targetRR: pick(params.get('rr'), TARGET_RRS, '1:2') };
+  const input = parseAnalysisInput(rawInput);
   if (!input) return NextResponse.json({ error: 'Parameter tidak valid.' }, { status: 400 });
 
   const started = Date.now();
   const btc = await klines('BTC', timeframe, 1000);
-  const trades: BacktestTrade[] = [];
-  const done: string[] = [];
+  const series: SymbolSeries[] = [];
   const failed: string[] = [];
   let skipped: string[] = [];
   for (let i = 0; i < symbols.length; i += 4) {
-    if (Date.now() - started > 45_000) { skipped = symbols.slice(i); break; }
+    if (Date.now() - started > 40_000) { skipped = symbols.slice(i); break; }
     await Promise.all(symbols.slice(i, i + 4).map(async symbol => {
       const [candles, daily, weekly] = await Promise.all([klines(symbol, timeframe, 1000), klines(symbol, '1d', 1000), klines(symbol, '1w', 300)]);
       if (!candles || candles.length < 100 || !daily || !weekly) { failed.push(symbol); return; }
-      trades.push(...runBacktest({ symbol, timeframe, candles, daily, weekly, btc: btc ?? undefined }, input, options));
-      done.push(symbol);
+      series.push({ symbol, timeframe, candles, daily, weekly, btc: btc ?? undefined });
     }));
   }
+  const evaluate = (config: NonNullable<ReturnType<typeof parseAnalysisInput>>) =>
+    series.flatMap(item => runBacktest(item, config, options));
+  const compact = (trades: BacktestTrade[]) => {
+    const { first, second } = splitHalves(trades);
+    const strong = trades.filter(trade => trade.score >= 80);
+    return { overall: summarize(trades), firstHalf: summarize(first), secondHalf: summarize(second), score80plus: summarize(strong) };
+  };
+  const span = series[0] ? { from: new Date(series[0].candles[0].openTime).toISOString().slice(0, 10),
+    to: new Date(series[0].candles[series[0].candles.length - 1].closeTime).toISOString().slice(0, 10) } : null;
+  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span };
+
+  if (params.get('sweep') === '1') {
+    // Many configurations on the same data. The best of many looks good by luck alone, so a result only counts
+    // when both halves of the data are positive and the interval around the average R stays above zero.
+    const results: Array<Record<string, unknown>> = [];
+    for (const strategy of STRATEGIES) for (const rrChoice of TARGET_RRS) {
+      if (Date.now() - started > 55_000) break;
+      const config = parseAnalysisInput({ ...rawInput, strategyFocus: strategy, targetRR: rrChoice });
+      if (!config) continue;
+      results.push({ strategy, rr: rrChoice, breakEvenWinRatePct: Math.round(100 / (Number(rrChoice.slice(2)) + 1) * 10) / 10,
+        ...compact(evaluate(config)) });
+    }
+    results.sort((a, b) => ((b.overall as { avgR: number | null }).avgR ?? -9) - ((a.overall as { avgR: number | null }).avgR ?? -9));
+    return NextResponse.json({ mode: 'sweep', timeframe, coverage, results,
+      reading: 'Look for rows where firstHalf.avgR, secondHalf.avgR and overall.ci95[0] are all above 0. Anything else is noise.' });
+  }
+
+  const trades = evaluate(input);
   const bucket = (trade: BacktestTrade) => trade.score >= 80 ? '80-100' : trade.score >= 70 ? '70-79' : trade.score >= 60 ? '60-69'
     : trade.score >= 50 ? '50-59' : trade.score >= 40 ? '40-49' : '0-39';
   const rr = Number(input.targetRR.slice(2));
   return NextResponse.json({
-    params: { timeframe, rr: input.targetRR, style: input.tradingStyle, risk: input.riskTolerance, strategy: input.strategyFocus, ...options,
-      feePctRoundTrip: options.feePct },
-    coverage: { completed: done, failed, skippedForTime: skipped, tookSeconds: Math.round((Date.now() - started) / 1000) },
+    params: { timeframe, rr: input.targetRR, style: input.tradingStyle, risk: input.riskTolerance, strategy: input.strategyFocus, ...options },
+    coverage: { ...coverage, tookSeconds: Math.round((Date.now() - started) / 1000) },
     breakEvenWinRatePct: Math.round(100 / (rr + 1) * 10) / 10,
-    overall: summarize(trades),
+    ...compact(trades),
     byStatus: groupSummary(trades, trade => trade.status),
     byGrade: groupSummary(trades, trade => trade.grade),
     byScore: groupSummary(trades, bucket),
@@ -83,6 +109,7 @@ export async function GET(request: Request) {
     notes: ['Signals use only candles closed at the time (no look-ahead).',
       'Plan followed as written: trigger close, retest, entry at the worse zone edge, SL/TP1 by candle range.',
       'If SL and TP1 are in one candle the loss is counted. Fees are an estimate, slippage is not included.',
-      'Funding, OI and sentiment are not available historically, so those factors count as unknown.'],
+      'Funding, OI and sentiment are not available historically, so those factors count as unknown.',
+      'Signals are 6 candles apart and coins move together, so the effective sample is smaller than the signal count.'],
   });
 }

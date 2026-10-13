@@ -11,4 +11,4 @@ new Function('require', 'module', 'exports', compiled)(name => {
   if (name === './report') return report;
   throw new Error(`Unexpected backtest import: ${name}`);
 }, mod, mod.exports);
-export const { simulatePlan, runBacktest, summarize, groupSummary } = mod.exports;
+export const { simulatePlan, runBacktest, summarize, groupSummary, splitHalves } = mod.exports;

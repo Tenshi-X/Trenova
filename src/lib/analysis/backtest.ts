@@ -105,7 +105,9 @@ export function runBacktest(series: SymbolSeries, input: AnalysisInput, options:
 }
 
 export type Bucket = { signals: number; filled: number; fillRate: number; wins: number; losses: number; timeouts: number;
-  winRate: number | null; avgR: number | null; profitFactor: number | null };
+  winRate: number | null; avgR: number | null; profitFactor: number | null;
+  // 95% interval of the average R. If it contains 0 the result cannot be told apart from luck.
+  ci95: [number, number] | null };
 
 export function summarize(trades: BacktestTrade[]): Bucket {
   const filled = trades.filter(trade => trade.filled && trade.r !== null);
@@ -118,7 +120,20 @@ export function summarize(trades: BacktestTrade[]): Bucket {
     wins, losses, timeouts: filled.length - wins - losses,
     winRate: filled.length ? round(wins / filled.length * 100) : null,
     avgR: filled.length ? round(filled.reduce((sum, trade) => sum + trade.r!, 0) / filled.length) : null,
-    profitFactor: drawdowns > 0 ? round(gains / drawdowns) : null };
+    profitFactor: drawdowns > 0 ? round(gains / drawdowns) : null,
+    ci95: filled.length >= 2 ? (() => {
+      const mean = filled.reduce((sum, trade) => sum + trade.r!, 0) / filled.length;
+      const variance = filled.reduce((sum, trade) => sum + (trade.r! - mean) ** 2, 0) / (filled.length - 1);
+      const margin = 1.96 * Math.sqrt(variance / filled.length);
+      return [round(mean - margin), round(mean + margin)] as [number, number];
+    })() : null };
+}
+
+// Splits trades at the median signal time, to check that a result holds in both halves of the data.
+export function splitHalves(trades: BacktestTrade[]): { first: BacktestTrade[]; second: BacktestTrade[] } {
+  const times = trades.map(trade => trade.at).sort();
+  const middle = times[Math.floor(times.length / 2)];
+  return { first: trades.filter(trade => trade.at < middle), second: trades.filter(trade => trade.at >= middle) };
 }
 
 export function groupSummary(trades: BacktestTrade[], key: (trade: BacktestTrade) => string): Record<string, Bucket> {
