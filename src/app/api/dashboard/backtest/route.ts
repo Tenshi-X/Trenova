@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminContext } from '@/lib/authz';
 import { parseAnalysisInput, parseCandle, RISKS, STRATEGIES, STYLES, TARGET_RRS, TIMEFRAMES,
   type Candle, type Timeframe } from '@/lib/analysis/core';
-import { groupSummary, runBacktest, splitHalves, summarize, type BacktestTrade, type SymbolSeries } from '@/lib/analysis/backtest';
+import { groupSummary, riskProfile, runBacktest, splitHalves, summarize, type BacktestTrade, type SymbolSeries } from '@/lib/analysis/backtest';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,11 +13,12 @@ const DEFAULT_SYMBOLS = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE', 'ADA', 'AVAX
   'LTC', 'TRX', 'NEAR', 'ATOM', 'UNI', 'AAVE', 'ARB', 'OP', 'SUI', 'INJ'];
 
 async function klinePage(symbol: string, interval: string, limit: number, endTime?: number): Promise<Candle[] | null> {
-  for (const host of HOSTS) {
+  // Two rounds over the hosts: public endpoints sometimes rate-limit bursts, and a missing page must not pass silently.
+  for (const host of [...HOSTS, ...HOSTS]) {
     try {
       const response = await fetch(`${host}/api/v3/klines?symbol=${symbol}USDT&interval=${interval}&limit=${limit}${endTime ? `&endTime=${endTime}` : ''}`,
         { cache: 'no-store', signal: AbortSignal.timeout(6000) });
-      if (!response.ok) continue;
+      if (!response.ok) { await new Promise(resolve => setTimeout(resolve, 300)); continue; }
       const raw: unknown = await response.json();
       if (!Array.isArray(raw)) continue;
       // Not filtered by close time here: the still-forming newest candle must count towards the page size.
@@ -73,12 +74,14 @@ export async function GET(request: Request) {
   const btc = await klines('BTC', timeframe, history);
   const series: SymbolSeries[] = [];
   const failed: string[] = [];
+  const short: string[] = [];
   let skipped: string[] = [];
   for (let i = 0; i < symbols.length; i += 4) {
     if (Date.now() - started > 35_000) { skipped = symbols.slice(i); break; }
     await Promise.all(symbols.slice(i, i + 4).map(async symbol => {
       const [candles, daily, weekly] = await Promise.all([klines(symbol, timeframe, history), klines(symbol, '1d', 1000), klines(symbol, '1w', 300)]);
       if (!candles || candles.length < 100 || !daily || !weekly) { failed.push(symbol); return; }
+      if (candles.length < history * 0.95) short.push(`${symbol}:${candles.length}`);
       series.push({ symbol, timeframe, candles, daily, weekly, btc: btc ?? undefined });
     }));
   }
@@ -87,11 +90,11 @@ export async function GET(request: Request) {
   const compact = (trades: BacktestTrade[]) => {
     const { first, second } = splitHalves(trades);
     const strong = trades.filter(trade => trade.score >= 80);
-    return { overall: summarize(trades), firstHalf: summarize(first), secondHalf: summarize(second), score80plus: summarize(strong) };
+    return { overall: summarize(trades), risk: riskProfile(trades), firstHalf: summarize(first), secondHalf: summarize(second), score80plus: summarize(strong) };
   };
   const span = series[0] ? { from: new Date(series[0].candles[0].openTime).toISOString().slice(0, 10),
     to: new Date(series[0].candles[series[0].candles.length - 1].closeTime).toISOString().slice(0, 10) } : null;
-  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span, candlesRequested: history, candlesBtc: series.find(item => item.symbol === 'BTC')?.candles.length ?? null };
+  const coverage = { completed: series.map(item => item.symbol), failed, incompleteHistory: short, skippedForTime: skipped, candleSpan: span, candlesRequested: history, candlesBtc: series.find(item => item.symbol === 'BTC')?.candles.length ?? null };
 
   if (params.get('sweep') === '1') {
     // Many configurations on the same data. The best of many looks good by luck alone, so a result only counts

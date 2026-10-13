@@ -148,3 +148,29 @@ export function groupSummary(trades: BacktestTrade[], key: (trade: BacktestTrade
   for (const trade of trades) groups.set(key(trade), [...(groups.get(key(trade)) ?? []), trade]);
   return Object.fromEntries([...groups.entries()].sort().map(([name, items]) => [name, summarize(items)]));
 }
+
+// What a person trading one coin would live through: longest run of stopped-out trades and deepest equity dip, in R.
+// Trades are taken per symbol in time order; the median and the worst symbol are reported.
+export function riskProfile(trades: BacktestTrade[]): { longestLosingStreak: { median: number; worst: number };
+  maxDrawdownR: { median: number; worst: number } } | null {
+  const bySymbol = new Map<string, BacktestTrade[]>();
+  for (const trade of trades) if (trade.filled && trade.r !== null) bySymbol.set(trade.symbol, [...(bySymbol.get(trade.symbol) ?? []), trade]);
+  const rows = [...bySymbol.values()].map(items => {
+    items.sort((a, b) => a.at.localeCompare(b.at));
+    let streak = 0, longest = 0, equity = 0, peak = 0, drawdown = 0;
+    // Overlapping signals on one coin are counted as if each were taken; this is a rough worst-case view.
+    for (const trade of items) {
+      streak = trade.outcome === 'SL' ? streak + 1 : 0;
+      longest = Math.max(longest, streak);
+      equity += trade.r!;
+      peak = Math.max(peak, equity);
+      drawdown = Math.max(drawdown, peak - equity);
+    }
+    return { longest, drawdown };
+  });
+  if (!rows.length) return null;
+  const median = (values: number[]) => { const sorted = [...values].sort((a, b) => a - b); return sorted[Math.floor(sorted.length / 2)]; };
+  const round = (value: number) => Math.round(value * 10) / 10;
+  return { longestLosingStreak: { median: median(rows.map(row => row.longest)), worst: Math.max(...rows.map(row => row.longest)) },
+    maxDrawdownR: { median: round(median(rows.map(row => row.drawdown))), worst: round(Math.max(...rows.map(row => row.drawdown))) } };
+}
