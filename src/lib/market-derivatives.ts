@@ -73,6 +73,11 @@ async function getJson(url: string, fetcher: Fetcher, timeoutMs: number): Promis
 }
 
 // ─── Parsers (exported so they can be unit-tested with sample responses) ──────
+/** Contracts quoted per 1000 units (1000PEPE) are the same coin as PEPE; funding and USD open interest are scale-free. */
+export function normalizeBase(base: string): string {
+  return base.replace(/^(?:1000000|10000|1000)(?=[A-Z])/, '');
+}
+
 /** OKX: GET /api/v5/public/open-interest?instType=SWAP → oiUsd per swap. USDT-margined only. */
 export function parseOkxOpenInterest(json: unknown): Map<string, number> {
   const out = new Map<string, number>();
@@ -108,10 +113,11 @@ export function parseBybitTickers(json: unknown): { funding: Map<string, number>
   for (const row of rows(asObject(root.result)?.list)) {
     const match = /^([A-Z0-9]+)USDT$/.exec(String(row.symbol ?? ''));
     if (!match) continue;
+    const base = normalizeBase(match[1]);
     const rate = toNumber(row.fundingRate);
     const usd = toNumber(row.openInterestValue);
-    if (rate !== null) funding.set(match[1], rate * 100);
-    if (usd !== null && usd >= 0) openInterest.set(match[1], usd);
+    if (rate !== null && !funding.has(base)) funding.set(base, rate * 100);
+    if (usd !== null && usd >= 0 && !openInterest.has(base)) openInterest.set(base, usd);
   }
   return { funding, openInterest };
 }
@@ -122,7 +128,8 @@ export function parseBinancePremiumIndex(json: unknown): Map<string, number> {
   for (const row of rows(json)) {
     const match = /^([A-Z0-9]+)USDT$/.exec(String(row.symbol ?? ''));
     const rate = toNumber(row.lastFundingRate);
-    if (match && rate !== null) out.set(match[1], rate * 100);
+    const base = match ? normalizeBase(match[1]) : null;
+    if (base && rate !== null && !out.has(base)) out.set(base, rate * 100);
   }
   return out;
 }
