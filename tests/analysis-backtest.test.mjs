@@ -87,3 +87,15 @@ test('walk-forward run produces graded trades and never uses candles after the s
     assert.equal(same.direction, trade.direction);
   });
 });
+
+test('summary reports a 95% interval and halves split by time', async () => {
+  const { splitHalves } = await import('./fixtures/backtest.mjs');
+  const trades = Array.from({ length: 40 }, (_, i) => ({ filled: true, outcome: i % 3 === 0 ? 'TP1' : 'SL', r: i % 3 === 0 ? 2 : -1,
+    at: new Date(2026, 0, 1 + i).toISOString(), score: 80, grade: 'HIGH', status: 'READY', direction: 'LONG' }));
+  const bucket = summarize(trades);
+  assert.ok(bucket.ci95[0] < bucket.avgR && bucket.avgR < bucket.ci95[1]);
+  assert.equal(summarize(trades.slice(0, 1)).ci95, null);
+  const { first, second } = splitHalves(trades);
+  assert.equal(first.length + second.length, 40);
+  assert.ok(first.every(t => t.at < second[0].at));
+});
