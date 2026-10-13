@@ -10,6 +10,10 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
   const { language, t } = useLanguage();
   const copy = (id: string, en: string) => language === 'id' ? id : en;
   const price = (value: number) => value.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' USDT';
+  const setup = result.setups[0];
+  const levelNote = (source?: { tf: string; touches: number }) => !source ? ''
+    : source.tf === 'local' ? copy(`level ${result.market.timeframe}`, `${result.market.timeframe} level`)
+      : `${source.tf} · ${source.touches} ${copy('titik', 'pivots')}`;
   const conditional = result.setups.length > 0 && (result.verdict === 'WAIT' || result.setups[0].execution === 'CONDITIONAL');
   const title = conditional ? copy('Rencana ' + result.setups[0].direction, result.setups[0].direction + ' plan') : result.verdict;
   const tone = result.verdict === 'LONG' ? 'text-emerald-500' : result.verdict === 'SHORT' ? 'text-rose-500' : 'text-amber-500';
@@ -37,7 +41,9 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
       <div>
         <p className="text-xs text-slate-500">{coinName} · {result.market.timeframe} · {new Date(result.market.asOf).toLocaleString(language === 'id' ? 'id-ID' : 'en-US', { timeZone: 'Asia/Jakarta' })} WIB</p>
         <h2 className={'terminal-result-title mt-1 text-3xl font-black ' + tone}>{title}</h2>
-        {conditional && <p className="mt-1 text-sm text-amber-600 dark:text-amber-300">{copy('Entry setelah pemicu terpenuhi', 'Enter after the trigger is confirmed')}</p>}
+        {conditional && <p className="mt-1 text-sm text-amber-600 dark:text-amber-300">{copy('Entry setelah pemicu terpenuhi', 'Enter after the trigger is confirmed')}
+          {typeof setup?.distanceToEntryPct === 'number' && Math.abs(setup.distanceToEntryPct) >= 0.1
+            && ` · ${copy('harga', 'price is')} ${Math.abs(setup.distanceToEntryPct).toFixed(1)}% ${setup.distanceToEntryPct > 0 ? copy('di atas zona entry', 'above the entry zone') : copy('di bawah zona entry', 'below the entry zone')}`}</p>}
       </div>
       <div className="flex flex-wrap items-center gap-4">
       {result.verdict !== 'WAIT' && !conditional && <div className="text-right">
@@ -123,10 +129,10 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
       </section>
     </>}
     {result.market.structure && <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl bg-slate-50 dark:bg-slate-950 p-4 text-xs">
-      {[[copy('Support terdekat', 'Nearest support'), price(result.market.structure.support)],
-        [copy('Resistance terdekat', 'Nearest resistance'), price(result.market.structure.resistance)],
-        [copy('Range terendah', 'Range low'), price(result.market.structure.rangeLow)],
-        [copy('Range tertinggi', 'Range high'), price(result.market.structure.rangeHigh)]].map(([label, value]) => <div key={label} className="min-w-0"><p className="text-slate-500">{label}</p><p className="mt-1 break-words font-semibold">{value}</p></div>)}
+      {[[copy('Support terdekat', 'Nearest support'), price(result.market.structure.support), levelNote(result.market.structure.supportSource)],
+        [copy('Resistance terdekat', 'Nearest resistance'), price(result.market.structure.resistance), levelNote(result.market.structure.resistanceSource)],
+        [copy('Range terendah', 'Range low'), price(result.market.structure.rangeLow), ''],
+        [copy('Range tertinggi', 'Range high'), price(result.market.structure.rangeHigh), '']].map(([label, value, note]) => <div key={label} className="min-w-0"><p className="text-slate-500">{label}</p><p className="mt-1 break-words font-semibold">{value}</p>{note && <p className="mt-0.5 text-[11px] text-slate-500">{note}</p>}</div>)}
     </div>}
     {result.market.confirmation && <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-sm">
       <strong>{t('ai_confirmation_label')} · {result.market.confirmation.timeframe}</strong>

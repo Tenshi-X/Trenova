@@ -47,6 +47,14 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
     const takeProfit1 = level(worstEntry + (long ? 1 : -1) * risk * rr);
     const takeProfit2 = level(worstEntry + (long ? 1 : -1) * risk * (rr + 1));
     const zone = `${priceText(entryLow)}–${priceText(entryHigh)}`;
+    const source = long === pullback ? structure.supportSource : structure.resistanceSource;
+    const sourceLabel = !source || source.tf === 'local' ? copy(`level ${input.timeframe}`, `${input.timeframe} level`)
+      : copy(`${source.tf}, ${source.touches} titik`, `${source.tf}, ${source.touches} pivots`);
+    // A pullback plan is cancelled by its stop; a breakout plan is cancelled by losing the opposite structure level,
+    // otherwise the cancel rule can already be true when the plan is created.
+    const cancelAt = pullback ? stopLoss : long ? structure.support : structure.resistance;
+    const distanceToEntryPct = market.price > entryHigh ? (market.price - entryHigh) / market.price * 100
+      : market.price < entryLow ? -(entryLow - market.price) / market.price * 100 : 0;
     const trigger = pullback
       ? copy(`Tunggu uji zona ${zone}, candle ${input.timeframe} tutup ${long ? 'di atas' : 'di bawah'} ${priceText(long ? entryHigh : entryLow)}, lalu retest zona entry.`,
         `Wait for a test of ${zone}, a ${input.timeframe} close ${long ? 'above' : 'below'} ${priceText(long ? entryHigh : entryLow)}, then an entry-zone retest.`)
@@ -54,10 +62,11 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
         `Wait for a ${input.timeframe} close ${long ? 'above' : 'below'} ${priceText(long ? entryHigh : entryLow)}, then a retest of ${zone}.`);
     return { direction, entryLow, entryHigh, stopLoss, takeProfit1, takeProfit2,
       execution: 'CONDITIONAL' as const, trigger,
-      invalidation: copy(`Batalkan sebelum entry jika candle ${input.timeframe} tutup ${long ? 'di bawah' : 'di atas'} ${priceText(stopLoss)}.`,
-        `Cancel before entry if a ${input.timeframe} candle closes ${long ? 'below' : 'above'} ${priceText(stopLoss)}.`),
-      rationale: copy(`${pullback ? 'Retest' : 'Breakout/retest'} ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)}; SL memakai buffer ${stopAtr.toFixed(2)} ATR. Target dihitung dari R:R ${input.targetRR}, bukan prediksi harga.`,
-        `${pullback ? 'Retest' : 'Breakout/retest'} of ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)}; SL uses a ${stopAtr.toFixed(2)} ATR buffer. Targets use ${input.targetRR} RR, not a price forecast.`),
+      distanceToEntryPct,
+      invalidation: copy(`Batalkan sebelum entry jika candle ${input.timeframe} tutup ${long ? 'di bawah' : 'di atas'} ${priceText(cancelAt)}.`,
+        `Cancel before entry if a ${input.timeframe} candle closes ${long ? 'below' : 'above'} ${priceText(cancelAt)}.`),
+      rationale: copy(`${pullback ? 'Retest' : 'Breakout/retest'} ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)} (${sourceLabel}); SL memakai buffer ${stopAtr.toFixed(2)} ATR. Target dihitung dari R:R ${input.targetRR}, bukan prediksi harga.`,
+        `${pullback ? 'Retest' : 'Breakout/retest'} of ${long === pullback ? 'support' : 'resistance'} ${priceText(anchor)} (${sourceLabel}); SL uses a ${stopAtr.toFixed(2)} ATR buffer. Targets use ${input.targetRR} RR, not a price forecast.`),
     };
   });
   const btc = market.btcChange24h === null ? copy('tidak tersedia', 'unavailable') : `${market.btcChange24h.toFixed(2)}%`;

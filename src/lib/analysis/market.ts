@@ -1,4 +1,4 @@
-import { calculateIndicators, candlesAreFresh, parseCandle, type Candle, type MarketSnapshot, type Timeframe,
+import { calculateIndicators, candlesAreFresh, parseCandle, withHigherTimeframeLevels, type Candle, type MarketSnapshot, type Timeframe,
   type CandleTimeframe, type TrendConfirmation } from './core';
 import { getDerivatives } from '../market-derivatives';
 
@@ -49,7 +49,7 @@ export async function getTrendConfirmation(symbol: string, timeframe: CandleTime
 
 export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): Promise<MarketSnapshot | null> {
   const pair = `${symbol}USDT`;
-  const [rawTicker, rawCandles, rawBtc, rawFunding, rawOi, rawSentiment, derivatives] = await Promise.all([
+  const [rawTicker, rawCandles, rawBtc, rawFunding, rawOi, rawSentiment, derivatives, rawDaily, rawWeekly] = await Promise.all([
     spot(`/api/v3/ticker/24hr?symbol=${pair}`),
     spot(`/api/v3/klines?symbol=${pair}&interval=${timeframe}&limit=60`),
     spot('/api/v3/ticker/24hr?symbol=BTCUSDT'),
@@ -58,6 +58,9 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
     fetchJson('https://api.alternative.me/fng/?limit=1'),
     // Binance futures blocks many server regions; OKX/Bybit/Bitget/Gate/MEXC fill in funding and open interest.
     getDerivatives(fetch).catch(() => null),
+    // Daily/weekly candles give support and resistance that more traders actually watch; fail-soft.
+    spot(`/api/v3/klines?symbol=${pair}&interval=1d&limit=150`),
+    spot(`/api/v3/klines?symbol=${pair}&interval=1w&limit=80`),
   ]);
   const ticker = object(rawTicker);
   if (!ticker || !Array.isArray(rawCandles)) {
@@ -72,6 +75,11 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
   if (!candlesAreFresh(candles,timeframe)) return null;
   const indicators = calculateIndicators(candles);
   if (!indicators) return null;
+  const closed = (raw: unknown) => Array.isArray(raw)
+    ? raw.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now()) : [];
+  if (indicators.structure) {
+    indicators.structure = withHigherTimeframeLevels(indicators.structure, price, indicators.atr, closed(rawDaily), closed(rawWeekly));
+  }
   const recentObject = (raw: unknown, field: string, ttl = 300000, seconds = false) => {
     const data = object(raw); const timestamp = numberOrNull(data?.[field]);
     const millis = timestamp === null ? null : timestamp * (seconds ? 1000 : 1);
