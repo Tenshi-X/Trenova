@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Search, Loader2, RefreshCw } from 'lucide-react';
 import clsx from 'clsx';
 import { useLanguage } from '@/context/LanguageContext';
+import MarketOverview from '@/components/MarketOverview';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CoinData {
@@ -25,6 +26,10 @@ interface CoinData {
   structure: string | null;
   rating: string | null;
   score: number | null;
+  chg1h: number | null;
+  chg4h: number | null;
+  chg12h: number | null;
+  exchanges: number | null;
 }
 
 interface LiveMarketTableProps {
@@ -35,7 +40,9 @@ type MarketSnapshot = {
   coins: Array<{ symbol: string; pair?: string; price: number; priceChangePercent: number;
     high24h: number; low24h: number; volume24h: number; fundingRate: number | null;
     openInterestUsd?: number | null; marketCap?: number; rsi?: number | null; macdHist?: number | null;
-    structure?: string | null; rating?: string | null; score?: number | null }>;
+    structure?: string | null; rating?: string | null; score?: number | null;
+    change1h?: number | null; change4h?: number | null; change12h?: number | null; exchanges?: number }>;
+  derivativesSources?: Array<{ source: string }>;
   source?: string;
   timestamp?: number;
 };
@@ -72,6 +79,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   const [filterMode, setFilterMode]   = useState<'ALL' | 'BULL' | 'BEAR' | 'BREAKOUT'>('ALL');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [source, setSource] = useState('');
+  const [exchangeList, setExchangeList] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const requestRef = useRef<AbortController | null>(null);
@@ -109,6 +117,10 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           structure: coin.structure ?? null,
           rating: coin.rating ?? null,
           score: coin.score ?? null,
+          chg1h: coin.change1h ?? null,
+          chg4h: coin.change4h ?? null,
+          chg12h: coin.change12h ?? null,
+          exchanges: coin.exchanges ?? null,
         }));
       });
 
@@ -116,6 +128,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       setIsLoading(false);
       setError('');
       setSource(json.source ?? 'binance');
+      setExchangeList((json.derivativesSources ?? []).map((item) => item.source));
       setLastUpdated(new Date(json.timestamp ?? Date.now()));
     } catch {
       if (controller.signal.aborted) return;
@@ -200,7 +213,13 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   );
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden text-slate-300 [--color-neon:#2dd4bf]">
+    <div className="space-y-4">
+    <MarketOverview
+      coins={coins.map((c) => ({ symbol: c.symbol, price: c.price, chg24h: c.chg24h, chg1h: c.chg1h, chg4h: c.chg4h, chg12h: c.chg12h, vol24h: c.vol24h, openInterestUsd: c.openInterestUsd }))}
+      language={language}
+      onSelectSymbol={(symbol) => onSelectSymbol?.(symbol)}
+    />
+    <div className="flex flex-col bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden text-slate-300 [--color-neon:#2dd4bf]" style={{ height: 'min(760px, calc(100vh - 160px))', minHeight: '420px' }}>
 
       {/* ── Header Filters ── */}
       <div className="flex-none px-4 py-3 border-b border-slate-800/80 bg-slate-950">
@@ -253,7 +272,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
             {language === 'id' ? 'RSI, MACD, EMA20, dan struktur dihitung dari candle 1 jam OKX. Rating adalah ringkasan teknikal sederhana (RSI, MACD, EMA20), bukan saran trading. Indikator terisi bertahap saat pertama dibuka.' : 'RSI, MACD, EMA20 and structure are computed from OKX 1h candles. Rating is a simple technical summary (RSI, MACD, EMA20), not trading advice. Indicators fill in gradually on first load.'}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            {language === 'id' ? 'Funding dan OI adalah data futures publik (OKX/Bybit/Binance), bukan agregat seluruh exchange. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding and OI are public futures data (OKX/Bybit/Binance), not an all-exchange aggregate. A — means the data is not available yet.'}
+            {language === 'id' ? 'Funding = rata-rata antar exchange, OI dan volume = jumlah dari exchange yang datanya bisa diambil (lihat daftar di bawah tabel), bukan seluruh pasar. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding = mean across exchanges; OI and volume = sum over the exchanges we could reach (listed below the table), not the whole market. A — means the data is not available yet.'}
           </p>
           {error && coins.length > 0 && <p role="status" className="text-xs text-amber-400 mt-2">{t('market_load_fail')} · {language === 'id' ? 'Menampilkan pembaruan terakhir.' : 'Showing the last update.'}</p>}
       </div>
@@ -270,8 +289,8 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center">24H RANGE</div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="RSI 14, candle 1 jam">RSI</div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="MACD histogram (12/26/9) candle 1 jam, dalam % dari harga">MACD</div>
-        {sortHeader('fund', 'FUNDING', 'right', 'Funding rate futures perpetual')}
-        {sortHeader('oi', 'OI', 'right', 'Open interest (USD) dari OKX/Bybit, bukan agregat seluruh exchange')}
+        {sortHeader('fund', 'FUNDING', 'right', 'Funding rate futures perpetual, rata-rata antar exchange')}
+        {sortHeader('oi', 'OI', 'right', 'Open interest (USD), dijumlah dari exchange yang aktif')}
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-end">24H HIGH</div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="Breakout/Breakdown: harga 1 jam menembus high/low 20 candle terakhir">STRUCTURE</div>
         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex justify-center" title="Rating teknikal sederhana dari RSI, MACD, dan EMA20 (candle 1 jam)">RATING 1H</div>
@@ -320,7 +339,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                    <div className="w-8 h-8 shrink-0 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-semibold text-slate-200">{coin.symbol.slice(0, 2)}</div>
                    <div className="min-w-0">
                      <div className="text-sm font-semibold text-slate-100 group-hover:text-neon transition-colors truncate">{coin.symbol}<span className="text-slate-500 font-normal">/{source === 'binance' || source === 'okx' ? 'USDT' : 'USD'}</span></div>
-                     <div className="text-[11px] text-slate-500">Perpetual · {source.toUpperCase()}</div>
+                     <div className="text-[11px] text-slate-500">Perpetual · {coin.exchanges && coin.exchanges > 1 ? `${coin.exchanges} exchange` : source.toUpperCase()}</div>
                    </div>
                 </div>
 
@@ -442,7 +461,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       {/* ── Footer ── */}
       <div className="flex-none px-4 py-2 border-t border-slate-800/80 bg-slate-950 flex flex-wrap gap-2 items-center justify-between">
         <span className="text-[11px] text-slate-500 uppercase tracking-wide">
-          {t('market_showing')} {filtered.length} {t('market_of')} {coins.length} pairs
+          {exchangeList.length ? `${exchangeList.length} exchange: ${exchangeList.join(' · ').toUpperCase()} — ` : ''}{t('market_showing')} {filtered.length} {t('market_of')} {coins.length} pairs
         </span>
         <span className="text-[11px] text-slate-500 uppercase tracking-wide flex items-center gap-2">
           <span className={clsx('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-neon animate-pulse' : 'bg-rose-500')} />
@@ -452,6 +471,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           }
         </span>
       </div>
+    </div>
     </div>
   );
 }

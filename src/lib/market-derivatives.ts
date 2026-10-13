@@ -3,15 +3,23 @@
 // the table shows "—" instead of a made-up number.
 //
 // Exchange providers are queried in parallel because any single one can be geo-blocked from the
-// deploy region (Binance and Bybit refuse many US data-center IPs). Priority per field: OKX > Bybit > Binance.
+// deploy region (Binance and Bybit refuse many US data-center IPs). Whatever answers is combined into
+// ONE row per coin: funding = mean across exchanges, open interest and volume = sum across exchanges.
 
-export type DerivativeSource = 'okx' | 'bybit' | 'binance';
+export type DerivativeSource = 'okx' | 'bybit' | 'bitget' | 'gate' | 'mexc' | 'binance';
+
+export interface ExchangeDerivative { funding: number | null; openInterestUsd: number | null }
 
 export interface Derivative {
-  /** Funding rate in PERCENT (0.01 means 0.01%). */
+  /** Funding rate in PERCENT (0.01 means 0.01%): mean over the exchanges that report it. */
   fundingRate: number | null;
-  /** Open interest in USD notional, from the first provider that has the coin. */
+  /** Open interest in USD notional: SUM over the exchanges that report it. */
   openInterestUsd: number | null;
+  /** 24h USD turnover summed over providers that report it (OKX's own volume comes from its tickers). */
+  volumeUsd: number | null;
+  /** How many exchanges have data for this coin. */
+  exchanges: number;
+  perExchange: Partial<Record<DerivativeSource, ExchangeDerivative>>;
 }
 
 export interface ProviderStat { source: DerivativeSource; funding: number; openInterest: number }
@@ -24,10 +32,12 @@ export interface DerivativeSnapshot {
 
 export type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 
-interface ProviderData {
+export interface ProviderData {
   source: DerivativeSource;
   funding: Map<string, number>;
   openInterest: Map<string, number>;
+  /** 24h USD turnover per coin (optional). */
+  volume?: Map<string, number>;
 }
 
 const OKX = 'https://www.okx.com';
@@ -35,7 +45,11 @@ const BYBIT = 'https://api.bybit.com';
 const BINANCE_FAPI = 'https://fapi.binance.com';
 const COINGECKO = 'https://api.coingecko.com/api/v3';
 
-const PRIORITY: DerivativeSource[] = ['okx', 'bybit', 'binance'];
+const BITGET = 'https://api.bitget.com';
+const GATE = 'https://api.gateio.ws/api/v4';
+const MEXC = 'https://contract.mexc.com';
+
+const PRIORITY: DerivativeSource[] = ['okx', 'bybit', 'bitget', 'gate', 'mexc', 'binance'];
 const DERIVATIVES_TTL_MS = 30_000;
 const DERIVATIVES_STALE_MS = 5 * 60_000;
 const MARKET_CAP_TTL_MS = 10 * 60_000;
@@ -104,22 +118,88 @@ export function parseOkxFunding(json: unknown): Map<string, number> {
   return out;
 }
 
-/** Bybit: GET /v5/market/tickers?category=linear → fundingRate + openInterestValue (USD). */
-export function parseBybitTickers(json: unknown): { funding: Map<string, number>; openInterest: Map<string, number> } {
+/** Bybit: GET /v5/market/tickers?category=linear → fundingRate + openInterestValue (USD) + turnover24h (USD). */
+export function parseBybitTickers(json: unknown): { funding: Map<string, number>; openInterest: Map<string, number>; volume: Map<string, number> } {
   const funding = new Map<string, number>();
   const openInterest = new Map<string, number>();
+  const volume = new Map<string, number>();
   const root = asObject(json);
-  if (!root || root.retCode !== 0) return { funding, openInterest };
+  if (!root || root.retCode !== 0) return { funding, openInterest, volume };
   for (const row of rows(asObject(root.result)?.list)) {
     const match = /^([A-Z0-9]+)USDT$/.exec(String(row.symbol ?? ''));
     if (!match) continue;
     const base = normalizeBase(match[1]);
     const rate = toNumber(row.fundingRate);
     const usd = toNumber(row.openInterestValue);
+    const turnover = toNumber(row.turnover24h);
     if (rate !== null && !funding.has(base)) funding.set(base, rate * 100);
     if (usd !== null && usd >= 0 && !openInterest.has(base)) openInterest.set(base, usd);
+    if (turnover !== null && turnover >= 0 && !volume.has(base)) volume.set(base, turnover);
   }
-  return { funding, openInterest };
+  return { funding, openInterest, volume };
+}
+
+/** Bitget: GET /api/v2/mix/market/tickers?productType=USDT-FUTURES. OI (base units) x mark price = USD. */
+export function parseBitgetTickers(json: unknown): { funding: Map<string, number>; openInterest: Map<string, number>; volume: Map<string, number> } {
+  const funding = new Map<string, number>();
+  const openInterest = new Map<string, number>();
+  const volume = new Map<string, number>();
+  const root = asObject(json);
+  if (!root || root.code !== '00000') return { funding, openInterest, volume };
+  for (const row of rows(root.data)) {
+    const match = /^([A-Z0-9]+)USDT$/.exec(String(row.symbol ?? ''));
+    if (!match) continue;
+    const base = normalizeBase(match[1]);
+    const rate = toNumber(row.fundingRate);
+    const units = toNumber(row.holdingAmount);
+    const mark = toNumber(row.markPrice) ?? toNumber(row.lastPr);
+    const turnover = toNumber(row.usdtVolume);
+    if (rate !== null && !funding.has(base)) funding.set(base, rate * 100);
+    if (units !== null && units >= 0 && mark !== null && mark > 0 && !openInterest.has(base)) openInterest.set(base, units * mark);
+    if (turnover !== null && turnover >= 0 && !volume.has(base)) volume.set(base, turnover);
+  }
+  return { funding, openInterest, volume };
+}
+
+/** Gate: GET /api/v4/futures/usdt/tickers. OI = contracts x quanto_multiplier (base per contract) x mark price. */
+export function parseGateTickers(json: unknown): { funding: Map<string, number>; openInterest: Map<string, number>; volume: Map<string, number> } {
+  const funding = new Map<string, number>();
+  const openInterest = new Map<string, number>();
+  const volume = new Map<string, number>();
+  for (const row of rows(json)) {
+    const match = /^([A-Z0-9]+)_USDT$/.exec(String(row.contract ?? ''));
+    if (!match) continue;
+    const base = normalizeBase(match[1]);
+    const rate = toNumber(row.funding_rate);
+    const contracts = toNumber(row.total_size);
+    const multiplier = toNumber(row.quanto_multiplier);
+    const mark = toNumber(row.mark_price) ?? toNumber(row.last);
+    const turnover = toNumber(row.volume_24h_quote);
+    if (rate !== null && !funding.has(base)) funding.set(base, rate * 100);
+    if (contracts !== null && contracts >= 0 && multiplier !== null && multiplier > 0 && mark !== null && mark > 0 && !openInterest.has(base)) {
+      openInterest.set(base, contracts * multiplier * mark);
+    }
+    if (turnover !== null && turnover >= 0 && !volume.has(base)) volume.set(base, turnover);
+  }
+  return { funding, openInterest, volume };
+}
+
+/** MEXC: GET /api/v1/contract/ticker → fundingRate + amount24 (USDT turnover). No OI: contract size is not in this response. */
+export function parseMexcTickers(json: unknown): { funding: Map<string, number>; volume: Map<string, number> } {
+  const funding = new Map<string, number>();
+  const volume = new Map<string, number>();
+  const root = asObject(json);
+  if (!root || root.success !== true) return { funding, volume };
+  for (const row of rows(root.data)) {
+    const match = /^([A-Z0-9]+)_USDT$/.exec(String(row.symbol ?? ''));
+    if (!match) continue;
+    const base = normalizeBase(match[1]);
+    const rate = toNumber(row.fundingRate);
+    const turnover = toNumber(row.amount24);
+    if (rate !== null && !funding.has(base)) funding.set(base, rate * 100);
+    if (turnover !== null && turnover >= 0 && !volume.has(base)) volume.set(base, turnover);
+  }
+  return { funding, volume };
 }
 
 /** Binance futures: GET /fapi/v1/premiumIndex → lastFundingRate (funding only; no bulk OI endpoint). */
@@ -161,12 +241,27 @@ async function fromBybit(fetcher: Fetcher, timeoutMs: number): Promise<ProviderD
   return parsed.funding.size || parsed.openInterest.size ? { source: 'bybit', ...parsed } : null;
 }
 
+async function fromBitget(fetcher: Fetcher, timeoutMs: number): Promise<ProviderData | null> {
+  const parsed = parseBitgetTickers(await getJson(`${BITGET}/api/v2/mix/market/tickers?productType=USDT-FUTURES`, fetcher, timeoutMs));
+  return parsed.funding.size || parsed.openInterest.size ? { source: 'bitget', ...parsed } : null;
+}
+
+async function fromGate(fetcher: Fetcher, timeoutMs: number): Promise<ProviderData | null> {
+  const parsed = parseGateTickers(await getJson(`${GATE}/futures/usdt/tickers`, fetcher, timeoutMs));
+  return parsed.funding.size || parsed.openInterest.size ? { source: 'gate', ...parsed } : null;
+}
+
+async function fromMexc(fetcher: Fetcher, timeoutMs: number): Promise<ProviderData | null> {
+  const parsed = parseMexcTickers(await getJson(`${MEXC}/api/v1/contract/ticker`, fetcher, timeoutMs));
+  return parsed.funding.size ? { source: 'mexc', funding: parsed.funding, openInterest: new Map(), volume: parsed.volume } : null;
+}
+
 async function fromBinance(fetcher: Fetcher, timeoutMs: number): Promise<ProviderData | null> {
   const funding = parseBinancePremiumIndex(await getJson(`${BINANCE_FAPI}/fapi/v1/premiumIndex`, fetcher, timeoutMs));
   return funding.size ? { source: 'binance', funding, openInterest: new Map() } : null;
 }
 
-/** Merge providers: per coin, per field, the highest-priority provider that has a value wins. */
+/** Combine providers into one row per coin: funding = mean, open interest and volume = sum over exchanges. */
 export function mergeProviders(parts: ProviderData[], now = Date.now()): DerivativeSnapshot | null {
   if (!parts.length) return null;
   const ordered = [...parts].sort((a, b) => PRIORITY.indexOf(a.source) - PRIORITY.indexOf(b.source));
@@ -174,16 +269,26 @@ export function mergeProviders(parts: ProviderData[], now = Date.now()): Derivat
   for (const part of ordered) {
     part.funding.forEach((_, symbol) => symbols.add(symbol));
     part.openInterest.forEach((_, symbol) => symbols.add(symbol));
+    part.volume?.forEach((_, symbol) => symbols.add(symbol));
   }
   const map = new Map<string, Derivative>();
   symbols.forEach((symbol) => {
-    let fundingRate: number | null = null;
+    const fundings: number[] = [];
     let openInterestUsd: number | null = null;
+    let volumeUsd: number | null = null;
+    const perExchange: Derivative['perExchange'] = {};
     for (const part of ordered) {
-      if (fundingRate === null) fundingRate = part.funding.get(symbol) ?? null;
-      if (openInterestUsd === null) openInterestUsd = part.openInterest.get(symbol) ?? null;
+      const funding = part.funding.get(symbol) ?? null;
+      const oi = part.openInterest.get(symbol) ?? null;
+      const volume = part.volume?.get(symbol) ?? null;
+      if (funding === null && oi === null && volume === null) continue;
+      perExchange[part.source] = { funding, openInterestUsd: oi };
+      if (funding !== null) fundings.push(funding);
+      if (oi !== null) openInterestUsd = (openInterestUsd ?? 0) + oi;
+      if (volume !== null) volumeUsd = (volumeUsd ?? 0) + volume;
     }
-    map.set(symbol, { fundingRate, openInterestUsd });
+    const fundingRate = fundings.length ? fundings.reduce((sum, value) => sum + value, 0) / fundings.length : null;
+    map.set(symbol, { fundingRate, openInterestUsd, volumeUsd, exchanges: Object.keys(perExchange).length, perExchange });
   });
   return {
     map,
@@ -193,7 +298,10 @@ export function mergeProviders(parts: ProviderData[], now = Date.now()): Derivat
 }
 
 export async function fetchDerivatives(fetcher: Fetcher = fetch, timeoutMs = 4000): Promise<DerivativeSnapshot | null> {
-  const settled = await Promise.allSettled([fromOkx(fetcher, timeoutMs), fromBybit(fetcher, timeoutMs), fromBinance(fetcher, timeoutMs)]);
+  const settled = await Promise.allSettled([
+    fromOkx(fetcher, timeoutMs), fromBybit(fetcher, timeoutMs), fromBitget(fetcher, timeoutMs),
+    fromGate(fetcher, timeoutMs), fromMexc(fetcher, timeoutMs), fromBinance(fetcher, timeoutMs),
+  ]);
   const parts = settled.flatMap((result) => (result.status === 'fulfilled' && result.value ? [result.value] : []));
   return mergeProviders(parts);
 }
@@ -241,6 +349,8 @@ export interface Enrichable {
   fundingRate: number | null;
   openInterestUsd?: number | null;
   marketCap?: number;
+  /** Number of exchanges that contributed derivatives data. */
+  exchanges?: number;
 }
 
 export function applyDerivatives(coins: Enrichable[], snapshot: DerivativeSnapshot | null) {
@@ -250,6 +360,7 @@ export function applyDerivatives(coins: Enrichable[], snapshot: DerivativeSnapsh
     if (!derivative) continue;
     if (coin.fundingRate === null) coin.fundingRate = derivative.fundingRate;
     if (derivative.openInterestUsd !== null) coin.openInterestUsd = derivative.openInterestUsd;
+    coin.exchanges = derivative.exchanges;
   }
 }
 

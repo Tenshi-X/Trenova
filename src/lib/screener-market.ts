@@ -124,6 +124,10 @@ export interface Indicators {
   ema20: number;
   structure: Structure;
   rating: Rating;
+  /** Percent change of the 1h close versus 1h / 4h / 12h earlier (from the same candles). null when not enough candles. */
+  change1h: number | null;
+  change4h: number | null;
+  change12h: number | null;
   /** 0-100, 50 = neutral. Derived from the three votes below, nothing else. */
   score: number;
 }
@@ -201,7 +205,12 @@ export function computeIndicators(candles: Candle[]): Indicators | null {
   const votes = vote(rsi > 50, rsi < 50) + vote(macdHist > 0, macdHist < 0) + vote(last.close > ema20Last, last.close < ema20Last);
   const rating: Rating = votes === 3 ? 'STR BULL' : votes === 2 ? 'BULL' : votes === -3 ? 'STR BEAR' : votes === -2 ? 'BEAR' : 'NEUTRAL';
   const score = Math.round(50 + (votes * 50) / 3);
-  return { rsi, macd, macdSignal, macdHist, ema20: ema20Last, structure, rating, score };
+  const changeOver = (hours: number) => {
+    const earlier = closes[closes.length - 1 - hours];
+    return earlier !== undefined && earlier > 0 ? ((last.close - earlier) / earlier) * 100 : null;
+  };
+  return { rsi, macd, macdSignal, macdHist, ema20: ema20Last, structure, rating,
+    change1h: changeOver(1), change4h: changeOver(4), change12h: changeOver(12), score };
 }
 
 // ─── Cached, rate-limit-friendly candle fetching ──────────────────────────────

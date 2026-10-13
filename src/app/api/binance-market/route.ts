@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { applyDerivatives, applyMarketCaps, getDerivatives, getMarketCaps } from '@/lib/market-derivatives';
 import { fetchOkxTickers, getIndicators } from '@/lib/screener-market';
+import { coinbasePremium, getCoinbaseBtcPrice, getGlobalMarket } from '@/lib/market-global';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 // Run close to Asia: Binance/Bybit block many US/EU datacenter IPs. Tokyo first (Bybit also blocks Singapore).
@@ -93,7 +94,8 @@ async function okxSnapshot() {
       high24h: t.high24h, low24h: t.low24h, volume24h: t.volume24h, marketCap: 0,
       fundingRate: null as number | null, openInterestUsd: null as number | null, sparkline: [] as number[],
       rsi: ind?.rsi ?? null, macdHist: ind?.macdHist ?? null, structure: ind?.structure ?? null,
-      rating: ind?.rating ?? null, score: ind?.score ?? null,
+      rating: ind?.rating ?? null, score: ind?.score ?? null, exchanges: 1,
+      change1h: ind?.change1h ?? null, change4h: ind?.change4h ?? null, change12h: ind?.change12h ?? null,
     };
   });
 }
@@ -172,15 +174,28 @@ export async function GET(req: Request) {
     // P0: OKX perpetual swaps (top 50 by volume, real indicators)
     const okx = await timed('okx', okxSnapshot);
     if (okx && okx.length >= 10) {
-      const [deriv, caps] = await extras;
+      const [[deriv, caps], gm, cbBtc] = await Promise.all([extras, timed('global', () => getGlobalMarket()), timed('coinbase-btc', () => getCoinbaseBtcPrice())]);
       applyDerivatives(okx, deriv);
       applyMarketCaps(okx, caps);
+      // OKX gives its own volume; the other exchanges' volume for the same coin is added on top (one row per coin).
+      for (const c of okx) c.volume24h += deriv?.map.get(c.symbol)?.volumeUsd ?? 0;
       const fundingValues = okx.flatMap((c) => (c.fundingRate === null ? [] : [c.fundingRate]));
       const avgFR = fundingValues.length ? Number((fundingValues.reduce((sum, v) => sum + v, 0) / fundingValues.length).toFixed(4)) : null;
       const totalVol = okx.reduce((sum, c) => sum + c.volume24h, 0);
       const btcVol = okx.find((c) => c.symbol === 'BTC')?.volume24h ?? 0;
       const btcDom = totalVol > 0 ? Number(((btcVol / totalVol) * 100).toFixed(2)) : 0;
-      const body: Record<string, unknown> = { coins: okx, global: globalFromCoins(okx, okx.length, avgFR, btcDom), timestamp: Date.now(), source: 'okx', degraded: false, derivativesSources: deriv?.providers ?? [] };
+      const rsiValues = okx.flatMap((c) => (c.rsi === null ? [] : [c.rsi]));
+      const btcPrice = okx.find((c) => c.symbol === 'BTC')?.price ?? null;
+      const premium = coinbasePremium(cbBtc, btcPrice);
+      const global = {
+        ...globalFromCoins(okx, okx.length, avgFR, btcDom),
+        btcDominance: gm?.btcDominance ?? null, ethDominance: gm?.ethDominance ?? null, usdtDominance: gm?.usdtDominance ?? null,
+        marketCapChange24h: gm?.marketCapChange24h ?? null,
+        avgRsi: rsiValues.length >= 10 ? Number((rsiValues.reduce((sum, v) => sum + v, 0) / rsiValues.length).toFixed(1)) : null,
+        rsiCount: rsiValues.length,
+        coinbasePremium: premium === null ? null : Number(premium.toFixed(3)),
+      };
+      const body: Record<string, unknown> = { coins: okx, global, timestamp: Date.now(), source: 'okx', degraded: false, derivativesSources: deriv?.providers ?? [] };
       if (debug) body.attempts = attempts;
       return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20' } });
     }

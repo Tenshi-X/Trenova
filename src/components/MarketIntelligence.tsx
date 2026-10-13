@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { TrendingUp, TrendingDown, Skull, BarChart, Flame, ArrowUpDown, Settings, X, Check, Activity, Snowflake, Percent } from 'lucide-react';
+import { TrendingUp, TrendingDown, Skull, BarChart, Flame, ArrowUpDown, Settings, X, Check, Activity, Snowflake, Percent, PieChart, Gauge, Scale } from 'lucide-react';
 import clsx from 'clsx';
 
 interface GlobalData {
@@ -25,6 +25,11 @@ interface GlobalData {
   gainersCount: number;
   losersCount: number;
   totalPairs: number;
+  btcDominance: number | null;
+  ethDominance: number | null;
+  usdtDominance: number | null;
+  avgRsi: number | null;
+  coinbasePremium: number | null;
 }
 
 const WIDGET_OPTIONS = [
@@ -41,9 +46,16 @@ const WIDGET_OPTIONS = [
     { id: 'momentum', label: 'Market Momentum' },
     { id: 'ethbtc', label: 'ETH/BTC Ratio' },
     { id: 'funding', label: 'Avg Funding Rate (Top 50)' },
+    { id: 'btcd', label: 'BTC Dominance (BTC.D)' },
+    { id: 'usdtd', label: 'USDT Dominance (USDT.D)' },
+    { id: 'avgrsi', label: 'Rata-rata RSI (Top 50)' },
+    { id: 'cbprem', label: 'Coinbase Premium (BTC)' },
 ];
 
-const DEFAULT_WIDGETS = ['btc', 'eth', 'sol', 'volume', 'fng', 'gainer', 'momentum'];
+const MAX_WIDGETS = 8;
+const WIDGETS_KEY = 'trv_market_widgets_v2';
+
+const DEFAULT_WIDGETS = ['fng', 'momentum', 'usdtd', 'btcd'];
 
 export default function MarketIntelligence() {
     const [globalData, setGlobalData] = useState<GlobalData | null>(null);
@@ -59,11 +71,12 @@ export default function MarketIntelligence() {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('trv_market_widgets');
+            const saved = localStorage.getItem(WIDGETS_KEY);
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length === 7) {
+                    const known = new Set(WIDGET_OPTIONS.map((widget) => widget.id));
+                    if (Array.isArray(parsed) && parsed.length >= 1 && parsed.length <= MAX_WIDGETS && parsed.every((id) => known.has(id))) {
                         setSelectedWidgets(parsed);
                     }
                 } catch (e) {}
@@ -73,7 +86,7 @@ export default function MarketIntelligence() {
 
     const fetchBinanceData = useCallback(async (force = false) => {
         try {
-            const CACHE_KEY = 'trv_binance_global_data_v2';
+            const CACHE_KEY = 'trv_binance_global_data_v3';
             const CACHE_TTL = 9000;
 
             if (!force && typeof window !== 'undefined') {
@@ -121,6 +134,11 @@ export default function MarketIntelligence() {
                 gainersCount: json.global?.gainersCount || 0,
                 losersCount: json.global?.losersCount || 0,
                 totalPairs: json.global?.totalPairs || 0,
+                btcDominance: json.global?.btcDominance ?? null,
+                ethDominance: json.global?.ethDominance ?? null,
+                usdtDominance: json.global?.usdtDominance ?? null,
+                avgRsi: json.global?.avgRsi ?? null,
+                coinbasePremium: json.global?.coinbasePremium ?? null,
             };
 
             if (typeof window !== 'undefined') {
@@ -192,10 +210,10 @@ export default function MarketIntelligence() {
     };
 
     const handleSaveWidgets = () => {
-        if (tempSelection.length === 7) {
+        if (tempSelection.length >= 1) {
             setSelectedWidgets(tempSelection);
             if (typeof window !== 'undefined') {
-                localStorage.setItem('trv_market_widgets', JSON.stringify(tempSelection));
+                localStorage.setItem(WIDGETS_KEY, JSON.stringify(tempSelection));
             }
             setIsSettingsOpen(false);
         }
@@ -205,7 +223,7 @@ export default function MarketIntelligence() {
         setTempSelection(prev => {
             if (prev.includes(id)) {
                 return prev.filter(w => w !== id);
-            } else if (prev.length < 7) {
+            } else if (prev.length < MAX_WIDGETS) {
                 return [...prev, id];
             }
             return prev;
@@ -222,7 +240,7 @@ export default function MarketIntelligence() {
                 <div className="z-10">
                     <div className="flex items-center gap-1.5 text-slate-500 mb-2">
                         <span className={`text-${color}-500 font-black text-base`}>{icon}</span>
-                        <span className="text-xs font-bold uppercase tracking-wider">{symbol}/USDT</span>
+                        <span className="text-[13px] font-semibold">{symbol}/USDT</span>
                         <span className="text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-1 py-0.5 rounded animate-pulse">LIVE</span>
                     </div>
                     <div className="text-base font-black text-slate-800 dark:text-slate-100 tabular-nums leading-tight">
@@ -241,8 +259,43 @@ export default function MarketIntelligence() {
         );
     };
 
+    const renderStatWidget = (id: string, label: string, icon: React.ReactNode, value: string, tone: string, note: string, bar?: number | null) => (
+        <div key={id} className={cardBase}>
+            <div className="z-10">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                    {icon}
+                    <span className="text-[13px] font-semibold">{label}</span>
+                </div>
+                <div className={clsx("text-2xl font-black tabular-nums leading-tight", tone)}>{value}</div>
+                {bar != null && (
+                    <div className="mt-2 w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-cyan-500 h-full rounded-full transition-all duration-1000" style={{ width: `${Math.max(0, Math.min(100, bar))}%` }} />
+                    </div>
+                )}
+                <div className="text-[12px] text-slate-400 mt-2 leading-snug">{note}</div>
+            </div>
+        </div>
+    );
+
     const renderWidget = (id: string) => {
         switch (id) {
+            case 'btcd': {
+                const v = globalData?.btcDominance ?? null;
+                return renderStatWidget(id, 'BTC Dominance', <PieChart size={14} className="text-orange-500" />, v === null ? '—' : `${v.toFixed(2)}%`, 'text-slate-800 dark:text-slate-100', v === null ? 'Data belum tersedia.' : 'Porsi BTC dari total market cap crypto.', v);
+            }
+            case 'usdtd': {
+                const v = globalData?.usdtDominance ?? null;
+                return renderStatWidget(id, 'USDT Dominance', <Scale size={14} className="text-emerald-500" />, v === null ? '—' : `${v.toFixed(2)}%`, 'text-slate-800 dark:text-slate-100', v === null ? 'Data belum tersedia.' : 'Naik cenderung berarti investor menghindari risiko.', v === null ? null : v * 5);
+            }
+            case 'avgrsi': {
+                const v = globalData?.avgRsi ?? null;
+                const label = v === null ? 'Data belum tersedia.' : v >= 70 ? 'Rata-rata koin overbought.' : v >= 55 ? 'Cenderung kuat.' : v > 45 ? 'Netral.' : v > 30 ? 'Cenderung lemah.' : 'Rata-rata koin oversold.';
+                return renderStatWidget(id, 'Rata-rata RSI', <Gauge size={14} className="text-cyan-500" />, v === null ? '—' : v.toFixed(1), v === null ? 'text-slate-400' : v >= 55 ? 'text-emerald-500' : v <= 45 ? 'text-rose-500' : 'text-amber-500', label, v);
+            }
+            case 'cbprem': {
+                const v = globalData?.coinbasePremium ?? null;
+                return renderStatWidget(id, 'Coinbase Premium', <Activity size={14} className="text-indigo-500" />, v === null ? '—' : `${v > 0 ? '+' : ''}${v.toFixed(3)}%`, v === null ? 'text-slate-400' : v >= 0 ? 'text-emerald-500' : 'text-rose-500', v === null ? 'Data belum tersedia.' : 'Harga BTC di Coinbase vs perpetual. Positif = pembeli AS lebih agresif.');
+            }
             case 'btc': return renderCoinWidget('BTC', '₿', 'orange', globalData?.btcPrice || 0, globalData?.btcChange24h || 0);
             case 'eth': return renderCoinWidget('ETH', 'Ξ', 'indigo', globalData?.ethPrice || 0, globalData?.ethChange24h || 0);
             case 'sol': return renderCoinWidget('SOL', '◎', 'purple', globalData?.solPrice || 0, globalData?.solChange24h || 0);
@@ -256,7 +309,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <BarChart size={14} className="text-cyan-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">24h Volume</span>
+                                <span className="text-[13px] font-semibold">24h Volume</span>
                             </div>
                             <div className="text-base font-black text-slate-800 dark:text-slate-100 leading-tight">
                                 {globalData ? formatCompactNumber(globalData.totalVolume24h) : "Loading..."}
@@ -287,7 +340,7 @@ export default function MarketIntelligence() {
                                     parseInt(fng.value) < 45 ? "text-orange-500" :
                                     "text-emerald-500"
                                 )}/>
-                                <span className="text-xs font-bold uppercase tracking-wider">Fear & Greed</span>
+                                <span className="text-[13px] font-semibold">Fear & Greed</span>
                             </div>
                             <div className="mt-1">
                                 <div className={clsx("text-2xl font-black",
@@ -326,7 +379,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <Flame size={14} className="text-emerald-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Top Gainer</span>
+                                <span className="text-[13px] font-semibold">Top Gainer</span>
                             </div>
                             {globalData?.topGainer?.symbol ? (
                                 <>
@@ -355,7 +408,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <Snowflake size={14} className="text-rose-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Top Loser</span>
+                                <span className="text-[13px] font-semibold">Top Loser</span>
                             </div>
                             {globalData?.topLoser?.symbol ? (
                                 <>
@@ -384,7 +437,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <ArrowUpDown size={14} className="text-amber-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Momentum</span>
+                                <span className="text-[13px] font-semibold">Momentum</span>
                             </div>
                             {globalData ? (
                                 <>
@@ -426,7 +479,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <Percent size={14} className="text-blue-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">ETH/BTC Ratio</span>
+                                <span className="text-[13px] font-semibold">ETH/BTC Ratio</span>
                             </div>
                             <div className="text-base font-black text-slate-800 dark:text-slate-100 tabular-nums leading-tight">
                                 {ratio > 0 ? ratio.toFixed(5) : "—"}
@@ -443,7 +496,7 @@ export default function MarketIntelligence() {
                         <div className="z-10">
                             <div className="flex items-center gap-2 text-slate-500 mb-2">
                                 <Activity size={14} className="text-fuchsia-500" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Avg Funding</span>
+                                <span className="text-[13px] font-semibold">Avg Funding</span>
                             </div>
                             <div className="flex items-end gap-1">
                                 <div className={clsx("text-xl font-black tabular-nums leading-tight",
@@ -481,7 +534,7 @@ export default function MarketIntelligence() {
                 </button>
             </div>
 
-            <div className="terminal-market-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-3">
+            <div className={clsx("terminal-market-grid grid grid-cols-2 gap-3 mb-3", selectedWidgets.length <= 4 ? "lg:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7")}>
                 {selectedWidgets.map(id => renderWidget(id))}
             </div>
 
@@ -499,7 +552,7 @@ export default function MarketIntelligence() {
                         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                             <div>
                                 <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Customize</h3>
-                                <p className="text-xs text-slate-500">Select exactly 7 widgets to display on your dashboard.</p>
+                                <p className="text-xs text-slate-500">Pilih 1–8 widget untuk ditampilkan di dashboard.</p>
                             </div>
                             <button
                                 onClick={() => setIsSettingsOpen(false)}
@@ -512,15 +565,15 @@ export default function MarketIntelligence() {
                             <div className="flex justify-between items-center mb-3">
                                 <span className="text-sm font-bold text-slate-400">Available Widgets</span>
                                 <span className={clsx("text-xs font-bold px-2 py-0.5 rounded",
-                                    tempSelection.length === 7 ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500/20 text-amber-500"
+                                    tempSelection.length >= 1 ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500/20 text-amber-500"
                                 )}>
-                                    {tempSelection.length} / 7 Selected
+                                    {tempSelection.length} / 8
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 {WIDGET_OPTIONS.map((widget) => {
                                     const isSelected = tempSelection.includes(widget.id);
-                                    const isDisabled = !isSelected && tempSelection.length >= 7;
+                                    const isDisabled = !isSelected && tempSelection.length >= MAX_WIDGETS;
 
                                     return (
                                         <button
@@ -556,10 +609,10 @@ export default function MarketIntelligence() {
                             </button>
                             <button
                                 onClick={handleSaveWidgets}
-                                disabled={tempSelection.length !== 7}
+                                disabled={tempSelection.length < 1}
                                 className={clsx(
                                     "px-4 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2",
-                                    tempSelection.length === 7
+                                    tempSelection.length >= 1
                                         ? "bg-indigo-500 hover:bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
                                         : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                                 )}

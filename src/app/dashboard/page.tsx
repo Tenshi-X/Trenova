@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const { language, t } = useLanguage();
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('market');
 
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
@@ -508,7 +508,7 @@ export default function DashboardPage() {
 
         {/* --- LIVE MARKET TAB --- */}
         {activeTab === 'market' && (
-            <div id="terminal-panel-market" role="tabpanel" aria-labelledby="terminal-tab-market" className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
+            <div id="terminal-panel-market" role="tabpanel" aria-labelledby="terminal-tab-market" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <LiveMarketTable
                     onSelectSymbol={(sym) => {
                         ignoreSearchRef.current = true;

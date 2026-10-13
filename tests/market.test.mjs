@@ -8,8 +8,16 @@ import * as core from '../src/lib/analysis/core.ts';
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../src/lib/analysis/market.ts', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const derivativesSource = readFileSync(new URL('../src/lib/market-derivatives.ts', import.meta.url), 'utf8');
+const derivativesCompiled = ts.transpileModule(derivativesSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+function loadDerivatives() {
+  const m = { exports: {} };
+  new Function('exports', 'require', 'module', derivativesCompiled)(m.exports, require, m);
+  m.exports.resetMarketDerivativesCache();
+  return m.exports;
+}
 
-function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false } = {}) {
+function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false, okxFunding = false } = {}) {
   const urls = [];
   const warnings = [];
   const now = Date.now();
@@ -34,12 +42,16 @@ function marketModule({ primaryBlocked = false, allBlocked = false, stale = fals
       if (missingCandle) rows.splice(40, 1);
       return Response.json(rows);
     }
+    if (okxFunding && parsed.host === 'www.okx.com') {
+      if (parsed.pathname.includes('open-interest')) return Response.json({ code: '0', data: [{ instId: 'BTC-USDT-SWAP', oiUsd: '5000000000' }] });
+      if (parsed.pathname.includes('funding-rate')) return Response.json({ code: '0', data: [{ instId: 'BTC-USDT-SWAP', fundingRate: '0.0001' }] });
+    }
     // Optional derivatives and sentiment can be unavailable without blocking the analysis.
     return Response.json({ error: 'Unavailable' }, { status: 503 });
   };
   const compiledModule = { exports: {} };
   new Function('require', 'module', 'exports', 'fetch', 'console', compiled)(
-    name => name === './core' ? core : require(name), compiledModule, compiledModule.exports,
+    name => name === './core' ? core : name === '../market-derivatives' ? loadDerivatives() : require(name), compiledModule, compiledModule.exports,
     mockFetch, { warn: (...args) => warnings.push(args) });
   return { ...compiledModule.exports, urls, warnings };
 }
@@ -102,4 +114,13 @@ test('confirmation supports higher timeframes including weekly and only uses com
   for (const options of [{ missingCandle: true }, { allBlocked: true }]) {
     assert.equal(await marketModule(options).getTrendConfirmation('BTC', '4h'), null);
   }
+});
+
+test('funding and open interest fall back to the multi-exchange data when Binance futures is blocked', async () => {
+  const provider = marketModule({ okxFunding: true });
+  const snapshot = await provider.getMarketSnapshot('BTC', '1h');
+  assert.ok(snapshot);
+  assert.ok(Math.abs(snapshot.fundingRate - 0.0001) < 1e-12, 'percent from the aggregator is converted back to a decimal');
+  assert.equal(snapshot.openInterestUsd, 5000000000);
+  assert.ok(snapshot.sourceTimes.funding && snapshot.sourceTimes.openInterest);
 });

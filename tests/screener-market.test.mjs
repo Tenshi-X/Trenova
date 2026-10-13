@@ -49,6 +49,8 @@ test('computeIndicators: uptrend is bullish, downtrend bearish, short history nu
   assert.equal(a.rating, 'STR BULL');
   assert.equal(a.structure, 'Breakout');
   assert.equal(a.score, 100);
+  assert.ok(Math.abs(a.change4h - (Math.pow(1.01, 4) - 1) * 100) < 1e-6);
+  assert.ok(a.change12h > a.change4h && a.change4h > a.change1h && a.change1h > 0);
   assert.ok(a.rsi > 50);
   assert.equal(b.rating, 'STR BEAR');
   assert.equal(b.structure, 'Breakdown');

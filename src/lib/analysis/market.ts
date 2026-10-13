@@ -1,5 +1,6 @@
 import { calculateIndicators, candlesAreFresh, parseCandle, type Candle, type MarketSnapshot, type Timeframe,
   type CandleTimeframe, type TrendConfirmation } from './core';
+import { getDerivatives } from '../market-derivatives';
 
 // Binance's dedicated public-data host also works when general API hosts are unreachable.
 // Keep the fallback budget below 8 seconds so the single Gemini call fits the route deadline.
@@ -48,13 +49,15 @@ export async function getTrendConfirmation(symbol: string, timeframe: CandleTime
 
 export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): Promise<MarketSnapshot | null> {
   const pair = `${symbol}USDT`;
-  const [rawTicker, rawCandles, rawBtc, rawFunding, rawOi, rawSentiment] = await Promise.all([
+  const [rawTicker, rawCandles, rawBtc, rawFunding, rawOi, rawSentiment, derivatives] = await Promise.all([
     spot(`/api/v3/ticker/24hr?symbol=${pair}`),
     spot(`/api/v3/klines?symbol=${pair}&interval=${timeframe}&limit=60`),
     spot('/api/v3/ticker/24hr?symbol=BTCUSDT'),
     fetchJson(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${pair}`),
     fetchJson(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${pair}`),
     fetchJson('https://api.alternative.me/fng/?limit=1'),
+    // Binance futures blocks many server regions; OKX/Bybit/Bitget/Gate/MEXC fill in funding and open interest.
+    getDerivatives(fetch).catch(() => null),
   ]);
   const ticker = object(rawTicker);
   if (!ticker || !Array.isArray(rawCandles)) {
@@ -83,18 +86,24 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
   const sentimentValue = numberOrNull(sentimentItem?.value);
   const markPrice = numberOrNull(funding?.markPrice) || price;
   const openInterestUnits = numberOrNull(oi?.openInterest);
+  const combined = derivatives?.map.get(symbol) ?? null;
+  const derivativesAt = derivatives ? new Date(derivatives.fetchedAt).toISOString() : null;
+  // Binance first (unchanged behaviour); otherwise the multi-exchange figures. Funding there is in percent, here it is a decimal.
+  const fundingRate = numberOrNull(funding?.lastFundingRate)
+    ?? (combined?.fundingRate != null ? combined.fundingRate / 100 : null);
+  const openInterestUsd = openInterestUnits !== null ? openInterestUnits * markPrice : (combined?.openInterestUsd ?? null);
   return {
     symbol, timeframe, asOf: new Date(asOfMillis).toISOString(), price,
     change24h: numberOrNull(ticker.priceChangePercent),
     volume24hUsd: numberOrNull(ticker.quoteVolume),
     btcChange24h: numberOrNull(btc?.priceChangePercent),
-    fundingRate: numberOrNull(funding?.lastFundingRate),
-    openInterestUsd: openInterestUnits === null ? null : openInterestUnits * markPrice,
+    fundingRate,
+    openInterestUsd,
     fearGreed: sentimentValue,
     sourceTimes: { candles: new Date(candles[candles.length - 1].closeTime).toISOString(),
       btc: btc ? new Date(Number(btc.closeTime)).toISOString() : null,
-      funding: funding ? new Date(Number(funding.time)).toISOString() : null,
-      openInterest: oi ? new Date(Number(oi.time)).toISOString() : null,
+      funding: funding ? new Date(Number(funding.time)).toISOString() : (fundingRate !== null ? derivativesAt : null),
+      openInterest: oi ? new Date(Number(oi.time)).toISOString() : (openInterestUsd !== null ? derivativesAt : null),
       sentiment: sentimentItem ? new Date(Number(sentimentItem.timestamp) * 1000).toISOString() : null },
     ...indicators,
     recentCandles: candles.slice(-24),
