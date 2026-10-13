@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { applyDerivatives, applyMarketCaps, getDerivatives, getMarketCaps } from '@/lib/market-derivatives';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 25;
@@ -64,7 +65,7 @@ async function coinbaseSnapshot() {
     const vol = parseFloat(st.data?.volume ?? '0'); // base volume
     if (!price) return null;
     const chg = open ? ((price - open) / open) * 100 : 0;
-    return { symbol: p.symbol, price, priceChangePercent: chg, high24h: high, low24h: low, volume24h: vol * price, marketCap: 0, fundingRate: null as number | null, sparkline: [] as number[] };
+    return { symbol: p.symbol, price, priceChangePercent: chg, high24h: high, low24h: low, volume24h: vol * price, marketCap: 0, fundingRate: null as number | null, openInterestUsd: null as number | null, sparkline: [] as number[] };
   });
   const settled = await Promise.allSettled(jobs);
   const coins = settled.flatMap((r, i) => {
@@ -145,10 +146,16 @@ export async function GET(req: Request) {
     };
   };
   try {
+    // Funding rate / open interest / market cap are fetched alongside the price source so they add no latency.
+    // timed() never rejects, so this promise is safe to leave un-awaited on the fallback branches.
+    const extras = Promise.all([timed('derivatives', () => getDerivatives()), timed('marketcaps', () => getMarketCaps())]);
     // P1: Coinbase (Vercel-friendly, no key, no geo-block)
     const cb = await timed('coinbase', coinbaseSnapshot);
     if (cb && cb.length >= 3) {
-      const body: Record<string, unknown> = { coins: cb, global: globalFromCoins(cb, cb.length), timestamp: Date.now(), source: 'coinbase', degraded: false };
+      const [deriv, caps] = await extras;
+      applyDerivatives(cb, deriv);
+      applyMarketCaps(cb, caps);
+      const body: Record<string, unknown> = { coins: cb, global: globalFromCoins(cb, cb.length), timestamp: Date.now(), source: 'coinbase', degraded: false, derivativesSources: deriv?.providers ?? [] };
       if (debug) body.attempts = attempts;
       return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=20' } });
     }
@@ -194,7 +201,10 @@ export async function GET(req: Request) {
       for (const k in fm) { if (k.endsWith('USDT') && !stable.includes(k)) { tf += fm[k]; tfc++; } }
       const avgFR = tfc > 0 ? tf / tfc : null;
       coins.forEach((coin) => { coin.fundingRate = fm[`${coin.symbol}USDT`] ?? null; });
-      const body: Record<string, unknown> = { coins, global: globalFromCoins(coins, usdt.length, avgFR === null ? null : Number(avgFR.toFixed(4)), parseFloat(btcDom.toFixed(2))), timestamp: Date.now(), source: 'binance', degraded: false };
+      const [deriv, caps] = await extras;
+      applyDerivatives(coins, deriv);
+      applyMarketCaps(coins, caps);
+      const body: Record<string, unknown> = { coins, global: globalFromCoins(coins, usdt.length, avgFR === null ? null : Number(avgFR.toFixed(4)), parseFloat(btcDom.toFixed(2))), timestamp: Date.now(), source: 'binance', degraded: false, derivativesSources: deriv?.providers ?? [] };
       if (debug) body.attempts = attempts;
       return NextResponse.json(body, { headers: { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=3' } });
     }
