@@ -20,7 +20,8 @@ async function klinePage(symbol: string, interval: string, limit: number, endTim
       if (!response.ok) continue;
       const raw: unknown = await response.json();
       if (!Array.isArray(raw)) continue;
-      return raw.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now());
+      // Not filtered by close time here: the still-forming newest candle must count towards the page size.
+      return raw.map(parseCandle).filter((candle): candle is Candle => candle !== null);
     } catch { /* try the next host */ }
   }
   return null;
@@ -32,13 +33,14 @@ async function klines(symbol: string, interval: string, limit: number): Promise<
   let endTime: number | undefined;
   while (all.length < limit) {
     const page = await klinePage(symbol, interval, Math.min(1000, limit - all.length), endTime);
-    if (!page) return all.length ? all : null;
+    if (!page) break;
     if (!page.length) break;
     all = [...page, ...all];
     if (page.length < 1000 && all.length < limit) break;
     endTime = page[0].openTime - 1;
   }
-  return all;
+  const closed = all.filter(candle => candle.closeTime <= Date.now());
+  return closed.length ? closed : null;
 }
 
 const pick = <T extends string>(value: string | null, allowed: readonly T[], fallback: T): T =>
@@ -89,7 +91,7 @@ export async function GET(request: Request) {
   };
   const span = series[0] ? { from: new Date(series[0].candles[0].openTime).toISOString().slice(0, 10),
     to: new Date(series[0].candles[series[0].candles.length - 1].closeTime).toISOString().slice(0, 10) } : null;
-  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span, candlesPerSymbol: history };
+  const coverage = { completed: series.map(item => item.symbol), failed, skippedForTime: skipped, candleSpan: span, candlesRequested: history, candlesBtc: series.find(item => item.symbol === 'BTC')?.candles.length ?? null };
 
   if (params.get('sweep') === '1') {
     // Many configurations on the same data. The best of many looks good by luck alone, so a result only counts
