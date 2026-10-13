@@ -233,7 +233,7 @@ export interface IndicatorOptions { budgetMs?: number; batchSize?: number; gapMs
  * few polls instead of hitting OKX's rate limit. Coins without data are simply absent from the result.
  */
 export async function getIndicators(symbols: string[], fetcher: Fetcher = fetch, options: IndicatorOptions = {}): Promise<Map<string, Indicators>> {
-  const { budgetMs = 3500, batchSize = 8, gapMs = 400 } = options;
+  const { budgetMs = 6000, batchSize = 8, gapMs = 400 } = options;
   const now = Date.now();
   const missing = symbols.filter((symbol) => {
     const cached = indicatorCache.get(symbol);

@@ -81,10 +81,10 @@ async function coinbaseSnapshot() {
   coins.forEach((c, i) => { c.rank = i + 1; });
   return coins;
 }
-// Primary source: OKX perpetual swaps. One request lists every USDT swap; we keep the top 50 by USD volume,
+// Primary source: OKX perpetual swaps. One request lists every USDT swap; we keep the top 100 by USD volume,
 // one row per base symbol (no duplicates), and attach real 1h indicators (cached server-side, filled in progressively).
 async function okxSnapshot() {
-  const tickers = await fetchOkxTickers(undefined, 50);
+  const tickers = await fetchOkxTickers(undefined, 100);
   if (!tickers || tickers.length < 10) return null;
   const indicators = await getIndicators(tickers.map((t) => t.symbol));
   return tickers.map((t, i) => {
@@ -171,7 +171,7 @@ export async function GET(req: Request) {
     // Funding rate / open interest / market cap are fetched alongside the price source so they add no latency.
     // timed() never rejects, so this promise is safe to leave un-awaited on the fallback branches.
     const extras = Promise.all([timed('derivatives', () => getDerivatives()), timed('marketcaps', () => getMarketCaps())]);
-    // P0: OKX perpetual swaps (top 50 by volume, real indicators)
+    // P0: OKX perpetual swaps (top 100 by volume, real indicators)
     const okx = await timed('okx', okxSnapshot);
     if (okx && okx.length >= 10) {
       const [[deriv, caps], gm, cbBtc] = await Promise.all([extras, timed('global', () => getGlobalMarket()), timed('coinbase-btc', () => getCoinbaseBtcPrice())]);
