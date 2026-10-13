@@ -19,6 +19,7 @@ interface CoinData {
   vol24h: number;
   marketCap: number;
   fundingRate: number | null;
+  openInterestUsd: number | null;
 }
 
 interface LiveMarketTableProps {
@@ -27,10 +28,15 @@ interface LiveMarketTableProps {
 
 type MarketSnapshot = {
   coins: Array<{ symbol: string; pair?: string; price: number; priceChangePercent: number;
-    high24h: number; low24h: number; volume24h: number; fundingRate: number | null }>;
+    high24h: number; low24h: number; volume24h: number; fundingRate: number | null;
+    openInterestUsd?: number | null; marketCap?: number }>;
   source?: string;
   timestamp?: number;
 };
+
+// Column layout shared by the header and every row (15 columns).
+const ROW_GRID = 'grid-cols-[30px_1.5fr_1fr_1fr_1fr_1fr_1fr_0.8fr_0.8fr_1fr_1fr_1fr_1fr_1fr_1.5fr]';
+const TABLE_MIN_W = 'min-w-[1300px]';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtPrice(p: number): string {
@@ -40,6 +46,7 @@ function fmtPrice(p: number): string {
   return '$' + p.toFixed(8);
 }
 function fmtVol(v: number): string {
+  if (v >= 1e12) return '$' + (v / 1e12).toFixed(2) + 'T';
   if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
   if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
   if (v >= 1e3) return '$' + (v / 1e3).toFixed(1) + 'K';
@@ -96,7 +103,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
   const [isLoading, setIsLoading]     = useState(true);
   const [error, setError]             = useState('');
   const [search, setSearch]           = useState('');
-  const [sortBy, setSortBy]           = useState<'score'|'vol' | 'chg' | 'price' | 'sym'>('score');
+  const [sortBy, setSortBy]           = useState<'score'|'vol' | 'chg' | 'price' | 'sym' | 'mcap' | 'oi' | 'fund'>('score');
   const [sortDir, setSortDir]         = useState<'desc' | 'asc'>('desc');
   const [filterMode, setFilterMode]   = useState<'ALL' | 'BULL' | 'BEAR' | 'BREAKOUT'>('ALL');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -130,8 +137,9 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           high24h: coin.high24h,
           low24h: coin.low24h,
           vol24h: coin.volume24h,
-          marketCap: 0,
+          marketCap: coin.marketCap ?? 0,
           fundingRate: coin.fundingRate ?? null,
+          openInterestUsd: coin.openInterestUsd ?? null,
         }));
       });
 
@@ -186,6 +194,16 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       return true;
     })
     .sort((a, b) => {
+      if (sortBy === 'mcap' || sortBy === 'oi' || sortBy === 'fund') {
+        const pick = (c: typeof a) => sortBy === 'mcap' ? (c.marketCap > 0 ? c.marketCap : null)
+          : sortBy === 'oi' ? c.openInterestUsd : c.fundingRate;
+        const av = pick(a);
+        const bv = pick(b);
+        if (av === null && bv === null) return 0;
+        if (av === null) return 1; // missing data always sorts last
+        if (bv === null) return -1;
+        return sortDir === 'desc' ? bv - av : av - bv;
+      }
       let d = 0;
       if (sortBy === 'vol')   d = b.vol24h  - a.vol24h;
       if (sortBy === 'chg')   d = b.chg24h  - a.chg24h;
@@ -195,8 +213,9 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       return sortDir === 'desc' ? d : -d;
     });
 
-  const sortHeader = (col: typeof sortBy, label: string, align: 'left'|'right'|'center' = 'left') => (
+  const sortHeader = (col: typeof sortBy, label: string, align: 'left'|'right'|'center' = 'left', title?: string) => (
     <button
+      title={title}
       onClick={() => handleSort(col)}
       type="button"
       aria-label={`${label}: ${sortBy === col ? sortDir : 'sort'}`}
@@ -264,21 +283,26 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
           <p className="text-[10px] text-slate-500 mt-2">
             {language === 'id' ? 'RSI, MACD, struktur, sinyal, dan skor adalah estimasi screener dari perubahan 24 jam.' : 'RSI, MACD, structure, signals, and scores are screener estimates based on 24h changes.'}
           </p>
+          <p className="text-[10px] text-slate-500 mt-1">
+            {language === 'id' ? 'Funding dan OI adalah data futures publik (OKX/Bybit/Binance), bukan agregat seluruh exchange. Kolom bertanda — berarti datanya belum tersedia.' : 'Funding and OI are public futures data (OKX/Bybit/Binance), not an all-exchange aggregate. A — means the data is not available yet.'}
+          </p>
           {error && coins.length > 0 && <p role="status" className="text-xs text-amber-400 mt-2">{t('market_load_fail')} · {language === 'id' ? 'Menampilkan pembaruan terakhir.' : 'Showing the last update.'}</p>}
       </div>
 
       <div className="flex-1 overflow-auto">
       {/* ── Table Header ── */}
-      <div className="sticky top-0 z-10 min-w-[1100px] grid grid-cols-[30px_1.5fr_1fr_1fr_1fr_1fr_0.8fr_0.8fr_1fr_1fr_1fr_1fr_1.5fr] gap-x-2 px-4 py-2.5 bg-slate-900 border-b border-slate-800">
+      <div className={`sticky top-0 z-10 ${TABLE_MIN_W} grid ${ROW_GRID} gap-x-2 px-4 py-2.5 bg-slate-900 border-b border-slate-800`}>
         <div className="text-[10px] font-bold text-slate-500 text-center">#</div>
         {sortHeader('sym', 'SYMBOL')}
         {sortHeader('price', 'PRICE', 'right')}
         {sortHeader('chg', '24H %', 'right')}
         {sortHeader('vol', 'VOL', 'right')}
+        {sortHeader('mcap', 'MCAP', 'right', 'Market cap (CoinGecko)')}
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">24H RANGE</div>
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">RSI</div>
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">MACD</div>
-        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-end">FUNDING</div>
+        {sortHeader('fund', 'FUNDING', 'right', 'Funding rate futures perpetual')}
+        {sortHeader('oi', 'OI', 'right', 'Open interest (USD) dari OKX/Bybit, bukan agregat seluruh exchange')}
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-end">24H HIGH</div>
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">STRUCTURE</div>
         <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 flex justify-center">SIGNAL</div>
@@ -289,7 +313,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
       </div>
 
       {/* ── Rows ── */}
-      <div className="min-w-[1100px] pb-10" aria-busy={isLoading}>
+      <div className={`${TABLE_MIN_W} pb-10`} aria-busy={isLoading}>
         {isLoading && coins.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 text-slate-500">
             <Loader2 className="animate-spin text-neon" size={24} />
@@ -318,7 +342,7 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                 key={coin.pair}
                 onClick={() => onSelectSymbol?.(coin.pair)}
                 aria-label={`${coin.symbol}: ${language === 'id' ? 'buka chart' : 'open chart'}`}
-                className="w-full text-left grid grid-cols-[30px_1.5fr_1fr_1fr_1fr_1fr_0.8fr_0.8fr_1fr_1fr_1fr_1fr_1.5fr] gap-x-2 px-4 py-2 border-b border-slate-800/30 hover:bg-slate-900/80 focus-visible:bg-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-400 active:bg-slate-800 cursor-pointer transition-colors group items-center"
+                className={`w-full text-left grid ${ROW_GRID} gap-x-2 px-4 py-2 border-b border-slate-800/30 hover:bg-slate-900/80 focus-visible:bg-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-teal-400 active:bg-slate-800 cursor-pointer transition-colors group items-center`}
               >
                 <div className="text-[10px] text-slate-500 text-center font-mono">{index + 1}</div>
 
@@ -341,6 +365,11 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                 {/* Vol */}
                 <div className="text-[10px] font-mono text-slate-400 text-right">
                     {fmtVol(coin.vol24h)}
+                </div>
+
+                {/* Market cap */}
+                <div className={clsx('text-[10px] font-mono text-right', coin.marketCap > 0 ? 'text-slate-400' : 'text-slate-600')}>
+                    {coin.marketCap > 0 ? fmtVol(coin.marketCap) : '—'}
                 </div>
 
                 {/* 24H Range */}
@@ -383,6 +412,11 @@ export default function LiveMarketTable({ onSelectSymbol }: LiveMarketTableProps
                     coin.fundingRate === null ? 'text-slate-600' : coin.fundingRate > 0 ? 'text-emerald-500' : 'text-rose-500'
                 )}>
                     {coin.fundingRate === null ? '—' : `${coin.fundingRate > 0 ? '+' : ''}${coin.fundingRate.toFixed(4)}%`}
+                </div>
+
+                {/* OPEN INTEREST */}
+                <div className={clsx('text-[10px] font-mono text-right', coin.openInterestUsd === null ? 'text-slate-600' : 'text-slate-400')}>
+                    {coin.openInterestUsd === null ? '—' : fmtVol(coin.openInterestUsd)}
                 </div>
 
                 {/* 24H HIGH */}

@@ -337,7 +337,7 @@ export default function MarketIntelligence() {
                                         ${globalData.topGainer.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                                     </div>
                                     <div className="text-xs font-bold text-emerald-500 bg-emerald-500/10 w-fit px-1.5 py-0.5 rounded mt-1 tabular-nums">
-                                        +{globalData.topGainer.change.toFixed(2)}%
+                                        {globalData.topGainer.change >= 0 ? '+' : ''}{globalData.topGainer.change.toFixed(2)}%
                                     </div>
                                 </>
                             ) : <div className="text-slate-400 text-sm">Loading...</div>}
