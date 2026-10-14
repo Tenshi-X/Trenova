@@ -34,10 +34,19 @@ function numberOrNull(value: unknown): number | null {
 }
 
 
-// OKX spot as a fallback when Binance has no spot pair for the coin (e.g. LIT) or its hosts are unreachable.
-// The shapes are converted to Binance's so the rest of the pipeline is unchanged.
+// Fallback market data. The analysis was Binance-spot only, so any coin without a Binance spot pair failed, even though
+// the coin list itself comes from OKX perpetual swaps. Sources are tried in this order, always converted to Binance's
+// row shape so the rest of the pipeline is unchanged: OKX spot, OKX swap (every listed coin has one), Bybit linear/spot.
 const OKX_HOSTS = ['https://www.okx.com', 'https://aws.okx.com'];
 const OKX_BAR: Record<CandleTimeframe, string> = { '15m': '15m', '30m': '30m', '1h': '1H', '4h': '4H', '1d': '1Dutc', '1w': '1Wutc' };
+const BYBIT_HOSTS = ['https://api.bybit.com', 'https://api.bytick.com'];
+const BYBIT_INTERVAL: Record<CandleTimeframe, string> = { '15m': '15', '30m': '30', '1h': '60', '4h': '240', '1d': 'D', '1w': 'W' };
+
+interface FallbackSource {
+  name: string;
+  ticker: () => Promise<Record<string, unknown> | null>;
+  candles: (timeframe: CandleTimeframe, limit: number) => Promise<unknown[] | null>;
+}
 
 async function okx(path: string): Promise<unknown[] | null> {
   for (const host of OKX_HOSTS) {
@@ -47,34 +56,88 @@ async function okx(path: string): Promise<unknown[] | null> {
   return null;
 }
 
-async function okxTicker(symbol: string): Promise<Record<string, unknown> | null> {
-  const row = object((await okx(`/api/v5/market/ticker?instId=${symbol}-USDT`))?.[0]);
-  const last = numberOrNull(row?.last); const open = numberOrNull(row?.open24h); const ts = numberOrNull(row?.ts);
-  if (!row || !last || !ts) return null;
-  return { lastPrice: String(last), closeTime: ts,
-    priceChangePercent: open ? String(((last - open) / open) * 100) : null,
-    quoteVolume: row.volCcy24h ?? null };
+function okxSource(symbol: string, swap: boolean): FallbackSource {
+  const instId = swap ? `${symbol}-USDT-SWAP` : `${symbol}-USDT`;
+  return {
+    name: swap ? 'okx-swap' : 'okx-spot',
+    async ticker() {
+      const row = object((await okx(`/api/v5/market/ticker?instId=${instId}`))?.[0]);
+      const last = numberOrNull(row?.last); const open = numberOrNull(row?.open24h); const ts = numberOrNull(row?.ts);
+      if (!row || !last || !ts) return null;
+      const volCcy = numberOrNull(row.volCcy24h);
+      // Spot volCcy24h is in USDT; for swaps it is in coins, so convert with the last price.
+      return { lastPrice: String(last), closeTime: ts,
+        priceChangePercent: open ? String(((last - open) / open) * 100) : null,
+        quoteVolume: volCcy === null ? null : String(swap ? volCcy * last : volCcy) };
+    },
+    async candles(timeframe, limit) {
+      const rows = await okx(`/api/v5/market/candles?instId=${instId}&bar=${OKX_BAR[timeframe]}&limit=${limit}`);
+      if (!rows) return null;
+      const duration = TIMEFRAME_MILLIS[timeframe];
+      // Newest first: [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm]; keep only closed candles.
+      return rows.filter((row): row is unknown[] => Array.isArray(row) && row[8] === '1')
+        .map(row => [Number(row[0]), row[1], row[2], row[3], row[4], row[5], Number(row[0]) + duration - 1])
+        .sort((a, b) => Number(a[0]) - Number(b[0]));
+    },
+  };
 }
 
-async function okxKlines(symbol: string, timeframe: CandleTimeframe, limit: number): Promise<unknown[] | null> {
-  const rows = await okx(`/api/v5/market/candles?instId=${symbol}-USDT&bar=${OKX_BAR[timeframe]}&limit=${limit}`);
-  if (!rows) return null;
-  const duration = TIMEFRAME_MILLIS[timeframe];
-  // OKX rows are newest first: [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm]; keep only closed candles.
-  return rows.filter((row): row is unknown[] => Array.isArray(row) && row[8] === '1')
-    .map(row => [Number(row[0]), row[1], row[2], row[3], row[4], row[5], Number(row[0]) + duration - 1])
-    .sort((a, b) => Number(a[0]) - Number(b[0]));
+async function bybit(path: string): Promise<{ list: unknown[]; time: number | null } | null> {
+  for (const host of BYBIT_HOSTS) {
+    const body = object(await fetchJson(`${host}${path}`, 2500));
+    const result = object(body?.result);
+    if (body && Number(body.retCode) === 0 && result && Array.isArray(result.list) && result.list.length) {
+      return { list: result.list, time: numberOrNull(body.time) };
+    }
+  }
+  return null;
 }
 
-async function okxSpotFallback(symbol: string, timeframe: Timeframe) {
-  const [ticker, candles, daily, weekly, btc] = await Promise.all([
-    okxTicker(symbol), okxKlines(symbol, timeframe, 61), okxKlines(symbol, '1d', 150), okxKlines(symbol, '1w', 80), okxTicker('BTC'),
-  ]);
-  return ticker && candles ? { ticker, candles, daily, weekly, btc } : null;
+function bybitSource(symbol: string, category: 'linear' | 'spot'): FallbackSource {
+  const pair = `${symbol}USDT`;
+  return {
+    name: `bybit-${category}`,
+    async ticker() {
+      const data = await bybit(`/v5/market/tickers?category=${category}&symbol=${pair}`);
+      const row = object(data?.list[0]);
+      const last = numberOrNull(row?.lastPrice); const change = numberOrNull(row?.price24hPcnt);
+      if (!data || !row || !last || !data.time) return null;
+      return { lastPrice: String(last), closeTime: data.time,
+        priceChangePercent: change === null ? null : String(change * 100), quoteVolume: row.turnover24h ?? null };
+    },
+    async candles(timeframe, limit) {
+      const data = await bybit(`/v5/market/kline?category=${category}&symbol=${pair}&interval=${BYBIT_INTERVAL[timeframe]}&limit=${limit}`);
+      if (!data) return null;
+      const duration = TIMEFRAME_MILLIS[timeframe];
+      // Newest first: [start, o, h, l, c, volume, turnover]; no "closed" flag, so drop the candle still in progress.
+      return data.list.filter((row): row is unknown[] => Array.isArray(row) && Number(row[0]) + duration - 1 <= Date.now())
+        .map(row => [Number(row[0]), row[1], row[2], row[3], row[4], row[5], Number(row[0]) + duration - 1])
+        .sort((a, b) => Number(a[0]) - Number(b[0]));
+    },
+  };
 }
 
-export async function getTrendConfirmation(symbol: string, timeframe: CandleTimeframe): Promise<TrendConfirmation | null> {
-  const raw = await spot(`/api/v3/klines?symbol=${symbol}USDT&interval=${timeframe}&limit=60`);
+function fallbackSources(symbol: string): FallbackSource[] {
+  return [okxSource(symbol, false), okxSource(symbol, true), bybitSource(symbol, 'linear'), bybitSource(symbol, 'spot')];
+}
+
+interface SpotData { ticker: unknown; candles: unknown; daily: unknown; weekly: unknown; btc: unknown }
+
+// Checks one source end to end; null when the price is stale, candles have gaps or indicators cannot be computed.
+function validateSpot(data: SpotData, timeframe: Timeframe) {
+  const ticker = object(data.ticker);
+  if (!ticker || !Array.isArray(data.candles)) return null;
+  const price = numberOrNull(ticker.lastPrice);
+  const asOfMillis = numberOrNull(ticker.closeTime);
+  if (!price || !asOfMillis || Date.now() - asOfMillis > 5 * 60_000 || asOfMillis > Date.now() + 60_000) return null;
+  const candles = data.candles.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now());
+  if (!candlesAreFresh(candles, timeframe)) return null;
+  const indicators = calculateIndicators(candles);
+  if (!indicators) return null;
+  return { data, ticker, price, asOfMillis, candles, indicators };
+}
+
+function buildConfirmation(raw: unknown, timeframe: CandleTimeframe): TrendConfirmation | null {
   if (!Array.isArray(raw)) return null;
   const candles = raw.map(parseCandle).filter((item): item is Candle => item !== null && item.closeTime <= Date.now());
   if (!candlesAreFresh(candles, timeframe)) return null;
@@ -85,6 +148,17 @@ export async function getTrendConfirmation(symbol: string, timeframe: CandleTime
     ema20: indicators.ema20, rsi: indicators.rsi,
     trend: last.close > indicators.ema20 && indicators.rsi > 50 ? 'bullish'
       : last.close < indicators.ema20 && indicators.rsi < 50 ? 'bearish' : 'neutral' };
+}
+
+export async function getTrendConfirmation(symbol: string, timeframe: CandleTimeframe): Promise<TrendConfirmation | null> {
+  const primary = buildConfirmation(await spot(`/api/v3/klines?symbol=${symbol}USDT&interval=${timeframe}&limit=60`), timeframe);
+  if (primary) return primary;
+  const others = await Promise.all(fallbackSources(symbol).map(source => source.candles(timeframe, 61)));
+  for (const rows of others) {
+    const confirmation = buildConfirmation(rows, timeframe);
+    if (confirmation) return confirmation;
+  }
+  return null;
 }
 
 export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): Promise<MarketSnapshot | null> {
@@ -102,30 +176,32 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
     spot(`/api/v3/klines?symbol=${pair}&interval=1d&limit=150`),
     spot(`/api/v3/klines?symbol=${pair}&interval=1w&limit=80`),
   ]);
-  let rawTicker = binanceTicker, rawCandles = binanceCandles, rawBtc = binanceBtc, rawDaily = binanceDaily, rawWeekly = binanceWeekly;
-  // Binance has no spot pair for some coins (or is unreachable from this region): use OKX spot instead.
-  if (!object(rawTicker) || !Array.isArray(rawCandles)) {
-    const fallback = await okxSpotFallback(symbol, timeframe);
-    if (fallback) {
-      rawTicker = fallback.ticker; rawCandles = fallback.candles;
-      if (fallback.daily) rawDaily = fallback.daily;
-      if (fallback.weekly) rawWeekly = fallback.weekly;
-      if (fallback.btc) rawBtc = fallback.btc;
+  const fromBinance: SpotData = { ticker: binanceTicker, candles: binanceCandles, daily: binanceDaily, weekly: binanceWeekly, btc: binanceBtc };
+  let chosen = validateSpot(fromBinance, timeframe);
+  const attempts: SpotData[] = [fromBinance];
+  // Binance has no usable spot data (no pair, delisted, stale or unreachable): take the first valid fallback source.
+  if (!chosen) {
+    const btcSource = okxSource('BTC', false);
+    const [btcTicker, ...results] = await Promise.all([btcSource.ticker(), ...fallbackSources(symbol).map(async source => {
+      const [ticker, candles, daily, weekly] = await Promise.all([
+        source.ticker(), source.candles(timeframe, 61), source.candles('1d', 150), source.candles('1w', 80)]);
+      return { ticker, candles, daily, weekly, btc: null } satisfies SpotData;
+    })]);
+    for (const result of results) {
+      attempts.push(result);
+      if (!chosen) {
+        const valid = validateSpot({ ...result, btc: btcTicker ?? binanceBtc }, timeframe);
+        if (valid) chosen = valid;
+      }
     }
   }
-  const ticker = object(rawTicker);
-  if (!ticker || !Array.isArray(rawCandles)) {
+  if (!chosen) {
     console.warn('Analysis market data unavailable', { symbol, timeframe,
-      tickerAvailable: !!ticker, candlesAvailable: Array.isArray(rawCandles) });
+      tickerAvailable: attempts.some(item => !!object(item.ticker)), candlesAvailable: attempts.some(item => Array.isArray(item.candles)) });
     return null;
   }
-  const price = numberOrNull(ticker.lastPrice);
-  const asOfMillis = numberOrNull(ticker.closeTime);
-  if (!price || !asOfMillis || Date.now() - asOfMillis > 5 * 60_000 || asOfMillis > Date.now() + 60_000) return null;
-  const candles = rawCandles.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now());
-  if (!candlesAreFresh(candles,timeframe)) return null;
-  const indicators = calculateIndicators(candles);
-  if (!indicators) return null;
+  const { ticker, price, asOfMillis, candles, indicators } = chosen;
+  const rawDaily = chosen.data.daily, rawWeekly = chosen.data.weekly, rawBtc = chosen.data.btc ?? binanceBtc;
   const closed = (raw: unknown) => Array.isArray(raw)
     ? raw.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now()) : [];
   if (indicators.structure) {
