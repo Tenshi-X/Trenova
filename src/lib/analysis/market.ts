@@ -1,4 +1,4 @@
-import { calculateIndicators, candlesAreFresh, higherTimeframeTrend, parseCandle, withHigherTimeframeLevels, type Candle, type MarketSnapshot, type Timeframe,
+import { calculateIndicators, candlesAreFresh, parseCandle, withHigherTimeframeLevels, TIMEFRAME_MILLIS, type Candle, type MarketSnapshot, type Timeframe,
   type CandleTimeframe, type TrendConfirmation } from './core';
 import { getDerivatives } from '../market-derivatives';
 
@@ -33,6 +33,46 @@ function numberOrNull(value: unknown): number | null {
   return value === null || value === undefined || !Number.isFinite(number) ? null : number;
 }
 
+
+// OKX spot as a fallback when Binance has no spot pair for the coin (e.g. LIT) or its hosts are unreachable.
+// The shapes are converted to Binance's so the rest of the pipeline is unchanged.
+const OKX_HOSTS = ['https://www.okx.com', 'https://aws.okx.com'];
+const OKX_BAR: Record<CandleTimeframe, string> = { '15m': '15m', '30m': '30m', '1h': '1H', '4h': '4H', '1d': '1Dutc', '1w': '1Wutc' };
+
+async function okx(path: string): Promise<unknown[] | null> {
+  for (const host of OKX_HOSTS) {
+    const body = object(await fetchJson(`${host}${path}`, 2500));
+    if (body && body.code === '0' && Array.isArray(body.data) && body.data.length) return body.data;
+  }
+  return null;
+}
+
+async function okxTicker(symbol: string): Promise<Record<string, unknown> | null> {
+  const row = object((await okx(`/api/v5/market/ticker?instId=${symbol}-USDT`))?.[0]);
+  const last = numberOrNull(row?.last); const open = numberOrNull(row?.open24h); const ts = numberOrNull(row?.ts);
+  if (!row || !last || !ts) return null;
+  return { lastPrice: String(last), closeTime: ts,
+    priceChangePercent: open ? String(((last - open) / open) * 100) : null,
+    quoteVolume: row.volCcy24h ?? null };
+}
+
+async function okxKlines(symbol: string, timeframe: CandleTimeframe, limit: number): Promise<unknown[] | null> {
+  const rows = await okx(`/api/v5/market/candles?instId=${symbol}-USDT&bar=${OKX_BAR[timeframe]}&limit=${limit}`);
+  if (!rows) return null;
+  const duration = TIMEFRAME_MILLIS[timeframe];
+  // OKX rows are newest first: [ts, o, h, l, c, vol, volCcy, volCcyQuote, confirm]; keep only closed candles.
+  return rows.filter((row): row is unknown[] => Array.isArray(row) && row[8] === '1')
+    .map(row => [Number(row[0]), row[1], row[2], row[3], row[4], row[5], Number(row[0]) + duration - 1])
+    .sort((a, b) => Number(a[0]) - Number(b[0]));
+}
+
+async function okxSpotFallback(symbol: string, timeframe: Timeframe) {
+  const [ticker, candles, daily, weekly, btc] = await Promise.all([
+    okxTicker(symbol), okxKlines(symbol, timeframe, 61), okxKlines(symbol, '1d', 150), okxKlines(symbol, '1w', 80), okxTicker('BTC'),
+  ]);
+  return ticker && candles ? { ticker, candles, daily, weekly, btc } : null;
+}
+
 export async function getTrendConfirmation(symbol: string, timeframe: CandleTimeframe): Promise<TrendConfirmation | null> {
   const raw = await spot(`/api/v3/klines?symbol=${symbol}USDT&interval=${timeframe}&limit=60`);
   if (!Array.isArray(raw)) return null;
@@ -49,7 +89,7 @@ export async function getTrendConfirmation(symbol: string, timeframe: CandleTime
 
 export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): Promise<MarketSnapshot | null> {
   const pair = `${symbol}USDT`;
-  const [rawTicker, rawCandles, rawBtc, rawFunding, rawOi, rawSentiment, derivatives, rawDaily, rawWeekly] = await Promise.all([
+  const [binanceTicker, binanceCandles, binanceBtc, rawFunding, rawOi, rawSentiment, derivatives, binanceDaily, binanceWeekly] = await Promise.all([
     spot(`/api/v3/ticker/24hr?symbol=${pair}`),
     spot(`/api/v3/klines?symbol=${pair}&interval=${timeframe}&limit=60`),
     spot('/api/v3/ticker/24hr?symbol=BTCUSDT'),
@@ -62,6 +102,17 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
     spot(`/api/v3/klines?symbol=${pair}&interval=1d&limit=150`),
     spot(`/api/v3/klines?symbol=${pair}&interval=1w&limit=80`),
   ]);
+  let rawTicker = binanceTicker, rawCandles = binanceCandles, rawBtc = binanceBtc, rawDaily = binanceDaily, rawWeekly = binanceWeekly;
+  // Binance has no spot pair for some coins (or is unreachable from this region): use OKX spot instead.
+  if (!object(rawTicker) || !Array.isArray(rawCandles)) {
+    const fallback = await okxSpotFallback(symbol, timeframe);
+    if (fallback) {
+      rawTicker = fallback.ticker; rawCandles = fallback.candles;
+      if (fallback.daily) rawDaily = fallback.daily;
+      if (fallback.weekly) rawWeekly = fallback.weekly;
+      if (fallback.btc) rawBtc = fallback.btc;
+    }
+  }
   const ticker = object(rawTicker);
   if (!ticker || !Array.isArray(rawCandles)) {
     console.warn('Analysis market data unavailable', { symbol, timeframe,
@@ -77,12 +128,9 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
   if (!indicators) return null;
   const closed = (raw: unknown) => Array.isArray(raw)
     ? raw.map(parseCandle).filter((candle): candle is Candle => candle !== null && candle.closeTime <= Date.now()) : [];
-  const dailyCandles = closed(rawDaily);
-  const weeklyCandles = closed(rawWeekly);
   if (indicators.structure) {
-    indicators.structure = withHigherTimeframeLevels(indicators.structure, price, indicators.atr, dailyCandles, weeklyCandles);
+    indicators.structure = withHigherTimeframeLevels(indicators.structure, price, indicators.atr, closed(rawDaily), closed(rawWeekly));
   }
-  const higherTrend = higherTimeframeTrend(timeframe, dailyCandles, weeklyCandles);
   const recentObject = (raw: unknown, field: string, ttl = 300000, seconds = false) => {
     const data = object(raw); const timestamp = numberOrNull(data?.[field]);
     const millis = timestamp === null ? null : timestamp * (seconds ? 1000 : 1);
@@ -117,7 +165,6 @@ export async function getMarketSnapshot(symbol: string, timeframe: Timeframe): P
       openInterest: oi ? new Date(Number(oi.time)).toISOString() : (openInterestUsd !== null ? derivativesAt : null),
       sentiment: sentimentItem ? new Date(Number(sentimentItem.timestamp) * 1000).toISOString() : null },
     ...indicators,
-    higherTrend,
     recentCandles: candles.slice(-24),
   };
 }
