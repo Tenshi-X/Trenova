@@ -17,7 +17,7 @@ function loadDerivatives() {
   return m.exports;
 }
 
-function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false, okxFunding = false } = {}) {
+function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false, okxFunding = false, okxSpot = false } = {}) {
   const urls = [];
   const warnings = [];
   const now = Date.now();
@@ -26,6 +26,23 @@ function marketModule({ primaryBlocked = false, allBlocked = false, stale = fals
     const parsed = new URL(url);
     if (allBlocked || (primaryBlocked && parsed.host === 'data-api.binance.vision')) {
       return Response.json({ code: 0, msg: 'Unavailable' }, { status: 451 });
+    }
+    if (okxSpot && parsed.pathname.startsWith('/api/v3/')) return Response.json({ code: -1121, msg: 'Invalid symbol.' }, { status: 400 });
+    if (okxSpot && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/ticker') {
+      return Response.json({ code: '0', data: [{ instId: parsed.searchParams.get('instId'), last: '100', open24h: '98', ts: String(now - 1000), volCcy24h: '2000000' }] });
+    }
+    if (okxSpot && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/candles') {
+      const bar = parsed.searchParams.get('bar');
+      const interval = { '15m': '15m', '30m': '30m', '1H': '1h', '4H': '4h', '1Dutc': '1d', '1Wutc': '1w' }[bar];
+      const duration = core.TIMEFRAME_MILLIS[interval];
+      const limit = Number(parsed.searchParams.get('limit'));
+      const currentOpen = Math.floor(now / duration) * duration;
+      // OKX returns newest first and includes the unfinished candle (confirm = '0').
+      const rows = Array.from({ length: limit }, (_, i) => {
+        const open = currentOpen - i * duration;
+        return [String(open), '99', '102', '98', '100', '10', '1000', '100000', i === 0 ? '0' : '1'];
+      });
+      return Response.json({ code: '0', data: rows });
     }
     if (parsed.pathname === '/api/v3/ticker/24hr') {
       return Response.json({ lastPrice: '100', closeTime: now - (stale ? 600000 : 1000),
@@ -123,4 +140,24 @@ test('funding and open interest fall back to the multi-exchange data when Binanc
   assert.ok(Math.abs(snapshot.fundingRate - 0.0001) < 1e-12, 'percent from the aggregator is converted back to a decimal');
   assert.equal(snapshot.openInterestUsd, 5000000000);
   assert.ok(snapshot.sourceTimes.funding && snapshot.sourceTimes.openInterest);
+});
+
+test('coins missing on Binance spot (e.g. LIT) fall back to OKX spot for every timeframe', async () => {
+  for (const timeframe of core.TIMEFRAMES) {
+    const provider = marketModule({ okxSpot: true });
+    const snapshot = await provider.getMarketSnapshot('LIT', timeframe);
+    assert.ok(snapshot, timeframe);
+    assert.equal(snapshot.symbol, 'LIT');
+    assert.equal(snapshot.price, 100);
+    assert.ok(Math.abs(snapshot.change24h - (2 / 98) * 100) < 1e-9);
+    assert.equal(snapshot.volume24hUsd, 2000000);
+    assert.ok(snapshot.recentCandles.length > 0 && snapshot.recentCandles.every(candle => candle.closeTime <= Date.now()));
+    assert.ok(snapshot.structure, 'structure is built from the OKX candles');
+    assert.deepEqual(provider.warnings, []);
+  }
+});
+
+test('OKX fallback still fails closed when OKX has no data either', async () => {
+  const provider = marketModule({ allBlocked: true });
+  assert.equal(await provider.getMarketSnapshot('LIT', '1h'), null);
 });

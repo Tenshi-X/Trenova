@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     getMarketSnapshot(input.symbol, input.timeframe),
     input.higherTimeframeConfirmation ? getTrendConfirmation(input.symbol, CONFIRMATION_TIMEFRAME[input.timeframe]) : null,
   ]);
-  if (!market) return jsonError('Data pasar tidak lengkap atau sudah kedaluwarsa. Coba lagi nanti.', 422);
+  if (!market) return jsonError('Data pasar untuk koin ini belum tersedia atau sudah kedaluwarsa. Kuota belum terpakai. Coba lagi sebentar lagi, atau pilih koin atau timeframe lain.', 422);
   if (input.higherTimeframeConfirmation && !confirmation) {
     return jsonError('Data konfirmasi timeframe lebih tinggi tidak tersedia atau kedaluwarsa. Coba lagi nanti atau nonaktifkan konfirmasi.', 422);
   }
