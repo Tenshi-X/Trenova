@@ -17,7 +17,7 @@ function loadDerivatives() {
   return m.exports;
 }
 
-function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false, okxFunding = false, okxSpot = false } = {}) {
+function marketModule({ primaryBlocked = false, allBlocked = false, stale = false, missingCandle = false, okxFunding = false, only = null } = {}) {
   const urls = [];
   const warnings = [];
   const now = Date.now();
@@ -27,22 +27,41 @@ function marketModule({ primaryBlocked = false, allBlocked = false, stale = fals
     if (allBlocked || (primaryBlocked && parsed.host === 'data-api.binance.vision')) {
       return Response.json({ code: 0, msg: 'Unavailable' }, { status: 451 });
     }
-    if (okxSpot && parsed.pathname.startsWith('/api/v3/')) return Response.json({ code: -1121, msg: 'Invalid symbol.' }, { status: 400 });
-    if (okxSpot && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/ticker') {
-      return Response.json({ code: '0', data: [{ instId: parsed.searchParams.get('instId'), last: '100', open24h: '98', ts: String(now - 1000), volCcy24h: '2000000' }] });
+    if (only && !stale && parsed.pathname.startsWith('/api/v3/')) return Response.json({ code: -1121, msg: 'Invalid symbol.' }, { status: 400 });
+    if (only && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/ticker') {
+      const instId = parsed.searchParams.get('instId');
+      const source = instId.endsWith('-SWAP') ? 'okx-swap' : 'okx-spot';
+      if (source !== only && instId !== 'BTC-USDT') return Response.json({ code: '51001', msg: "Instrument ID doesn't exist", data: [] });
+      return Response.json({ code: '0', data: [{ instId, last: '100', open24h: '98', ts: String(now - 1000), volCcy24h: source === 'okx-swap' ? '20000' : '2000000' }] });
     }
-    if (okxSpot && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/candles') {
-      const bar = parsed.searchParams.get('bar');
-      const interval = { '15m': '15m', '30m': '30m', '1H': '1h', '4H': '4h', '1Dutc': '1d', '1Wutc': '1w' }[bar];
+    if (only && parsed.host === 'www.okx.com' && parsed.pathname === '/api/v5/market/candles') {
+      const source = parsed.searchParams.get('instId').endsWith('-SWAP') ? 'okx-swap' : 'okx-spot';
+      if (source !== only) return Response.json({ code: '51001', msg: "Instrument ID doesn't exist", data: [] });
+      const interval = { '15m': '15m', '30m': '30m', '1H': '1h', '4H': '4h', '1Dutc': '1d', '1Wutc': '1w' }[parsed.searchParams.get('bar')];
       const duration = core.TIMEFRAME_MILLIS[interval];
-      const limit = Number(parsed.searchParams.get('limit'));
       const currentOpen = Math.floor(now / duration) * duration;
       // OKX returns newest first and includes the unfinished candle (confirm = '0').
-      const rows = Array.from({ length: limit }, (_, i) => {
+      const rows = Array.from({ length: Number(parsed.searchParams.get('limit')) }, (_, i) => {
         const open = currentOpen - i * duration;
         return [String(open), '99', '102', '98', '100', '10', '1000', '100000', i === 0 ? '0' : '1'];
       });
       return Response.json({ code: '0', data: rows });
+    }
+    if (only && parsed.host === 'api.bybit.com' && parsed.pathname === '/v5/market/tickers') {
+      if (`bybit-${parsed.searchParams.get('category')}` !== only) return Response.json({ retCode: 10001, result: {} });
+      return Response.json({ retCode: 0, time: now, result: { list: [{ symbol: parsed.searchParams.get('symbol'), lastPrice: '100', price24hPcnt: '0.02', turnover24h: '3000000' }] } });
+    }
+    if (only && parsed.host === 'api.bybit.com' && parsed.pathname === '/v5/market/kline') {
+      if (`bybit-${parsed.searchParams.get('category')}` !== only) return Response.json({ retCode: 10001, result: {} });
+      const interval = { '15': '15m', '30': '30m', '60': '1h', '240': '4h', D: '1d', W: '1w' }[parsed.searchParams.get('interval')];
+      const duration = core.TIMEFRAME_MILLIS[interval];
+      const currentOpen = Math.floor(now / duration) * duration;
+      // Bybit returns newest first and includes the unfinished candle.
+      const rows = Array.from({ length: Number(parsed.searchParams.get('limit')) }, (_, i) => {
+        const open = currentOpen - i * duration;
+        return [String(open), '99', '102', '98', '100', '10', '1000'];
+      });
+      return Response.json({ retCode: 0, result: { list: rows } });
     }
     if (parsed.pathname === '/api/v3/ticker/24hr') {
       return Response.json({ lastPrice: '100', closeTime: now - (stale ? 600000 : 1000),
@@ -142,22 +161,45 @@ test('funding and open interest fall back to the multi-exchange data when Binanc
   assert.ok(snapshot.sourceTimes.funding && snapshot.sourceTimes.openInterest);
 });
 
-test('coins missing on Binance spot (e.g. LIT) fall back to OKX spot for every timeframe', async () => {
-  for (const timeframe of core.TIMEFRAMES) {
-    const provider = marketModule({ okxSpot: true });
-    const snapshot = await provider.getMarketSnapshot('LIT', timeframe);
-    assert.ok(snapshot, timeframe);
-    assert.equal(snapshot.symbol, 'LIT');
-    assert.equal(snapshot.price, 100);
-    assert.ok(Math.abs(snapshot.change24h - (2 / 98) * 100) < 1e-9);
-    assert.equal(snapshot.volume24hUsd, 2000000);
-    assert.ok(snapshot.recentCandles.length > 0 && snapshot.recentCandles.every(candle => candle.closeTime <= Date.now()));
-    assert.ok(snapshot.structure, 'structure is built from the OKX candles');
-    assert.deepEqual(provider.warnings, []);
+for (const only of ['okx-spot', 'okx-swap', 'bybit-linear', 'bybit-spot']) {
+  test(`coins missing on Binance spot (e.g. LIT) fall back to ${only} for every timeframe`, async () => {
+    for (const timeframe of core.TIMEFRAMES) {
+      const provider = marketModule({ only });
+      const snapshot = await provider.getMarketSnapshot('LIT', timeframe);
+      assert.ok(snapshot, `${only} ${timeframe}`);
+      assert.equal(snapshot.symbol, 'LIT');
+      assert.equal(snapshot.price, 100);
+      assert.ok(Math.abs(snapshot.change24h - 2.0408163265306123) < 1e-6 || Math.abs(snapshot.change24h - 2) < 1e-9);
+      assert.ok(snapshot.volume24hUsd > 0);
+      assert.ok(snapshot.recentCandles.length > 0 && snapshot.recentCandles.every(candle => candle.closeTime <= Date.now()));
+      assert.ok(snapshot.structure, 'structure is built from the fallback candles');
+      assert.deepEqual(provider.warnings, []);
+    }
+  });
+}
+
+test('swap volume is converted from coins to USDT', async () => {
+  const snapshot = await marketModule({ only: 'okx-swap' }).getMarketSnapshot('LIT', '1h');
+  assert.equal(snapshot.volume24hUsd, 20000 * 100);
+});
+
+test('a stale Binance price no longer blocks the analysis when another source is fresh', async () => {
+  const snapshot = await marketModule({ stale: true, only: 'okx-swap' }).getMarketSnapshot('LIT', '1h');
+  assert.ok(snapshot);
+  assert.equal(snapshot.price, 100);
+  assert.ok(snapshot.volume24hUsd === 20000 * 100, 'values come from the fresh OKX source, not stale Binance');
+  assert.equal(await marketModule({ stale: true }).getMarketSnapshot('BTC', '1h'), null, 'still null when nothing fresh exists');
+});
+
+test('higher timeframe confirmation also falls back for coins outside Binance', async () => {
+  for (const only of ['okx-spot', 'okx-swap', 'bybit-linear']) {
+    const confirmation = await marketModule({ only }).getTrendConfirmation('LIT', '4h');
+    assert.ok(confirmation, only); assert.equal(confirmation.timeframe, '4h');
   }
 });
 
-test('OKX fallback still fails closed when OKX has no data either', async () => {
+test('fallbacks still fail closed when no source has the coin', async () => {
   const provider = marketModule({ allBlocked: true });
   assert.equal(await provider.getMarketSnapshot('LIT', '1h'), null);
+  assert.equal(await provider.getTrendConfirmation('LIT', '4h'), null);
 });
