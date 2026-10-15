@@ -1,5 +1,5 @@
 export const ANALYSIS_MODEL = 'gemini-3.8-flash';
-export const MAX_INPUT_TOKENS = 4000;
+export const MAX_INPUT_TOKENS = 5500;
 export const MAX_OUTPUT_TOKENS = 2200;
 export const MIN_OUTPUT_TOKENS = 1700;
 export const ANALYSIS_THINKING_LEVEL = 'LOW';

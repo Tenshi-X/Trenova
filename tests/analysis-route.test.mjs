@@ -208,7 +208,7 @@ test('very wide charts are padded to a square before provider token accounting',
 
 test('token counting failure or oversized input never reserves quota or generates analysis', () => withProviderKey(async () => {
   for (const [options, expected] of [[{ countStatus: 503 }, 503], [{ countedInput: null }, 503],
-    [{ countedInput: '1000' }, 503], [{ countedInput: 0 }, 503], [{ countedInput: 4001 }, 413]]) {
+    [{ countedInput: '1000' }, 503], [{ countedInput: 0 }, 503], [{ countedInput: 5500 }, 413]]) {
     const { handler, calls } = route(options);
     assert.equal((await handler(request())).status, expected);
     assert.deepEqual(calls, ['count_tokens']);
