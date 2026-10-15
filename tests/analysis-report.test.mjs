@@ -149,3 +149,15 @@ test('contradictory EMA crossover claims are repaired while conditional scenario
   const reason = 'Jika EMA20 memotong ke bawah EMA50, evaluasi ulang arah rencana.';
   assert.equal(enrichTechnicalAnalysis(aiExplanation({ reason }), base, technicalMarket).reason, reason);
 });
+
+test('an implausible alternative plan is dropped instead of failing the whole analysis', () => {
+  const market = { ...technicalMarket, price: 100, atr: 1, ema20: 101,
+    structure: { ...technicalMarket.structure, trend: 'bearish', support: 98, resistance: 140 } };
+  const report = buildTechnicalAnalysis({ ...input, marketType: 'futures', directionPreference: 'auto' }, market);
+  assert.equal(report.setups.length, 1);
+  assert.equal(report.setups[0].direction, 'SHORT');
+  assert.ok(report.warnings.some(warning => warning.includes('LONG')));
+  // When no plan is plausible the analysis still fails closed.
+  const hopeless = { ...market, structure: { ...market.structure, support: 10, resistance: 140 } };
+  assert.throws(() => buildTechnicalAnalysis({ ...input, marketType: 'futures', directionPreference: 'auto' }, hopeless));
+});
