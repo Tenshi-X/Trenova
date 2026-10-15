@@ -138,8 +138,7 @@ export async function POST(request: Request) {
   };
   // Count the entire request, including image/schema, before reserving a credit.
   // This allows useful context without treating every UTF-8 byte as a token.
-  let upperInput: number;
-  try {
+  const countInput = async (): Promise<number> => {
     const counted = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${ANALYSIS_MODEL}:countTokens`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({ generateContentRequest: { model: `models/${ANALYSIS_MODEL}`, ...generationRequest } }),
@@ -147,7 +146,16 @@ export async function POST(request: Request) {
     });
     const metadata = await counted.json();
     if (!counted.ok || !Number.isInteger(metadata?.totalTokens) || metadata.totalTokens <= 0) throw new Error('invalid_token_count');
-    upperInput = metadata.totalTokens + 256;
+    return metadata.totalTokens + 256;
+  };
+  let upperInput: number;
+  try {
+    upperInput = await countInput();
+    // A screenshot is optional: if it pushes the request over budget, analyse without it instead of failing.
+    if (upperInput > MAX_INPUT_TOKENS && parts.length > 1) {
+      parts.pop();
+      upperInput = await countInput();
+    }
   } catch {
     return jsonError('Pemeriksaan batas biaya AI belum tersedia. Kuota belum digunakan; coba lagi.', 503);
   }
