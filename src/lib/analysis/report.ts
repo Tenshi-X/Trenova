@@ -151,11 +151,24 @@ export function buildTechnicalAnalysis(input: AnalysisInput, market: MarketSnaps
     actionPlan: copy(`Periksa lagi setelah candle ${input.timeframe} tutup. Entry hanya setelah pemicu terpenuhi; hitung ukuran posisi sesuai risiko akun. Evaluasi hambatan support/resistance sebelum TP; jika posisi aktif, gunakan SL dan tinjau posisi di TP1.`,
       `Recheck after the ${input.timeframe} candle closes. Enter only after the trigger; size the position for account risk. Assess support/resistance barriers before TP; once in a position, use SL and review at TP1.`),
   };
-  const report = validateModelAnalysis({ verdict: 'WAIT', setups, insights,
-    reason: copy(`Rencana ${setups[0].direction} disusun dari support/resistance candle tertutup dan ATR. Entry menunggu pemicu terukur; target R:R harus ditinjau terhadap hambatan harga dan biaya transaksi.`,
-      `The ${setups[0].direction} plan uses closed-candle support/resistance and ATR. Entry needs a measurable trigger; assess RR targets against price barriers and transaction costs.`),
-    wait_for: setups[0].trigger,
+  const validateSetups = (list: AnalysisSetup[]) => validateModelAnalysis({ verdict: 'WAIT', setups: list, insights,
+    reason: copy(`Rencana ${list[0].direction} disusun dari support/resistance candle tertutup dan ATR. Entry menunggu pemicu terukur; target R:R harus ditinjau terhadap hambatan harga dan biaya transaksi.`,
+      `The ${list[0].direction} plan uses closed-candle support/resistance and ATR. Entry needs a measurable trigger; assess RR targets against price barriers and transaction costs.`),
+    wait_for: list[0].trigger,
   }, input, market);
+  // One implausible alternative (e.g. a level too far from the current price) must not discard a valid plan.
+  let report: AnalysisV2;
+  let dropped: AnalysisSetup['direction'][] = [];
+  try { report = validateSetups(setups); }
+  catch (error) {
+    const usable = setups.filter(setup => { try { validateSetups([setup]); return true; } catch { return false; } });
+    if (!usable.length) throw error;
+    dropped = setups.filter(setup => !usable.includes(setup)).map(setup => setup.direction);
+    report = validateSetups(usable);
+  }
+  if (dropped.length) report.warnings.push(copy(
+    `Rencana ${dropped.join(', ')} tidak ditampilkan karena level entry/SL/TP terlalu jauh dari harga saat ini.`,
+    `The ${dropped.join(', ')} plan is hidden because its entry/SL/TP levels are too far from the current price.`));
   report.wait_for = report.setups[0].trigger!;
   const lead = report.setups[0].quality;
   if (lead?.status === 'NO_TRADE') report.warnings.push(copy(
