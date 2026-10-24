@@ -179,6 +179,8 @@ export default function AdminPage() {
       </div>
       <div className="flex flex-wrap gap-3 text-sm font-bold">
         <Link href="/admin/insights" className="rounded-lg border border-neon px-4 py-2 text-neon">Biaya & laporan</Link>
+        <Link href="/admin/macro" className="rounded-lg border border-neon px-4 py-2 text-neon">Kalender makro</Link>
+        <Link href="/admin/backtest" className="rounded-lg border border-neon px-4 py-2 text-neon">Backtest</Link>
       </div>
       {error && <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-rose-300">{error}</p>}
 

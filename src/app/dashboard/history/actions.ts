@@ -4,6 +4,8 @@ import { getSessionProfile } from '@/lib/authz';
 import type { AnalysisV2, Candle, Timeframe } from '@/lib/analysis/core';
 import { parseCandle, TIMEFRAMES } from '@/lib/analysis/core';
 import { evaluateSetupOutcome } from '@/lib/analysis/outcome';
+import { planItemsFor, refreshPlanTracking, type AnalysisRow } from '@/lib/analysis/tracking-service';
+import { summarizeTracks, type PlanStatus, type TrackingView, type TrackStats } from '@/lib/analysis/tracking';
 
 export type HistoryRow = {
   id: string; created_at: string; analysis_json: unknown; coin_symbol: string | null;
@@ -81,4 +83,52 @@ export async function checkHistoryOutcome(id: string) {
   await context.admin.from('analysis_results').update({ outcome_json: result })
     .eq('id', id).eq('user_id', context.user.id);
   return { result };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TRACKING_COLUMNS = 'analysis_id,setup_index,direction,status,final,triggered_at,filled_at,closed_at,tp1_at,tp2_at,r,ambiguous,stopped_after_tp1,checked_at';
+const REFRESH_AFTER_MS = 60_000;
+
+/**
+ * Status of every trade plan on the given history rows. Plans that can still change are recomputed from candles
+ * that closed after the analysis; finished plans are served from the database without calling the exchange.
+ */
+export async function getPlanTracking(ids: string[]): Promise<{ tracking: TrackingView[]; pending?: number; error?: string }> {
+  const context = await getSessionProfile();
+  if (!context) return { tracking: [], error: 'Silakan masuk kembali.' };
+  if (context.profile.enabled_features?.history === false) return { tracking: [], error: 'Riwayat tidak tersedia pada paket ini.' };
+  if (!Array.isArray(ids) || ids.length > 10 || ids.some(id => typeof id !== 'string' || !UUID.test(id))) return { tracking: [], error: 'Permintaan tidak valid.' };
+  if (!ids.length) return { tracking: [] };
+  const { admin, user } = context;
+  const [owned, current] = await Promise.all([
+    admin.from('analysis_results').select('id,user_id,coin_symbol,timeframe,created_at,analysis_json').eq('user_id', user.id).in('id', ids),
+    admin.from('plan_tracking').select(TRACKING_COLUMNS).eq('user_id', user.id).in('analysis_id', ids),
+  ]);
+  if (owned.error) return { tracking: [], error: 'Status rencana belum dapat dimuat.' };
+  const stored = (current.data ?? []) as TrackingView[];
+  const byKey = new Map(stored.map(row => [`${row.analysis_id}:${row.setup_index}`, row]));
+  const stale = (owned.data as AnalysisRow[] ?? []).filter(row => planItemsFor(row).some(item => {
+    const existing = byKey.get(`${item.analysisId}:${item.setupIndex}`);
+    return !existing || (!existing.final && Date.now() - Date.parse(existing.checked_at) > REFRESH_AFTER_MS);
+  }));
+  let pending = 0;
+  if (stale.length) {
+    const refreshed = await refreshPlanTracking(admin, stale, { budgetMs: 8000, maxGroups: 8 });
+    pending = refreshed.deferred + refreshed.unavailable;
+  }
+  const { data, error } = await admin.from('plan_tracking').select(TRACKING_COLUMNS).eq('user_id', user.id).in('analysis_id', ids);
+  return error ? { tracking: stored, pending, error: 'Status rencana belum dapat dimuat.' } : { tracking: (data ?? []) as TrackingView[], pending };
+}
+
+/** Totals over all of the user's tracked plans (most recent 2.000). */
+export async function getTrackingStats(): Promise<{ stats?: TrackStats; ambiguous?: number; error?: string }> {
+  const context = await getSessionProfile();
+  if (!context) return { error: 'Silakan masuk kembali.' };
+  if (context.profile.enabled_features?.history === false) return { error: 'Riwayat tidak tersedia pada paket ini.' };
+  const { data, error } = await context.admin.from('plan_tracking').select('status,r,direction,timeframe,ambiguous')
+    .eq('user_id', context.user.id).order('created_at', { ascending: false }).limit(2000);
+  if (error) return { error: 'Statistik belum dapat dimuat.' };
+  const rows = (data ?? []) as Array<{ status: PlanStatus; r: number | null;
+    direction: 'LONG' | 'SHORT'; timeframe: string | null; ambiguous: boolean }>;
+  return { stats: summarizeTracks(rows), ambiguous: rows.filter(row => row.ambiguous).length };
 }

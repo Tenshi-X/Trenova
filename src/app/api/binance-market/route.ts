@@ -132,7 +132,8 @@ async function cgMarkets() {
   } catch { return null; }
 }
 export async function GET(req: Request) {
-  const debug = new URL(req.url).searchParams.get('debug') === '1';
+  // Upstream host details are for local debugging only; never exposed by the public production endpoint.
+  const debug = process.env.NODE_ENV !== 'production' && new URL(req.url).searchParams.get('debug') === '1';
   const attempts: { provider: string; ok: boolean; ms: number; error?: string }[] = [];
   const timed = async <T,>(provider: string, fn: () => Promise<T>): Promise<T | null> => {
     const t0 = Date.now();

@@ -5,7 +5,10 @@ import Link from 'next/link';
 import AnalysisVisualizer from '@/components/AnalysisVisualizer';
 import AnalysisResultV2 from '@/components/AnalysisResultV2';
 import type { AnalysisV2 } from '@/lib/analysis/core';
-import { checkHistoryOutcome, listHistory, reportHistory, saveHistoryNote, type HistoryRow } from './actions';
+import PlanStatusBadge from '@/components/PlanStatusBadge';
+import PlanStatsCard from '@/components/PlanStatsCard';
+import type { TrackingView, TrackStats } from '@/lib/analysis/tracking';
+import { checkHistoryOutcome, getPlanTracking, getTrackingStats, listHistory, reportHistory, saveHistoryNote, type HistoryRow } from './actions';
 
 function legacyContent(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -35,11 +38,29 @@ export default function HistoryPage() {
     setRows(result.rows); setTotal(result.total);
     if (result.error) setMessage(result.error);
   };
+  const [tracking, setTracking] = useState<TrackingView[]>([]);
+  const [trackingBusy, setTrackingBusy] = useState(false);
+  const [trackingNote, setTrackingNote] = useState('');
+  const [stats, setStats] = useState<{ stats: TrackStats; ambiguous: number } | null>(null);
   useEffect(() => {
-    listHistory(page, query).then((result) => {
+    let active = true;
+    listHistory(page, query).then(async (result) => {
+      if (!active) return;
       setRows(result.rows); setTotal(result.total);
       if (result.error) setMessage(result.error);
+      // Plan status is computed from exchange candles, so it loads after the list is already visible.
+      const ids = result.rows.map(row => row.id).slice(0, 10);
+      if (!ids.length) return;
+      setTrackingBusy(true); setTrackingNote('');
+      const [plans, totals] = await Promise.all([getPlanTracking(ids), getTrackingStats()]);
+      if (!active) return;
+      setTracking(plans.tracking);
+      if (plans.error) setTrackingNote(plans.error);
+      else if (plans.pending) setTrackingNote('Sebagian status belum bisa diperbarui (data pasar belum tersedia). Coba muat ulang nanti.');
+      if (totals.stats) setStats({ stats: totals.stats, ambiguous: totals.ambiguous ?? 0 });
+      setTrackingBusy(false);
     });
+    return () => { active = false; };
   }, [page, query]);
   return <main className="max-w-5xl mx-auto p-4 pb-20 space-y-6 text-foreground">
     <Link href="/dashboard" className="text-neon text-sm">← Dashboard</Link>
@@ -49,17 +70,22 @@ export default function HistoryPage() {
       <button className="rounded-xl bg-neon px-5 font-bold text-white">Cari</button>
     </form>
     {message && <p role="status" className="rounded-lg bg-slate-100 dark:bg-slate-800 p-3">{message}</p>}
+    {stats && stats.stats.plans > 0 && <PlanStatsCard stats={stats.stats} ambiguous={stats.ambiguous} />}
+    {(trackingBusy || trackingNote) && <p className="text-xs text-slate-500">{trackingBusy ? 'Memperbarui status rencana…' : trackingNote}</p>}
     <p className="text-sm text-slate-500">{total} hasil · halaman {page}</p>
     {rows.map((row) => {
       const raw = row.analysis_json;
       const v2 = raw && typeof raw === 'object' && (raw as AnalysisV2).version === 2 ? raw as AnalysisV2 : null;
+      const mine = tracking.filter(track => track.analysis_id === row.id);
+      const lead = mine.find(track => track.setup_index === 0);
       return <article key={row.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 space-y-3">
         <button className="w-full text-left flex justify-between" onClick={() => setExpanded(expanded === row.id ? null : row.id)}>
-          <div><strong>{row.coin_name || row.coin_symbol || 'Analisis lama'}</strong><p className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString('id-ID')} · {v2?.verdict === 'WAIT' && v2.setups.length ? `Rencana ${v2.setups[0].direction} bersyarat` : v2?.verdict || 'Arsip'}</p></div>
+          <div><strong>{row.coin_name || row.coin_symbol || 'Analisis lama'}</strong><p className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString('id-ID')} · {v2?.verdict === 'WAIT' && v2.setups.length ? `Rencana ${v2.setups[0].direction} bersyarat` : v2?.verdict || 'Arsip'}</p>
+            {lead && <div className="mt-1"><PlanStatusBadge track={lead} /></div>}</div>
           <span>{expanded === row.id ? 'Tutup' : 'Lihat'}</span>
         </button>
         {expanded === row.id && <div className="space-y-4 border-t pt-4">
-          {v2 ? <AnalysisResultV2 result={v2} coinName={row.coin_name || row.coin_symbol || 'Crypto'} />
+          {v2 ? <AnalysisResultV2 result={v2} coinName={row.coin_name || row.coin_symbol || 'Crypto'} tracking={mine} />
             : <AnalysisVisualizer markdown={legacyContent(raw)} coinName={row.coin_name || row.coin_symbol || 'Crypto'} instant />}
           <label className="block text-sm font-semibold">Catatan pribadi
             <textarea className="mt-1 w-full rounded-lg border bg-transparent p-2" maxLength={1000} defaultValue={row.user_note || ''} id={`note-${row.id}`} />
@@ -80,7 +106,7 @@ export default function HistoryPage() {
               setMessage(result.error || 'Laporan dikirim ke admin.'); setBusy(false);
             }}>Laporkan hasil keliru</button>
           </div>
-          {v2?.setups.some(setup => setup.execution === 'CONDITIONAL') && <p className="text-xs text-slate-500">Pemeriksaan TP/SL otomatis belum tersedia untuk rencana bersyarat karena pemicu masuk perlu dikonfirmasi terlebih dahulu.</p>}
+          {v2?.setups.some(setup => setup.execution === 'CONDITIONAL') && <p className="text-xs text-slate-500">Status rencana dihitung otomatis dari candle yang sudah tutup setelah analisis (pemicu, retest, FILLED, TP/SL). Rencana tidak dipantau setiap detik; status diperbarui saat halaman ini dibuka.</p>}
           {outcomeText(row.outcome_json) && <p className="text-sm rounded-lg bg-slate-100 dark:bg-slate-800 p-3">{outcomeText(row.outcome_json)}. Ini simulasi dari candle, dengan target utama TP1; urutan sentuhan dalam satu candle dapat tidak pasti.</p>}
         </div>}
       </article>;

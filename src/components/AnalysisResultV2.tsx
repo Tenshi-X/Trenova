@@ -6,8 +6,10 @@ import { useLanguage } from '@/context/LanguageContext';
 import AnalysisStoryExport from '@/components/AnalysisStoryExport';
 import AnalysisPlanMap from '@/components/AnalysisPlanMap';
 import PlanGuide from '@/components/PlanGuide';
+import PlanStatusBadge from '@/components/PlanStatusBadge';
+import type { TrackingView } from '@/lib/analysis/tracking';
 
-export default function AnalysisResultV2({ result, coinName }: { result: AnalysisV2; coinName: string }) {
+export default function AnalysisResultV2({ result, coinName, tracking }: { result: AnalysisV2; coinName: string; tracking?: TrackingView[] }) {
   const { language, t } = useLanguage();
   const copy = (id: string, en: string) => language === 'id' ? id : en;
   const price = (value: number) => value.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' USDT';
@@ -99,6 +101,10 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
             {pending ? copy('Bersyarat', 'Conditional') : copy('Setup siap', 'Setup ready')}
           </span>
         </div>
+        {tracking?.find(track => track.setup_index === index) && <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm">
+          <strong>{copy('Status rencana:', 'Plan status:')}</strong>
+          <PlanStatusBadge track={tracking.find(track => track.setup_index === index) as TrackingView} />
+        </div>}
         <div className="grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4 gap-3 text-sm">
           {[[copy('Zona Entry', 'Entry zone'), setup.entryLow.toLocaleString('en-US', { maximumSignificantDigits: 8 }) + ' – ' + price(setup.entryHigh)],
             ['SL · Stop Loss', price(setup.stopLoss)], ['TP1 · Take Profit', price(setup.takeProfit1)],

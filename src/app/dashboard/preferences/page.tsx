@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Star, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import AlertSettingsCard from '@/components/AlertSettingsCard';
 import { getPreferences, savePreferences, type UserPreset } from './actions';
 
 export default function PreferencesPage() {
@@ -58,6 +59,7 @@ export default function PreferencesPage() {
           <button type="button" disabled={busy} className="terminal-icon-button" aria-label={copy(`Hapus favorit ${symbol}`, `Remove favorite ${symbol}`)} onClick={() => void save(presets, watchlist.filter(value => value !== symbol))}><Trash2 size={14} /></button>
         </div>)}</div>
       </section>
+      <AlertSettingsCard />
     </>}
   </div>;
 }

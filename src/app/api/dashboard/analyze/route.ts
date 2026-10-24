@@ -6,7 +6,7 @@ import {
   RESPONSE_SCHEMA, buildPrompt, parseAnalysisInput,
   outputBudgetForCost, analysisCostIdr, analysisPricing,
   isRolloutAllowed,
-  CONFIRMATION_TIMEFRAME,
+  CONFIRMATION_TIMEFRAME, isStablecoin,
 } from '@/lib/analysis/core';
 import { getMarketSnapshot, getTrendConfirmation } from '@/lib/analysis/market';
 import { buildTechnicalAnalysis, enrichTechnicalAnalysis, technicalFallback } from '@/lib/analysis/report';
@@ -76,6 +76,7 @@ export async function POST(request: Request) {
   }
   const input = parseAnalysisInput(rawBody);
   if (!input) return jsonError('Pilihan analisis tidak valid.', 400);
+  if (isStablecoin(input.symbol)) return jsonError('Stablecoin harganya dikunci ke aset lain, jadi tidak dianalisis. Kuota Anda tidak terpakai; pilih koin lain.', 400);
   const { data: existingRun } = await admin.from('analysis_runs').select('id,status,result_id,created_at')
     .eq('user_id',user.id).eq('request_key',input.requestKey).maybeSingle();
   if (existingRun?.status === 'completed' && existingRun.result_id) {

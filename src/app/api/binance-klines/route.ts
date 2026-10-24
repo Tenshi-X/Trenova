@@ -68,8 +68,11 @@ async function coinbaseKlines(cbId: string, interval: string, limit: string) {
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const rawSymbol = (searchParams.get('symbol') || '').toUpperCase();
-  const interval = searchParams.get('interval') || '1h';
-  const limit = searchParams.get('limit') || '100';
+  // Only the intervals the app uses, and a bounded size, so the query cannot be bent into other exchange calls.
+  const requestedInterval = searchParams.get('interval') || '1h';
+  const interval = Object.prototype.hasOwnProperty.call(GRAN, requestedInterval) ? requestedInterval : '1h';
+  const requestedLimit = Number.parseInt(searchParams.get('limit') || '100', 10);
+  const limit = String(Number.isFinite(requestedLimit) ? Math.min(500, Math.max(1, requestedLimit)) : 100);
 
   const clean = rawSymbol.replace(/[^A-Z0-9]/g, '');
   if (!clean || clean === 'USDT' || clean === 'USD') {

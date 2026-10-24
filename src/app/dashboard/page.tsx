@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Database, Sparkles, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown, Star, Check, Plus, Trash2, RefreshCw } from 'lucide-react';
+import { Database, Sparkles, Layers, Eye, Globe, BarChart3, Upload, X, MousePointerClick, Loader2, Search, FileText, AppWindow, Radio, Newspaper, ChevronDown, Star, Check, Plus, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { getUserUsage, searchTVSymbols } from './actions';
@@ -17,6 +17,9 @@ import { CONFIRMATION_TIMEFRAME, MAX_CONTEXT_CHARS, type AnalysisInput, type Ana
 import { getPreferences, savePreferences, type UserPreset } from './preferences/actions';
 import LiveMarketTable from '@/components/LiveMarketTable';
 import CryptoNews from '@/components/CryptoNews';
+import DepthPanel from '@/components/terminal/DepthPanel';
+import WatchlistPanel from '@/components/terminal/WatchlistPanel';
+import MacroPanel from '@/components/terminal/MacroPanel';
 import { useLanguage } from '@/context/LanguageContext';
 
 
@@ -28,7 +31,8 @@ export default function DashboardPage() {
   const { language, t } = useLanguage();
 
   // Tab State
-  const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis'>('market');
+  const [activeTab, setActiveTab] = useState<'chart' | 'market' | 'news' | 'analysis' | 'depth' | 'watch' | 'macro'>('market');
+  const [depthSymbol, setDepthSymbol] = useState('BTC');
 
   // Chart Tab State
   const [chartSymbol, setChartSymbol] = useState('');
@@ -427,9 +431,10 @@ export default function DashboardPage() {
         onKeyDown={event => {
           if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
           event.preventDefault();
-          const panels = ['chart', 'market', 'news', 'analysis'] as const;
+          const panels = ['chart', 'market', 'news', 'analysis', 'depth', 'watch', 'macro'] as const;
           const index = panels.indexOf(activeTab);
-          const next = event.key === 'Home' ? 0 : event.key === 'End' ? 3 : (index + (event.key === 'ArrowRight' ? 1 : 3)) % 4;
+          const last = panels.length - 1;
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? last : (index + (event.key === 'ArrowRight' ? 1 : last)) % panels.length;
           setActiveTab(panels[next]);
           event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
         }}>
@@ -482,6 +487,42 @@ export default function DashboardPage() {
         >
             <Database size={15} /> {t('tab_analysis')}
         </button>
+        <button
+            id="terminal-tab-depth" role="tab" aria-controls="terminal-panel-depth" tabIndex={activeTab === 'depth' ? 0 : -1} aria-selected={activeTab === 'depth'}
+            onClick={() => setActiveTab('depth')}
+            className={clsx(
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
+                activeTab === 'depth'
+                    ? "border-neon text-neon"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            )}
+        >
+            <Layers size={15} /> {copy('Order book', 'Order book')}
+        </button>
+        <button
+            id="terminal-tab-watch" role="tab" aria-controls="terminal-panel-watch" tabIndex={activeTab === 'watch' ? 0 : -1} aria-selected={activeTab === 'watch'}
+            onClick={() => setActiveTab('watch')}
+            className={clsx(
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
+                activeTab === 'watch'
+                    ? "border-neon text-neon"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            )}
+        >
+            <Eye size={15} /> {copy('Watchlist', 'Watchlist')}
+        </button>
+        <button
+            id="terminal-tab-macro" role="tab" aria-controls="terminal-panel-macro" tabIndex={activeTab === 'macro' ? 0 : -1} aria-selected={activeTab === 'macro'}
+            onClick={() => setActiveTab('macro')}
+            className={clsx(
+                "px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap",
+                activeTab === 'macro'
+                    ? "border-neon text-neon"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+            )}
+        >
+            <Globe size={15} /> {copy('Makro', 'Macro')}
+        </button>
       </div>
 
       {usageStats?.isRestricted ? (
@@ -519,6 +560,32 @@ export default function DashboardPage() {
                         setActiveTab('chart');
                     }}
                 />
+            </div>
+        )}
+
+        {/* --- ORDER BOOK / DERIVATIVES TAB --- */}
+        {activeTab === 'depth' && (
+            <div id="terminal-panel-depth" role="tabpanel" aria-labelledby="terminal-tab-depth" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <DepthPanel initialSymbol={depthSymbol} favorites={watchlist} />
+            </div>
+        )}
+
+        {/* --- WATCHLIST + SCANNER TAB --- */}
+        {activeTab === 'watch' && (
+            <div id="terminal-panel-watch" role="tabpanel" aria-labelledby="terminal-tab-watch" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <WatchlistPanel watchlist={watchlist}
+                    onAnalyze={(symbol) => {
+                        handleCoinSelect({ id: symbol.toLowerCase(), symbol, name: symbol, image: '', current_price: 0, price_change_percentage_24h: 0 } as Coin);
+                        setActiveTab('analysis');
+                    }}
+                    onDepth={(symbol) => { setDepthSymbol(symbol); setActiveTab('depth'); }} />
+            </div>
+        )}
+
+        {/* --- MACRO TAB --- */}
+        {activeTab === 'macro' && (
+            <div id="terminal-panel-macro" role="tabpanel" aria-labelledby="terminal-tab-macro" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <MacroPanel />
             </div>
         )}
 

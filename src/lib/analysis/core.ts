@@ -24,6 +24,12 @@ export function isRolloutAllowed(userId: string, percent: number, evaluationIds:
   return evaluationIds.includes(userId) || (percent > 0 && Number.parseInt(userId.slice(0, 8), 16) % 100 < percent);
 }
 
+// Stablecoins hold a fixed price, so a LONG/SHORT plan on them is meaningless and would only waste a credit.
+export const STABLECOIN_SYMBOLS: readonly string[] = ['USDT', 'USDC', 'DAI', 'FDUSD', 'TUSD', 'USDE', 'USDS', 'USDD', 'PYUSD', 'BUSD',
+  'USDP', 'GUSD', 'FRAX', 'LUSD', 'USD1', 'RLUSD', 'USDG', 'CRVUSD', 'SUSD', 'USDX', 'EURC', 'EURT', 'AEUR', 'USDT0', 'BFUSD'];
+export function isStablecoin(symbol: string): boolean {
+  return STABLECOIN_SYMBOLS.includes(String(symbol).trim().toUpperCase());
+}
 export const TIMEFRAMES = ['15m', '30m', '1h', '4h', '1d'] as const;
 export type Timeframe = (typeof TIMEFRAMES)[number];
 export type CandleTimeframe = Timeframe | '1w';

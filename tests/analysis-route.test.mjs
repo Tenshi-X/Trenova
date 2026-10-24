@@ -341,3 +341,13 @@ test('unusable technical data fails before counting, quota reservation or genera
     assert.deepEqual(calls, []);
   }
 }));
+
+test('stablecoins are rejected before any quota, market or provider call', async () => {
+  for (const symbol of ['USDT', 'usdc']) {
+    const { handler, calls } = route();
+    const response = await handler(request({ ...input, symbol }));
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /Stablecoin/);
+    assert.deepEqual(calls, []);
+  }
+});

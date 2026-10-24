@@ -20,6 +20,10 @@ interface CoinSelectorProps {
 }
 
 import { useLanguage } from '@/context/LanguageContext';
+import { isStablecoin } from '@/lib/analysis/core';
+
+// Stablecoins cannot be analysed (fixed price), so they never appear in the list.
+const tradable = (list: Coin[]) => list.filter(coin => !isStablecoin(coin.symbol));
 
 export default function CoinSelector({ selectedCoinId, onSelect, disabled = false }: CoinSelectorProps) {
     const [coins, setCoins] = useState<Coin[]>([]);
@@ -43,8 +47,8 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
                         try {
                             const { timestamp, data } = JSON.parse(cached);
                             if (Date.now() - timestamp < CACHE_TTL) {
-                                setCoins(data);
-                                setDisplayedCoins(data);
+                                setCoins(tradable(data));
+                                setDisplayedCoins(tradable(data));
                                 setLoading(false);
                                 return;
                             }
@@ -61,8 +65,8 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
                     if (typeof window !== 'undefined') {
                         localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
                     }
-                    setCoins(data);
-                    setDisplayedCoins(data);
+                    setCoins(tradable(data));
+                    setDisplayedCoins(tradable(data));
                 }
             } catch (e) {
                 console.error("Coin fetch error", e);
@@ -102,7 +106,7 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
             
             try {
                 // A. Search for Coin IDs through CoinGecko globally
-                const searchRes = await fetch(`https://api.coingecko.com/api/v3/search?query=${search}`);
+                const searchRes = await fetch(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(search)}`);
                 if (!searchRes.ok) throw new Error("Search failed");
                 const searchData = await searchRes.json();
                 
@@ -119,7 +123,7 @@ export default function CoinSelector({ selectedCoinId, onSelect, disabled = fals
                         // Combine local filter and market data to ensure 
                         // local hits (like typing "btcusdt") aren't wiped out by CoinGecko's empty API hit.
                         const combined = [...localFilter];
-                        marketData.forEach((mc: Coin) => {
+                        tradable(marketData).forEach((mc: Coin) => {
                             if (!combined.find(c => c.id === mc.id)) {
                                 combined.push(mc);
                             }
