@@ -104,3 +104,30 @@ test('archived v2 WAIT and trade results still render without new fields or inve
   assert.ok(html.includes('>WAIT</h2>'));
   assert.ok(!html.includes('Zona Entry'));
 });
+
+test('plan guide explains a conditional plan with its own numbers in both languages', () => {
+  const result = validateModelAnalysis(modelResult({ verdict: 'WAIT' }), input, market);
+  const id = renderAnalysis(result, 'id');
+  for (const text of ['Cara membaca &amp; menjalankan rencana ini', 'Tunggu pemicu terpenuhi', 'Masuk hanya di zona entry',
+    'Pasang stop loss sejak awal', 'Tahu kapan membatalkan', 'Contoh menghitung ukuran posisi', 'Kesalahan yang sering terjadi',
+    'bukan saran investasi', 'penutupan candle 1h']) assert.ok(id.includes(text), text);
+  const en = renderAnalysis(result, 'en');
+  for (const text of ['How to read &amp; follow this plan', 'Wait for the trigger', 'Know when to cancel', 'Common mistakes']) {
+    assert.ok(en.includes(text), text);
+  }
+  for (const html of [id, en]) {
+    assert.ok(!html.includes('undefined'));
+    assert.ok(!html.includes('NaN'));
+  }
+});
+
+test('plan guide skips trigger and cancel steps for a ready setup and sizes the example from the SL distance', () => {
+  const result = validateModelAnalysis(modelResult({ verdict: 'LONG' }), input, market);
+  const html = renderAnalysis(result, 'id');
+  assert.ok(html.includes('Cara membaca &amp; menjalankan rencana ini'));
+  assert.ok(!html.includes('Tunggu pemicu terpenuhi'));
+  assert.ok(!html.includes('Tahu kapan membatalkan'));
+  // LONG: worst entry 100, SL 97 -> 3.00% away -> Rp100.000 / 3% = Rp3.333.333
+  assert.ok(html.includes('3.00%'));
+  assert.ok(html.includes('Rp3.333.333'));
+});
