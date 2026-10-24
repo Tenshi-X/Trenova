@@ -5,6 +5,7 @@ import { levelSourceLabel, setupTargetMetrics } from '@/lib/analysis/core';
 import { useLanguage } from '@/context/LanguageContext';
 import AnalysisStoryExport from '@/components/AnalysisStoryExport';
 import AnalysisPlanMap from '@/components/AnalysisPlanMap';
+import PlanGuide from '@/components/PlanGuide';
 
 export default function AnalysisResultV2({ result, coinName }: { result: AnalysisV2; coinName: string }) {
   const { language, t } = useLanguage();
@@ -130,6 +131,7 @@ export default function AnalysisResultV2({ result, coinName }: { result: Analysi
         </div>
       </section>;
     })}
+    <PlanGuide result={result} />
     {insights && <>
       <section className="rounded-xl border border-neon/30 bg-neon/5 p-4 text-sm leading-relaxed">
         <h3 className="font-bold">{copy('Tindakan & pengelolaan posisi', 'Actions & position management')}</h3><p className="mt-2">{insights.actionPlan}</p>
